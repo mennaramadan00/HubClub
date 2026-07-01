@@ -1,0 +1,86 @@
+﻿@model IEnumerable<HubClub.Models.Customer>
+@{
+    ViewData["Title"] = "العملاء";
+    Layout = "~/Views/Shared/_Layout.cshtml";
+}
+
+<link rel="stylesheet" href="~/css/products.css" asp-append-version="true" />
+
+<div class="container-fluid px-4 py-4">
+    <div class="page-header">
+        <div>
+            <h1>👥 إدارة العملاء</h1>
+            <p>سجل بيانات العملاء والبحث السريع</p>
+        </div>
+        <a asp-action="Create" class="btn-add">
+            ＋ عميل جديد
+        </a>
+    </div>
+
+    <div class="stats-bar">
+        <div class="stat-card">
+            <div class="stat-icon blue">👥</div>
+            <div>
+                <div class="stat-label">إجمالي العملاء</div>
+                <div class="stat-value">@Model.Count()</div>
+            </div>
+        </div>
+        <div class="stat-card">
+            <div class="stat-icon green">✅</div>
+            <div>
+                <div class="stat-label">نشط</div>
+                <div class="stat-value">@Model.Count(c => c.IsActive)</div>
+            </div>
+        </div>
+    </div>
+
+    <div class="search-wrap">
+        <span class="icon">🔍</span>
+        <input type="text" id="searchInput" placeholder="ابحث بالاسم أو رقم الهاتف..." />
+    </div>
+
+    @if (!Model.Any())
+    {
+        <div class="empty-state">
+            <div class="icon">👤</div>
+            <h3>لا يوجد عملاء بعد</h3>
+            <p>ابدأ بتسجيل أول عميل في النظام</p>
+            <a asp-action="Create" class="btn-add" style="display:inline-flex;margin-top:1rem;">＋ تسجيل عميل</a>
+        </div>
+    }
+    else
+    {
+        <div class="products-grid">
+            @foreach (var item in Model)
+            {
+                <div class="product-card customer-card" data-search="@item.Name.ToLower() @item.Phone">
+                    <div class="card-top">
+                        <span class="status-badge @(item.IsActive ? "active" : "inactive")">
+                            @(item.IsActive ? "نشط ✓" : "مؤرشف")
+                        </span>
+                        <div class="product-name" style="font-size: 1.3rem;">@item.Name</div>
+                        <div class="product-price" style="font-size: 1rem; margin-top: 0.5rem; color: var(--blue-100);">
+                            📞 @item.Phone
+                        </div>
+                    </div>
+                    <div class="card-body" style="justify-content: center; padding-bottom: 1rem;">
+                        <div class="card-actions" style="width: 100%; justify-content: center;">
+                            <a asp-action="Details" asp-route-id="@item.CustomerId" class="action-btn details" style="flex:1" title="التفاصيل">👁</a>
+                            <a asp-action="Edit" asp-route-id="@item.CustomerId" class="action-btn edit" style="flex:1" title="تعديل">✏️</a>
+                            <a asp-action="Delete" asp-route-id="@item.CustomerId" class="action-btn delete" style="flex:1" title="حذف">🗑</a>
+                        </div>
+                    </div>
+                </div>
+            }
+        </div>
+    }
+</div>
+
+<script>
+    document.getElementById('searchInput')?.addEventListener('input', function () {
+        const q = this.value.toLowerCase();
+        document.querySelectorAll('.customer-card').forEach(card => {
+            card.style.display = card.dataset.search.includes(q) ? '' : 'none';
+        });
+    });
+</script>

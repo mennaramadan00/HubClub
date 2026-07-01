@@ -1,0 +1,109 @@
+﻿@model HubClub.ViewModels.BuyPackageViewModel
+@{
+    ViewData["Title"] = "شراء باقة لعميل";
+}
+
+<link href="https://cdn.jsdelivr.net/npm/select2@4.1.0-rc.0/dist/css/select2.min.css" rel="stylesheet" />
+
+<div class="form-page" dir="rtl">
+    <div class="form-card">
+
+        <div class="form-card-header">
+            <div class="icon">🎟️</div>
+            <div>
+                <h2>إضافة باقة لعميل</h2>
+                <p>شحن رصيد باقات للعملاء لاستخدامها في الجلسات</p>
+            </div>
+        </div>
+
+        <div class="form-body">
+            <form asp-action="Buy" method="post">
+                <div asp-validation-summary="ModelOnly" class="validation-summary" style="display: @(ViewData.ModelState.IsValid ? "none" : "block")"></div>
+
+                <div class="field-group" style="background: var(--blue-50); border: 1.5px solid var(--blue-100); border-radius: 0.8rem; padding: 1.2rem; margin-bottom: 1.5rem;">
+                    <label class="field-label" style="margin-bottom: 1rem;">بيانات العميل</label>
+
+                    <div class="toggle-group" style="margin-bottom: 1.2rem; justify-content: center; gap: 2rem;">
+                        <label class="d-flex align-items-center gap-2">
+                            <input type="radio" asp-for="IsNewCustomer" value="false" onchange="toggleCustomer(false)" style="cursor: pointer;" />
+                            <span>عميل مسجل (بحث)</span>
+                        </label>
+                        <label class="d-flex align-items-center gap-2">
+                            <input type="radio" asp-for="IsNewCustomer" value="true" onchange="toggleCustomer(true)" style="cursor: pointer;" />
+                            <span>➕ عميل جديد</span>
+                        </label>
+                    </div>
+
+                    <div id="divExisting" class="field-group mb-0">
+                        <select asp-for="SelectedCustomerId" asp-items="Model.AllCustomers" id="SelectedCustomerId" class="field-input select2-search">
+                            <option value="">-- ابحث بالاسم أو رقم الموبايل --</option>
+                        </select>
+                        <span asp-validation-for="SelectedCustomerId" class="field-error"></span>
+                    </div>
+
+                    <div id="divNew" style="display: none;">
+                        <div class="field-group">
+                            <input type="text" asp-for="NewCustomerName" id="NewCustomerName" class="field-input" placeholder="اسم العميل الجديد *" />
+                            <span asp-validation-for="NewCustomerName" class="field-error"></span>
+                        </div>
+                        <div class="field-group mb-0">
+                            <input type="text" asp-for="NewCustomerPhone" id="NewCustomerPhone" class="field-input" placeholder="رقم الموبايل * (إلزامي)" />
+                            <span asp-validation-for="NewCustomerPhone" class="field-error"></span>
+                        </div>
+                    </div>
+                </div>
+
+                <div class="field-group">
+                    <label class="field-label">اختر الباقة المطلوبة <span class="required">*</span></label>
+                    <select asp-for="SelectedPackageId" asp-items="Model.AvailablePackages" class="field-input">
+                        <option value="">-- اختر من الباقات المتاحة --</option>
+                    </select>
+                    <span asp-validation-for="SelectedPackageId" class="field-error"></span>
+                </div>
+
+                <div class="edit-notice mt-3">
+                    <span>ℹ️</span> بمجرد الحفظ، سيتم تفعيل الباقة وتضاف الساعات لرصيد العميل فوراً.
+                </div>
+
+                <div class="form-actions mt-4">
+                    <a asp-controller="UserPackage" asp-action="Index" class="btn-back" style="flex: 1;">إلغاء</a>
+                    <button type="submit" class="btn-save" style="flex: 2; margin: 0;">✅ تأكيد وشراء الباقة</button>
+                </div>
+            </form>
+        </div>
+    </div>
+</div>
+
+@section Scripts {
+    <script src="https://cdn.jsdelivr.net/npm/select2@4.1.0-rc.0/dist/js/select2.min.js"></script>
+
+    <script>
+        $(document).ready(function() {
+            $('.select2-search').select2({
+                dir: "rtl",
+                width: '100%',
+                placeholder: "-- ابحث بالاسم أو رقم الموبايل --"
+            });
+
+            // ضبط حالة العميل عند تحميل الصفحة
+            var isNew = $('input[name="IsNewCustomer"]:checked').val() === 'true' || $('input[name="IsNewCustomer"]:checked').val() === 'True';
+            toggleCustomer(isNew);
+        });
+
+        function toggleCustomer(isNew) {
+            if (isNew) {
+                $('#divExisting').hide();
+                $('#divNew').show();
+                $('#SelectedCustomerId').prop('disabled', true);
+                $('#NewCustomerName').prop('disabled', false);
+                $('#NewCustomerPhone').prop('disabled', false);
+            } else {
+                $('#divExisting').show();
+                $('#divNew').hide();
+                $('#SelectedCustomerId').prop('disabled', false);
+                $('#NewCustomerName').prop('disabled', true);
+                $('#NewCustomerPhone').prop('disabled', true);
+            }
+        }
+    </script>
+}

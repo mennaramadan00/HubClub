@@ -1,0 +1,73 @@
+﻿@model IEnumerable<HubClub.Models.PricingSetting>
+@{
+    ViewData["Title"] = "إعدادات التسعير";
+    Layout = "~/Views/Shared/_Layout.cshtml";
+}
+
+<link rel="stylesheet" href="~/css/products.css" asp-append-version="true" />
+
+<div class="container-fluid px-4 py-4">
+
+    <div class="page-header">
+        <div>
+            <h1>⚙️ إعدادات التسعير</h1>
+            <p>إدارة شرائح الأسعار بناءً على عدد الساعات</p>
+        </div>
+        <a asp-action="Create" class="btn-add">
+            ＋ إضافة شريحة جديدة
+        </a>
+    </div>
+
+    <div class="stats-bar">
+        <div class="stat-card">
+            <div class="stat-icon blue">💰</div>
+            <div>
+                <div class="stat-label">إجمالي الشرائح</div>
+                <div class="stat-value">@Model.Count()</div>
+            </div>
+        </div>
+    </div>
+
+    @if (!Model.Any())
+    {
+        <div class="empty-state">
+            <div class="icon">⏱️</div>
+            <h3>لا توجد شرائح أسعار بعد</h3>
+            <p>ابدأ بإضافة شرائح التسعير لحساب الجلسات تلقائياً</p>
+            <a asp-action="Create" class="btn-add" style="display:inline-flex;margin-top:1rem;">＋ أضف أول شريحة</a>
+        </div>
+    }
+    else
+    {
+        <div class="packages-grid">
+            @foreach (var item in Model.OrderBy(m => m.MinNumberOfHours))
+            {
+                <div class="package-card">
+                    <div class="card-top">
+                        <div class="package-name">من @item.MinNumberOfHours إلى @item.MaxNumberOfHours ساعة</div>
+                        <div class="package-price">
+                            @item.Price.ToString("N2") <span>جنيه</span>
+                        </div>
+                    </div>
+                    <div class="card-body">
+                        <div class="qty-wrap">
+                            <span class="qty-label">الحد الأدنى:</span>
+                            <span class="qty-value">@item.MinNumberOfHours ساعة</span>
+                        </div>
+                        <div class="qty-wrap">
+                            <span class="qty-label">الحد الأقصى:</span>
+                            <span class="qty-value" style="background:var(--gray-100); color:var(--gray-600)">@item.MaxNumberOfHours ساعة</span>
+                        </div>
+                    </div>
+                    <div class="card-body" style="padding-top: 0; border-top: 1px solid var(--gray-100); padding-bottom: 1rem;">
+                        <div class="card-actions" style="width: 100%; justify-content: center;">
+                            <a asp-action="Details" asp-route-id="@item.PricingSettingId" class="action-btn details" style="flex:1" title="التفاصيل">👁</a>
+                            <a asp-action="Edit" asp-route-id="@item.PricingSettingId" class="action-btn edit" style="flex:1" title="تعديل">✏️</a>
+                            <a asp-action="Delete" asp-route-id="@item.PricingSettingId" class="action-btn delete" style="flex:1" title="حذف">🗑</a>
+                        </div>
+                    </div>
+                </div>
+            }
+        </div>
+    }
+</div>

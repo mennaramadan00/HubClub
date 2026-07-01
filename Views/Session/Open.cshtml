@@ -1,0 +1,110 @@
+﻿@model HubClub.ViewModels.SessionOpenViewModel
+@{
+    ViewData["Title"] = "فتح جلسة جديدة";
+}
+<link rel="stylesheet" href="~/css/product.css" />
+
+<div class="form-page" dir="rtl">
+    <div class="form-card">
+
+        <div class="form-card-header">
+            <div class="icon">⏱</div>
+            <div>
+                <h2>فتح جلسة جديدة</h2>
+                <p>تسجيل بيانات الجلسة وبداية الوقت</p>
+            </div>
+        </div>
+
+        <div class="form-body">
+            <form asp-action="Open" method="post">
+                <div asp-validation-summary="ModelOnly" class="validation-summary" style="display: @(ViewData.ModelState.IsValid ? "none" : "block")"></div>
+
+                <div class="field-group">
+                    <label class="field-label">وقت وتاريخ البداية</label>
+                    <input type="text" class="field-input" style="background-color: var(--gray-100); color: var(--gray-500); text-align: center; font-weight: 700; border-style: dashed;" value="@Model.StartTime.ToString("dd/MM/yyyy - hh:mm tt")" readonly disabled />
+                </div>
+
+                <div class="field-group" style="background: var(--white); border: 1.5px solid var(--blue-100); border-radius: 0.8rem; padding: 1.2rem; margin-bottom: 1.5rem;">
+                    <label class="field-label" style="font-size: 1rem; border-bottom: 1px solid var(--blue-50); padding-bottom: 0.5rem; margin-bottom: 1rem;">بيانات العميل</label>
+
+                    <div class="toggle-group" style="margin-bottom: 1.2rem; justify-content: center; gap: 2rem;">
+                        <label class="d-flex align-items-center gap-2">
+                            <input type="radio" asp-for="IsNewCustomer" value="false" onchange="toggleCustomer(false)" style="cursor: pointer;" />
+                            <span style="cursor: pointer;">عميل مسجل (بحث)</span>
+                        </label>
+                        <label class="d-flex align-items-center gap-2" style="color: var(--success);">
+                            <input type="radio" asp-for="IsNewCustomer" value="true" onchange="toggleCustomer(true)" style="cursor: pointer;" />
+                            <span style="cursor: pointer;">➕ عميل جديد</span>
+                        </label>
+                    </div>
+
+                    <div id="divExisting" class="field-group mb-0">
+                        <select asp-for="SelectedCustomerId" asp-items="Model.AllCustomers" id="SelectedCustomerId" class="field-input select2-search">
+                            <option value="">-- ابحث بالاسم أو رقم الموبايل --</option>
+                        </select>
+                        <span asp-validation-for="SelectedCustomerId" class="field-error"></span>
+                    </div>
+
+                    <div id="divNew" style="display: none;">
+                        <div class="field-group">
+                            <input type="text" asp-for="NewCustomerName" id="NewCustomerName" class="field-input" style="border-color: var(--success);" placeholder="اسم العميل الجديد *" />
+                            <span asp-validation-for="NewCustomerName" class="field-error"></span>
+                        </div>
+                        <div class="field-group mb-0">
+                            <input type="text" asp-for="NewCustomerPhone" id="NewCustomerPhone" class="field-input" style="border-color: var(--success);" placeholder="رقم الموبايل * (إلزامي)" />
+                            <span asp-validation-for="NewCustomerPhone" class="field-error"></span>
+                        </div>
+                    </div>
+                </div>
+
+                <div class="field-group">
+                    <label class="field-label">نظام الدفع المتوقع</label>
+                    <select asp-for="PaymentType" class="field-input">
+                        <option value="0">بالساعة (دفع نقدي)</option>
+                        <option value="1">من الباقة (للعملاء المسجلين)</option>
+                    </select>
+                    <span asp-validation-for="PaymentType" class="field-error"></span>
+                </div>
+
+                <div class="form-actions">
+                    <a asp-controller="Home" asp-action="Index" class="btn-back" style="flex: 1;">إلغاء</a>
+                    <button type="submit" class="btn-save" style="flex: 2; margin: 0;">▶️ بدء الجلسة الفعلي</button>
+                </div>
+            </form>
+        </div>
+    </div>
+</div>
+
+@section Scripts {
+    <link href="https://cdn.jsdelivr.net/npm/select2@4.1.0-rc.0/dist/css/select2.min.css" rel="stylesheet" />
+    <script src="https://cdn.jsdelivr.net/npm/select2@4.1.0-rc.0/dist/js/select2.min.js"></script>
+
+    <script>
+        $(document).ready(function() {
+            $('#SelectedCustomerId').select2({
+                dir: "rtl",
+                width: '100%',
+                placeholder: "-- ابحث بالاسم أو رقم الموبايل --"
+            });
+
+            var isNew = $('input[name="IsNewCustomer"]:checked').val() === 'true' || $('input[name="IsNewCustomer"]:checked').val() === 'True';
+            toggleCustomer(isNew);
+        });
+
+        function toggleCustomer(isNew) {
+            if (isNew) {
+                $('#divExisting').hide();
+                $('#divNew').show();
+                $('#SelectedCustomerId').prop('disabled', true);
+                $('#NewCustomerName').prop('disabled', false);
+                $('#NewCustomerPhone').prop('disabled', false);
+            } else {
+                $('#divExisting').show();
+                $('#divNew').hide();
+                $('#SelectedCustomerId').prop('disabled', false);
+                $('#NewCustomerName').prop('disabled', true);
+                $('#NewCustomerPhone').prop('disabled', true);
+            }
+        }
+    </script>
+}

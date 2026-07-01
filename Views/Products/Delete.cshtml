@@ -1,0 +1,40 @@
+﻿@model HubClub.Models.Product
+@{
+    ViewData["Title"] = "حذف المنتج";
+}
+
+<link rel="stylesheet" href="~/css/products.css" asp-append-version="true" />
+
+<div class="delete-page">
+    <div class="delete-card">
+        <div class="delete-header">
+            <div class="delete-icon">🗑️</div>
+            <h2>تأكيد الحذف</h2>
+            <p>هذا الإجراء لا يمكن التراجع عنه</p>
+        </div>
+
+        <div class="delete-body">
+            <div class="product-preview">
+                <div class="pname">@Model.Name</div>
+                <div class="pdetails">
+                    <span>السعر: <strong>@Model.Price.ToString("N2") جنيه</strong></span>
+                    <span>الكمية: <strong>@Model.Quantity قطعة</strong></span>
+                </div>
+            </div>
+
+            <div class="warning-box">
+                ⚠️ هل أنت متأكد من حذف هذا المنتج؟ سيتم إزالته من قائمة البار ولن يمكن استعادته.
+            </div>
+        </div>
+
+        <div class="delete-actions">
+            <a asp-action="Index" class="btn-cancel">← إلغاء</a>
+            <form asp-action="Delete" method="post" style="flex:1;">
+                <input type="hidden" asp-for="ProductId" />
+                <button type="submit" class="btn-confirm-delete" style="width:100%;">
+                    🗑 نعم، احذف المنتج
+                </button>
+            </form>
+        </div>
+    </div>
+</div>

@@ -1,0 +1,64 @@
+﻿@model HubClub.Models.PricingSetting
+@{
+    ViewData["Title"] = "تعديل شريحة التسعير";
+}
+
+<link rel="stylesheet" href="~/css/products.css" asp-append-version="true" />
+
+<div class="form-page">
+    <div class="form-card">
+        <div class="form-card-header">
+            <div class="icon">✏️</div>
+            <div>
+                <h2>تعديل الشريحة</h2>
+                <p>من @Model.MinNumberOfHours إلى @Model.MaxNumberOfHours ساعة</p>
+            </div>
+        </div>
+        <div class="form-body">
+
+            <div class="edit-notice">
+                ⚠️ تعديل هذه الشريحة سيطبق على الجلسات الجديدة فقط، ولن يؤثر على الجلسات التي تم محاسبتها مسبقاً.
+            </div>
+
+            <form asp-action="Edit" method="post">
+                <div asp-validation-summary="ModelOnly" class="validation-summary text-danger"></div>
+                <input type="hidden" asp-for="PricingSettingId" />
+
+                <div class="field-group">
+                    <label class="field-label" asp-for="MinNumberOfHours">
+                        من (ساعة) <span class="required">*</span>
+                    </label>
+                    <input asp-for="MinNumberOfHours" class="field-input" type="number" step="0.5" min="0" />
+                    <span asp-validation-for="MinNumberOfHours" class="field-error"></span>
+                </div>
+
+                <div class="field-group">
+                    <label class="field-label" asp-for="MaxNumberOfHours">
+                        إلى (ساعة) <span class="required">*</span>
+                    </label>
+                    <input asp-for="MaxNumberOfHours" class="field-input" type="number" step="0.5" min="0.5" />
+                    <span asp-validation-for="MaxNumberOfHours" class="field-error"></span>
+                </div>
+
+                <div class="field-group">
+                    <label class="field-label" asp-for="Price">
+                        السعر (جنيه) <span class="required">*</span>
+                    </label>
+                    <input asp-for="Price" class="field-input" type="number" step="0.01" min="1" />
+                    <span asp-validation-for="Price" class="field-error"></span>
+                </div>
+
+                <div class="form-actions">
+                    <a asp-action="Index" class="btn-back">← رجوع</a>
+                    <button type="submit" class="btn-save">💾 حفظ التعديلات</button>
+                </div>
+            </form>
+        </div>
+    </div>
+</div>
+
+@section Scripts {
+    @{
+        await Html.RenderPartialAsync("_ValidationScriptsPartial");
+    }
+}

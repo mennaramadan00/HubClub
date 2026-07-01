@@ -1,0 +1,57 @@
+﻿@model HubClub.Models.Customer
+@{
+    ViewData["Title"] = "إضافة عميل جديد";
+}
+
+<link rel="stylesheet" href="~/css/products.css" asp-append-version="true" />
+
+<div class="form-page">
+    <div class="form-card">
+        <div class="form-card-header">
+            <div class="icon">👤</div>
+            <div>
+                <h2>تسجيل عميل جديد</h2>
+                <p>أدخل بيانات العميل</p>
+            </div>
+        </div>
+        <div class="form-body">
+            <form asp-action="Create" method="post">
+                <div asp-validation-summary="ModelOnly" class="validation-summary text-danger"></div>
+
+                <div class="field-group">
+                    <label class="field-label" asp-for="Name">
+                        اسم العميل <span class="required">*</span>
+                    </label>
+                    <input asp-for="Name" class="field-input" placeholder="اكتب اسم العميل..." />
+                    <span asp-validation-for="Name" class="field-error"></span>
+                </div>
+
+                <div class="field-group">
+                    <label class="field-label" asp-for="Phone">
+                        رقم الهاتف <span class="required">*</span>
+                    </label>
+                    <input asp-for="Phone" class="field-input" placeholder="مثال: 01xxxxxxxxx" />
+                    <span asp-validation-for="Phone" class="field-error"></span>
+                </div>
+
+                <div class="field-group">
+                    <div class="toggle-group">
+                        <input asp-for="IsActive" type="checkbox" id="IsActive" checked />
+                        <label for="IsActive">حساب نشط</label>
+                    </div>
+                </div>
+
+                <div class="form-actions">
+                    <a asp-action="Index" class="btn-back">← رجوع</a>
+                    <button type="submit" class="btn-save">💾 حفظ العميل</button>
+                </div>
+            </form>
+        </div>
+    </div>
+</div>
+
+@section Scripts {
+    @{
+        await Html.RenderPartialAsync("_ValidationScriptsPartial");
+    }
+}

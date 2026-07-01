@@ -1,0 +1,157 @@
+﻿/* HubClub Fancy Layout Styles — Ocean Depth theme */
+@import url('https://fonts.googleapis.com/css2?family=Cairo:wght@400;600;700;800;900&family=Poppins:wght@700;800&display=swap');
+
+:root {
+    --deep-space: #012a4a;
+    --yale-1: #013a63;
+    --yale-2: #01497c;
+    --yale-3: #014f86;
+    --cerulean-rich: #2a6f97;
+    --cerulean: #2c7da0;
+    --air-force: #468faf;
+    --steel: #61a5c2;
+    --sky-light: #89c2d9;
+    --light-blue: #a9d6e5;
+    --amber-500: #f59e0b;
+    --amber-400: #fbbf24;
+    --white: #ffffff;
+    --ink-400: #7a97a9;
+}
+
+body {
+    font-family: 'Cairo', sans-serif;
+    /* soft ocean wash behind the whole app instead of flat white */
+    background-color: #eef5f8;
+    background-image: radial-gradient(circle at 100% 0%, rgba(137,194,217,0.25) 0%, transparent 45%), radial-gradient(circle at 0% 100%, rgba(97,165,194,0.14) 0%, transparent 40%);
+    background-attachment: fixed;
+    direction: rtl;
+    text-align: right;
+    min-height: 100vh;
+    display: flex;
+    flex-direction: column;
+}
+
+/* ── Fancy Navbar : frosted glass over a deep-ocean gradient underline ── */
+.fancy-navbar {
+    background: rgba(255,255,255,0.72);
+    backdrop-filter: blur(16px) saturate(160%);
+    -webkit-backdrop-filter: blur(16px) saturate(160%);
+    box-shadow: 0 1px 0 rgba(1,42,74,0.06), 0 8px 24px rgba(1,42,74,0.06);
+    padding: 0.85rem 0;
+    border-bottom: none;
+    position: sticky;
+    top: 0;
+    z-index: 200;
+}
+    /* signature: a slim wave-gradient seam under the whole navbar */
+    .fancy-navbar::after {
+        content: '';
+        display: block;
+        position: absolute;
+        left: 0;
+        right: 0;
+        bottom: -3px;
+        height: 3px;
+        background: linear-gradient(90deg, var(--deep-space), var(--cerulean-rich), var(--sky-light), var(--amber-400));
+        opacity: 0.9;
+    }
+
+    .fancy-navbar .navbar-brand {
+        color: var(--deep-space) !important;
+        font-weight: 900;
+        font-size: 1.65rem;
+        font-family: 'Cairo', sans-serif;
+        display: flex;
+        align-items: center;
+        gap: 0.3rem;
+        margin-right: 0;
+        margin-left: 1.5rem;
+        letter-spacing: -0.01em;
+    }
+
+        .fancy-navbar .navbar-brand span {
+            background: linear-gradient(135deg, var(--cerulean-rich), var(--air-force));
+            -webkit-background-clip: text;
+            background-clip: text;
+            color: transparent;
+        }
+
+    .fancy-navbar .nav-link {
+        color: var(--yale-1) !important;
+        font-weight: 700;
+        font-size: 1rem;
+        padding: 0.55rem 1.15rem !important;
+        margin: 0 0.2rem;
+        border-radius: 0.6rem;
+        position: relative;
+        transition: all 0.25s cubic-bezier(0.16, 1, 0.3, 1);
+    }
+
+        .fancy-navbar .nav-link:hover,
+        .fancy-navbar .nav-link:focus {
+            background: rgba(44,125,160,0.10);
+            color: var(--deep-space) !important;
+            transform: translateY(-2px);
+        }
+
+        .fancy-navbar .nav-link.active {
+            background: linear-gradient(135deg, var(--deep-space), var(--yale-2));
+            color: var(--white) !important;
+            box-shadow: 0 4px 14px rgba(1,73,124,0.3);
+        }
+
+    .fancy-navbar .navbar-toggler {
+        border-color: rgba(1,42,74,0.12);
+        box-shadow: none !important;
+    }
+
+    .fancy-navbar .navbar-toggler-icon {
+        background-image: url("data:image/svg+xml,%3csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 30 30'%3e%3cpath stroke='rgba(1,42,74,0.85)' stroke-linecap='round' stroke-miterlimit='10' stroke-width='2' d='M4 7h22M4 15h22M4 23h22'/%3e%3c/svg%3e");
+    }
+
+/* ── Main Content Area ── */
+.main-container {
+    min-height: calc(100vh - 168px);
+    padding-top: 1.5rem;
+    flex: 1;
+}
+
+/* ── Fancy Footer : deep ocean floor with a wave seam ── */
+.fancy-footer {
+    background: linear-gradient(180deg, var(--deep-space), #011b30);
+    color: var(--light-blue);
+    text-align: center;
+    padding: 1.7rem 0;
+    margin-top: auto;
+    border-top: none;
+    font-size: 0.95rem;
+    position: relative;
+}
+
+    .fancy-footer::before {
+        content: '';
+        position: absolute;
+        top: -3px;
+        left: 0;
+        right: 0;
+        height: 3px;
+        background: linear-gradient(90deg, var(--amber-400), var(--sky-light), var(--cerulean-rich), var(--deep-space));
+        opacity: 0.9;
+    }
+
+    .fancy-footer a {
+        color: var(--amber-400);
+        text-decoration: none;
+        font-weight: 700;
+        transition: color 0.2s;
+    }
+
+        .fancy-footer a:hover {
+            color: var(--white);
+        }
+
+@media (max-width: 768px) {
+    .fancy-navbar .navbar-brand {
+        font-size: 1.35rem;
+    }
+}

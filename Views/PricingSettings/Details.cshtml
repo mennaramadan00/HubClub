@@ -1,0 +1,39 @@
+﻿@model HubClub.Models.PricingSetting
+@{
+    ViewData["Title"] = "تفاصيل الشريحة";
+}
+
+<link rel="stylesheet" href="~/css/products.css" asp-append-version="true" />
+
+<div class="detail-page">
+    <div class="detail-card">
+        <div class="detail-hero">
+            <div class="product-icon">⚙️</div>
+            <h2>تفاصيل الشريحة</h2>
+            <div class="price-display">
+                @Model.Price.ToString("N2") <span>جنيه</span>
+            </div>
+        </div>
+
+        <div class="detail-body">
+            <div class="info-row">
+                <span class="info-key">⏳ من</span>
+                <span class="info-val">
+                    <span class="qty-badge">@Model.MinNumberOfHours ساعة</span>
+                </span>
+            </div>
+            <div class="info-row">
+                <span class="info-key">⌛ إلى</span>
+                <span class="info-val">@Model.MaxNumberOfHours ساعة</span>
+            </div>
+        </div>
+
+        <div class="detail-actions">
+            <a asp-action="Edit" asp-route-id="@Model.PricingSettingId" class="btn-edit">✏️ تعديل</a>
+            <a asp-action="Delete" asp-route-id="@Model.PricingSettingId" class="btn-delete">🗑 حذف</a>
+        </div>
+        <div style="text-align: center; margin-bottom: 1rem;">
+            <a asp-action="Index" class="btn-back" style="border: none; background: transparent;">← العودة للقائمة</a>
+        </div>
+    </div>
+</div>

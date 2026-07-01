@@ -1,3 +1,6 @@
+using Microsoft.EntityFrameworkCore;
+using HubClub.Data;
+
 namespace HubClub
 {
     public class Program
@@ -8,6 +11,12 @@ namespace HubClub
 
             // Add services to the container.
             builder.Services.AddControllersWithViews();
+
+            // Add MySQL DbContext
+            var connectionString = builder.Configuration.GetConnectionString("DefaultConnection");
+            builder.Services.AddDbContext<AppDbContext>(options =>
+                options.UseMySql(connectionString, ServerVersion.AutoDetect(connectionString))
+            );
 
             var app = builder.Build();
 
@@ -21,10 +30,10 @@ namespace HubClub
 
             app.UseHttpsRedirection();
             app.UseRouting();
-
             app.UseAuthorization();
 
             app.MapStaticAssets();
+
             app.MapControllerRoute(
                 name: "default",
                 pattern: "{controller=Home}/{action=Index}/{id?}")

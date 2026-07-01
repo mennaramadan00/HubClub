@@ -1,0 +1,67 @@
+﻿@model IEnumerable<HubClub.ViewModels.UserPackageListViewModel>
+@{
+    ViewData["Title"] = "باقات العملاء";
+}
+
+<div class="container-fluid py-4" dir="rtl">
+
+    @if (TempData["Success"] != null)
+    {
+        <div class="alert alert-success alert-dismissible fade show shadow-sm mb-4" role="alert" style="border-radius: 0.6rem;">
+            <strong>✅ نجاح!</strong> @TempData["Success"]
+            <button type="button" class="btn-close" data-bs-dismiss="alert" aria-label="Close"></button>
+        </div>
+    }
+
+    <div class="page-header">
+        <div>
+            <h1> باقات العملاء</h1>
+            <p>متابعة أرصدة الساعات للعملاء المشتركين في النظام</p>
+        </div>
+        <a asp-action="Buy" class="btn-add">
+             شحن باقة جديدة
+        </a>
+    </div>
+
+    @if (!Model.Any())
+    {
+        <div class="empty-state bg-white rounded border" style="border-radius: 1.2rem; box-shadow: 0 4px 15px rgba(0,0,0,0.03);">
+            <div class="icon">🪹</div>
+            <h3>لا توجد باقات مفعلة</h3>
+            <p>لم يتم شحن أي باقات للعملاء حتى الآن. ابدأ بإضافة باقة جديدة.</p>
+        </div>
+    }
+    else
+    {
+        <div class="packages-grid">
+            @foreach (var item in Model)
+            {
+                <div class="package-card">
+                    <div class="card-top">
+                        @if (item.RemainingHours > 0)
+                        {
+                            <span class="status-badge active" style="top: 1rem; left: auto; right: 1rem;"> فعالة</span>
+                        }
+                        else
+                        {
+                            <span class="status-badge inactive" style="top: 1rem; left: auto; right: 1rem;"> منتهية</span>
+                        }
+
+                        <h3 class="package-name mt-4 pt-2">@item.CustomerName</h3>
+                        <div class="text-white small opacity-75">📞 @item.CustomerPhone</div>
+                    </div>
+
+                    <div class="card-body" style="flex-direction: column; align-items: stretch; gap: 0.5rem;">
+                        <div class="info-row border-0 py-2">
+                            <span class="info-key">الرصيد المتبقي</span>
+                            <span class="info-val fs-3 fw-bold @(item.RemainingHours > 0 ? "text-success" : "text-danger")">
+                                @item.RemainingHours
+                                <small class="text-muted fs-6 fw-normal">ساعة</small>
+                            </span>
+                        </div>
+                    </div>
+                </div>
+            }
+        </div>
+    }
+</div>

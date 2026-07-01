@@ -1,0 +1,104 @@
+﻿@model IEnumerable<HubClub.Models.Product>
+@{
+    ViewData["Title"] = "المنتجات";
+    Layout = "~/Views/Shared/_Layout.cshtml";
+}
+
+<link rel="stylesheet" href="~/css/products.css" asp-append-version="true" />
+
+<div class="container-fluid px-4 py-4">
+
+    <!-- Header -->
+    <div class="page-header">
+        <div>
+            <h1>🛒 إدارة المنتجات</h1>
+            <p>قائمة منتجات البار والمشروبات المتاحة</p>
+        </div>
+        <a asp-action="Create" class="btn-add">
+            ＋ إضافة منتج
+        </a>
+    </div>
+
+    <!-- Stats -->
+    <div class="stats-bar">
+        <div class="stat-card">
+            <div class="stat-icon blue">📦</div>
+            <div>
+                <div class="stat-label">إجمالي المنتجات</div>
+                <div class="stat-value">@Model.Count()</div>
+            </div>
+        </div>
+        <div class="stat-card">
+            <div class="stat-icon green">✅</div>
+            <div>
+                <div class="stat-label">المنتجات المتاحة</div>
+                <div class="stat-value">@Model.Count(p => p.IsActive)</div>
+            </div>
+        </div>
+        <div class="stat-card">
+            <div class="stat-icon yellow">⚠️</div>
+            <div>
+                <div class="stat-label">مخزون منخفض (أقل من 5)</div>
+                <div class="stat-value">@Model.Count(p => p.Quantity < 5)</div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Search -->
+    <div class="search-wrap">
+        <span class="icon">🔍</span>
+        <input type="text" id="searchInput" placeholder="ابحث عن منتج بالاسم..." />
+    </div>
+
+    <!-- Grid -->
+    @if (!Model.Any())
+    {
+        <div class="empty-state">
+            <div class="icon">🛍️</div>
+            <h3>لا توجد منتجات بعد</h3>
+            <p>ابدأ بإضافة منتجات البار والمشروبات المتاحة لديك</p>
+            <a asp-action="Create" class="btn-add" style="display:inline-flex;margin-top:1rem;">＋ أضف أول منتج</a>
+        </div>
+    }
+    else
+    {
+        <div class="products-grid" id="productsGrid">
+            @foreach (var item in Model)
+            {
+                <div class="product-card" data-name="@item.Name.ToLower()">
+                    <div class="card-top">
+                        <span class="status-badge @(item.IsActive ? "active" : "inactive")">
+                            @(item.IsActive ? "متاح ✓" : "غير متاح")
+                        </span>
+                        <div class="product-name">@item.Name</div>
+                        <div class="product-price">
+                            @item.Price.ToString("N2") <span>جنيه</span>
+                        </div>
+                    </div>
+                    <div class="card-body">
+                        <div class="qty-wrap">
+                            <span class="qty-label">المخزون</span>
+                            <span class="qty-value @(item.Quantity < 5 ? "low" : "")">
+                                @item.Quantity قطعة
+                            </span>
+                        </div>
+                        <div class="card-actions">
+                            <a asp-action="Details" asp-route-id="@item.ProductId" class="action-btn details" title="التفاصيل">👁</a>
+                            <a asp-action="Edit" asp-route-id="@item.ProductId" class="action-btn edit" title="تعديل">✏️</a>
+                            <a asp-action="Delete" asp-route-id="@item.ProductId" class="action-btn delete" title="حذف">🗑</a>
+                        </div>
+                    </div>
+                </div>
+            }
+        </div>
+    }
+</div>
+
+<script>
+    document.getElementById('searchInput')?.addEventListener('input', function () {
+        const q = this.value.toLowerCase();
+        document.querySelectorAll('.product-card').forEach(card => {
+            card.style.display = card.dataset.name.includes(q) ? '' : 'none';
+        });
+    });
+</script>
