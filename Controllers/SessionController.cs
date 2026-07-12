@@ -45,14 +45,18 @@ namespace HubClub.Controllers
         // ─────────────────────────────────────────
         private async Task<PricingSetting?> GetPricingTierAsync(decimal hoursElapsed)
         {
+            // 🟢 التعديل الأول: إضافة p.IsActive للتأكد من أن الشريحة مفعلة
             var tier = await _context.PricingSettings
-                .Where(p => p.MinNumberOfHours <= hoursElapsed
+                .Where(p => p.IsActive
+                         && p.MinNumberOfHours <= hoursElapsed
                          && hoursElapsed < p.MaxNumberOfHours)
                 .FirstOrDefaultAsync();
 
             if (tier == null)
             {
+                // 🟢 التعديل الثاني: إضافة نفس الشرط في حالة عدم وجود شريحة (الكود الاحتياطي)
                 tier = await _context.PricingSettings
+                    .Where(p => p.IsActive)
                     .OrderByDescending(p => p.MaxNumberOfHours)
                     .FirstOrDefaultAsync();
             }
@@ -142,11 +146,14 @@ namespace HubClub.Controllers
 
                 if (vm.PaymentType == PaymentType.Package)
                 {
+                    // 🟢 التعديل هنا: استخدام Where ثم OrderByDescending ثم FirstOrDefaultAsync
                     var activePackage = await _context.UserPackages
-                        .FirstOrDefaultAsync(p => p.CusId == finalCustomerId
-                                           && p.Status == UserPackageStatus.Active
-                                           && p.RemainingHours > 0
-                                           && p.ExpiryDate >= now);
+                        .Where(p => p.CusId == finalCustomerId
+                                 && p.Status == UserPackageStatus.Active
+                                 && p.RemainingHours > 0
+                                 && p.ExpiryDate >= now)
+                        .OrderByDescending(p => p.RemainingHours) // لضمان سحب الباقة المليئة أولاً
+                        .FirstOrDefaultAsync();
 
                     if (activePackage == null)
                     {
@@ -477,6 +484,14 @@ namespace HubClub.Controllers
                         // حساب الفرق لتحديث المخزون
                         int qtyDiff = item.Quantity - existingLine.Quantity;
 
+                        // 🟢 التعديل الأول (حماية المخزون من التعديل بالسالب):
+                        if (qtyDiff > 0 && qtyDiff > product.Quantity)
+                        {
+                            await transaction.RollbackAsync();
+                            TempData["Error"] = $"عفواً، لا يوجد مخزون كافٍ لزيادة كمية {product.Name}. المتاح: {product.Quantity}";
+                            return RedirectToAction("CloseReview", new { id = vm.SessionId });
+                        }
+
                         if (item.Quantity == 0)
                         {
                             // الحذف: إرجاع الكمية للمخزون ومسح السطر
@@ -501,7 +516,15 @@ namespace HubClub.Controllers
                     foreach (var item in vm.AvailableProducts.Where(p => p.SelectedQuantity > 0))
                     {
                         var product = await _context.Products.FindAsync(item.ProductId);
-                        if (product == null || item.SelectedQuantity > product.Quantity) continue;
+                        if (product == null) continue;
+
+                        // 🟢 التعديل الثاني (منع تخطي المنتجات الناقصة بصمت لحماية حسابات الفاتورة):
+                        if (item.SelectedQuantity > product.Quantity)
+                        {
+                            await transaction.RollbackAsync();
+                            TempData["Error"] = $"عفواً، الكمية المطلوبة من {product.Name} أكبر من المخزون المتاح ({product.Quantity}).";
+                            return RedirectToAction("CloseReview", new { id = vm.SessionId });
+                        }
 
                         var existing = session.SessionProducts.FirstOrDefault(sp => sp.ProductId == item.ProductId);
                         if (existing != null)
@@ -551,6 +574,12 @@ namespace HubClub.Controllers
                     {
                         session.UserPackage.RemainingHours -= hoursElapsed;
                         session.TotalTimePrice = 0;
+
+                        // 🟢 التعديل الثالث (إغلاق الباقة تماماً إذا استهلكت للصفر):
+                        if (session.UserPackage.RemainingHours == 0)
+                        {
+                            session.UserPackage.Status = UserPackageStatus.Expired;
+                        }
                     }
 
                     _context.UserPackages.Update(session.UserPackage);
@@ -565,10 +594,8 @@ namespace HubClub.Controllers
                 // حساب إجمالي المنتجات للتقارير
                 session.TotalProductPrice = session.SessionProducts.Sum(sp => sp.TotalPrice);
 
-                // 🟢 التعديل السحري هنا:
-                // بدلاً من الجمع التلقائي (session.TotalTimePrice + session.TotalProductPrice)
-                // سنأخذ القيمة التي قمتِ بتعديلها بيدك في الشاشة مباشرة:
-                session.GrandTotal = vm.GrandTotal;
+                
+                session.GrandTotal = Math.Max(0, vm.GrandTotal);
 
                 await _context.SaveChangesAsync();
                 await transaction.CommitAsync();
