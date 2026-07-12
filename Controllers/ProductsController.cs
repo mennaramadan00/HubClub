@@ -75,7 +75,6 @@ namespace HubClub.Controllers
         // POST: Products/Edit/5
         [HttpPost]
         [ValidateAntiForgeryToken]
-        // قمنا بإزالة CreatedAt من الـ Bind لأننا لا نستقبلها من الشاشة
         public async Task<IActionResult> Edit(int id, [Bind("ProductId,Name,Price,Quantity,IsActive")] Product product)
         {
             if (id != product.ProductId) return NotFound();
@@ -84,7 +83,6 @@ namespace HubClub.Controllers
             {
                 try
                 {
-                    // 1. نجلب المنتج الأصلي بجميع بياناته (بما فيها تاريخ الإنشاء الأصلي) من قاعدة البيانات
                     var existingProduct = await _context.Products.FindAsync(id);
 
                     if (existingProduct == null)
@@ -92,13 +90,37 @@ namespace HubClub.Controllers
                         return NotFound();
                     }
 
-                    // 2. نحدث الحقول التي جاءت من الشاشة فقط
+                    // حساب الفرق قبل التعديل
+                    int quantityDifference = product.Quantity - existingProduct.Quantity;
+
+                    if (quantityDifference > 0)
+                    {
+                        // 🟢 إضافة مخزون
+                        _context.StockMovements.Add(new StockMovement
+                        {
+                            ProductId = existingProduct.ProductId,
+                            QuantityChanged = quantityDifference,
+                            MovementType = "Stock In",
+                            Timestamp = DateTime.Now
+                        });
+                    }
+                    else if (quantityDifference < 0)
+                    {
+                        // 🔴 عجز أو تلف
+                        _context.StockMovements.Add(new StockMovement
+                        {
+                            ProductId = existingProduct.ProductId,
+                            QuantityChanged = quantityDifference,
+                            MovementType = "Deficit",
+                            Timestamp = DateTime.Now
+                        });
+                    }
+
+                    // تحديث بيانات المنتج
                     existingProduct.Name = product.Name;
                     existingProduct.Price = product.Price;
                     existingProduct.Quantity = product.Quantity;
                     existingProduct.IsActive = product.IsActive;
-
-                    // تاريخ الإنشاء (CreatedAt) سيبقى كما هو ولن يسبب أي خطأ
 
                     _context.Update(existingProduct);
                     await _context.SaveChangesAsync();
@@ -107,11 +129,15 @@ namespace HubClub.Controllers
                 }
                 catch (DbUpdateConcurrencyException)
                 {
-                    if (!ProductExists(product.ProductId)) return NotFound();
-                    else throw;
+                    if (!ProductExists(product.ProductId))
+                        return NotFound();
+                    else
+                        throw;
                 }
+
                 return RedirectToAction(nameof(Index));
             }
+
             return View(product);
         }
 

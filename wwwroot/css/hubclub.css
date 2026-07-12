@@ -1,24 +1,25 @@
 ﻿/* ========================================================
    HubClub — Apple-Inspired Edition (Neutral Glass Pass)
-   Light glassmorphism · gradient-glass · graphite/silver premium · nav-left
+   Light glassmorphism · gradient-glass · white/blue/orange/yellow bold · nav-left
    ======================================================== */
 @import url('https://fonts.googleapis.com/css2?family=Sora:wght@400;500;600;700;800&family=Tajawal:wght@400;500;700;800&display=swap');
 
 :root {
     /* ---- Canvas ---- */
-    --bg-canvas: #F5F5F7;
-    --bg-canvas-2: #EAEAEC;
-    /* ---- Graphite / Apple palette ---- */
-    --sapphire: #0B3D91;
-    --sapphire-deep: #052659;
-    --azure: #0071E3;
-    --azure-soft: #4DA3FF;
-    --violet-hint: #86868B; /* neutral secondary hue, kept minor */
-    --azure-glow: rgba(0, 113, 227, 0.28);
-    --azure-glow-soft: rgba(0, 113, 227, 0.12);
+    --bg-canvas: #FFFFFF;
+    --bg-canvas-2: #F2F2F4;
+    /* ---- Bold palette: blue / orange / yellow ---- */
+    --sapphire: #0044CC;
+    --sapphire-deep: #002B85;
+    --azure: #0080FF;
+    --azure-soft: #4FB2FF;
+    --violet-hint: #FF7A1A; /* bold orange accent */
+    --amber: #FFC400; /* bold yellow accent */
+    --azure-glow: rgba(0, 128, 255, 0.30);
+    --azure-glow-soft: rgba(0, 128, 255, 0.14);
     /* ---- Glass gradients (the upgrade) ---- */
-    --glass-grad: linear-gradient(135deg, rgba(255,255,255,0.75) 0%, rgba(234,234,236,0.40) 55%, rgba(255,255,255,0.58) 100%);
-    --glass-grad-strong: linear-gradient(135deg, rgba(255,255,255,0.92) 0%, rgba(236,236,238,0.68) 100%);
+    --glass-grad: linear-gradient(135deg, rgba(255,255,255,0.78) 0%, rgba(242,242,244,0.40) 55%, rgba(255,255,255,0.60) 100%);
+    --glass-grad-strong: linear-gradient(135deg, rgba(255,255,255,0.94) 0%, rgba(244,244,246,0.70) 100%);
     --glass-border-grad: linear-gradient(135deg, rgba(255,255,255,0.95) 0%, var(--azure-soft) 45%, var(--sapphire) 100%);
     --glass-sheen: linear-gradient(120deg, transparent 30%, rgba(255,255,255,0.55) 48%, transparent 66%);
     --glass-border: rgba(255, 255, 255, 0.9);
@@ -60,7 +61,7 @@ body {
         inset: -50%;
         width: 200%;
         height: 200%;
-        background: radial-gradient(circle at 12% 18%, rgba(0, 113, 227, 0.12), transparent 42%), radial-gradient(circle at 88% 12%, rgba(120, 120, 128, 0.10), transparent 48%), radial-gradient(circle at 80% 88%, rgba(0, 113, 227, 0.09), transparent 45%), radial-gradient(circle at 8% 92%, rgba(0, 0, 0, 0.06), transparent 42%), radial-gradient(circle at 50% 50%, rgba(255, 255, 255, 0.9), transparent 55%);
+        background: radial-gradient(circle at 12% 18%, rgba(0, 128, 255, 0.16), transparent 42%), radial-gradient(circle at 88% 12%, rgba(255, 196, 0, 0.14), transparent 48%), radial-gradient(circle at 80% 88%, rgba(255, 122, 26, 0.14), transparent 45%), radial-gradient(circle at 8% 92%, rgba(0, 0, 0, 0.05), transparent 42%), radial-gradient(circle at 50% 50%, rgba(255, 255, 255, 0.9), transparent 55%);
         z-index: -2;
         animation: auroraDrift 34s ease-in-out infinite alternate;
     }
@@ -70,7 +71,7 @@ body {
         content: '';
         position: fixed;
         inset: 0;
-        background: linear-gradient(160deg, rgba(255,255,255,0.35) 0%, rgba(234,234,236,0.15) 45%, rgba(0,113,227,0.04) 100%);
+        background: linear-gradient(160deg, rgba(255,255,255,0.35) 0%, rgba(242,242,244,0.15) 45%, rgba(0,128,255,0.05) 100%);
         z-index: -1;
         pointer-events: none;
     }
@@ -136,7 +137,7 @@ body {
 }
 
     .sidebar-brand span {
-        background: linear-gradient(120deg, var(--azure) 0%, var(--violet-hint) 45%, var(--sapphire) 100%);
+        background: linear-gradient(120deg, var(--azure) 0%, var(--amber) 40%, var(--violet-hint) 70%, var(--sapphire) 100%);
         -webkit-background-clip: text;
         background-clip: text;
         color: transparent;
@@ -208,7 +209,7 @@ body {
 }
 
 .app-topbar {
-    background: linear-gradient(120deg, rgba(255,255,255,0.9) 0%, rgba(234,234,236,0.65) 100%);
+    background: linear-gradient(120deg, rgba(255,255,255,0.9) 0%, rgba(242,242,244,0.65) 100%);
     backdrop-filter: blur(18px) saturate(150%);
     -webkit-backdrop-filter: blur(18px) saturate(150%);
     padding: 1.2rem 2.5rem;
@@ -341,7 +342,7 @@ body {
     border: 1px solid var(--glass-edge-blue);
     padding: 0.6rem 1rem;
     border-radius: var(--radius-sharp);
-    background: linear-gradient(120deg, rgba(255,255,255,0.85), rgba(234,234,236,0.6));
+    background: linear-gradient(120deg, rgba(255,255,255,0.85), rgba(242,242,244,0.6));
     transition: background 0.2s, border-color 0.2s;
 }
 
@@ -369,7 +370,7 @@ body {
 }
 
 .summary-box {
-    background: linear-gradient(145deg, rgba(255,255,255,0.95) 0%, rgba(234,234,236,0.55) 60%, rgba(255,255,255,0.7) 100%);
+    background: linear-gradient(145deg, rgba(255,255,255,0.95) 0%, rgba(242,242,244,0.55) 60%, rgba(255,255,255,0.7) 100%);
     backdrop-filter: blur(24px) saturate(150%);
     -webkit-backdrop-filter: blur(24px) saturate(150%);
     border: 1px solid transparent;
@@ -389,8 +390,8 @@ body {
         left: 0;
         width: 100%;
         height: 3px;
-        background: linear-gradient(90deg, transparent, var(--azure), var(--violet-hint), transparent);
-        opacity: 0.7;
+        background: linear-gradient(90deg, transparent, var(--azure), var(--amber), var(--violet-hint), transparent);
+        opacity: 0.85;
     }
 
     .summary-box .sb-title {
@@ -421,7 +422,7 @@ body {
 }
 
 .product-square {
-    background: linear-gradient(150deg, rgba(255,255,255,0.9) 0%, rgba(234,234,236,0.55) 100%);
+    background: linear-gradient(150deg, rgba(255,255,255,0.9) 0%, rgba(242,242,244,0.55) 100%);
     backdrop-filter: blur(16px) saturate(150%);
     border: 1px solid var(--glass-edge-blue);
     border-radius: var(--radius-sharp);
@@ -453,7 +454,7 @@ body {
 .ps-action-bar {
     display: flex;
     border-top: 1px solid var(--glass-edge-blue);
-    background: linear-gradient(90deg, rgba(0,113,227,0.04), rgba(120,120,128,0.04));
+    background: linear-gradient(90deg, rgba(0,128,255,0.05), rgba(255,122,26,0.05));
 }
 
 .ps-btn {
@@ -576,7 +577,7 @@ body {
     padding: 0.8rem 1.2rem;
     border: 2px solid rgba(0, 0, 0, 0.08);
     border-radius: var(--radius-sharp);
-    background: linear-gradient(120deg, rgba(255,255,255,0.92), rgba(238,238,240,0.75));
+    background: linear-gradient(120deg, rgba(255,255,255,0.92), rgba(246,246,248,0.75));
     color: var(--text-ink);
     font-family: var(--font-ar);
     font-size: 1rem;
@@ -621,7 +622,7 @@ body {
 }
 
     .table-glass th {
-        background: linear-gradient(120deg, rgba(0,0,0,0.04), rgba(0,113,227,0.04));
+        background: linear-gradient(120deg, rgba(0,0,0,0.04), rgba(0,128,255,0.06));
         color: var(--sapphire);
         font-weight: 800;
         text-align: right;
@@ -658,13 +659,13 @@ body {
     border-radius: 100px;
     font-size: 0.8rem;
     font-weight: 700;
-    background: linear-gradient(120deg, var(--azure-glow-soft), rgba(120,120,128,0.1));
+    background: linear-gradient(120deg, var(--azure-glow-soft), rgba(255,196,0,0.16));
     color: var(--sapphire);
     border: 1px solid var(--azure-glow);
 }
 
 .alert-glass {
-    background: linear-gradient(120deg, rgba(255,255,255,0.88), rgba(234,234,236,0.6));
+    background: linear-gradient(120deg, rgba(255,255,255,0.88), rgba(242,242,244,0.6));
     backdrop-filter: blur(18px);
     border: 1px solid var(--glass-border);
     border-right: 4px solid var(--azure);

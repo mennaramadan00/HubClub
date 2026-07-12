@@ -1,0 +1,168 @@
+﻿@model HubClub.ViewModels.DailyReportViewModel
+@{
+    var prevDay = Model.SelectedDate.AddDays(-1).ToString("yyyy-MM-dd");
+    var nextDay = Model.SelectedDate.AddDays(1).ToString("yyyy-MM-dd");
+    var todayStr = DateTime.Now.Date.ToString("yyyy-MM-dd");
+}
+
+<h2>تقرير يوم @Model.SelectedDate.ToString("yyyy-MM-dd")</h2>
+
+<!-- فلتر التاريخ + تنقل بين الأيام -->
+<div class="card p-3 mb-4">
+    <form method="get" asp-controller="Session" asp-action="DailyReport" class="row g-3 align-items-end">
+        <div class="col-md-4">
+            <label for="date" class="form-label fw-bold">تاريخ يوم العمل:</label>
+            <input type="date" id="date" name="date" class="form-control"
+                   value="@Model.SelectedDate.ToString("yyyy-MM-dd")" required />
+        </div>
+        <div class="col-md-2">
+            <button type="submit" class="btn btn-primary w-100">عرض التقرير</button>
+        </div>
+        <div class="col-md-6 d-flex gap-2 justify-content-md-end">
+            <a class="btn btn-outline-secondary" asp-controller="Session" asp-action="DailyReport" asp-route-date="@prevDay">
+                &raquo; اليوم السابق
+            </a>
+            <a class="btn btn-outline-secondary" asp-controller="Session" asp-action="DailyReport" asp-route-date="@todayStr">
+                اليوم
+            </a>
+            <a class="btn btn-outline-secondary" asp-controller="Session" asp-action="DailyReport" asp-route-date="@nextDay">
+                اليوم التالي &laquo;
+            </a>
+        </div>
+    </form>
+</div>
+
+<!-- شريط توضيح نافذة يوم العمل الفعلية -->
+<div class="alert alert-info d-flex justify-content-between flex-wrap">
+    <span>
+        <strong>يوم العمل المعروض:</strong>
+        من @Model.BusinessDayStart.ToString("yyyy-MM-dd hh:mm tt")
+        إلى @Model.BusinessDayEnd.ToString("yyyy-MM-dd hh:mm tt")
+    </span>
+    <span>
+        الجلسات المغلقة: <strong>@Model.ClosedSessionsCount</strong> |
+        الجلسات المفتوحة الآن: <strong>@Model.OpenSessionsCount</strong>
+    </span>
+</div>
+
+<!-- ملخص الإيرادات -->
+<div class="row g-3 mb-4">
+    <div class="col-md-3">
+        <div class="card p-3 text-center h-100">
+            <div class="text-muted">إجمالي الإيراد</div>
+            <div class="fs-3 fw-bold text-success">@Model.TotalRevenue.ToString("N2") ج</div>
+        </div>
+    </div>
+    <div class="col-md-3">
+        <div class="card p-3 text-center h-100">
+            <div class="text-muted">إيراد الوقت</div>
+            <div class="fs-4 fw-bold">@Model.TotalTimeRevenue.ToString("N2") ج</div>
+        </div>
+    </div>
+    <div class="col-md-3">
+        <div class="card p-3 text-center h-100">
+            <div class="text-muted">إيراد المنتجات</div>
+            <div class="fs-4 fw-bold">@Model.TotalProductRevenue.ToString("N2") ج</div>
+        </div>
+    </div>
+    <div class="col-md-3">
+        <div class="card p-3 text-center h-100">
+            <div class="text-muted">عدد الجلسات المغلقة</div>
+            <div class="fs-4 fw-bold">@Model.ClosedSessionsCount</div>
+        </div>
+    </div>
+</div>
+
+<!-- توزيع الإيراد حسب طريقة الدفع -->
+<h3>الإيراد حسب طريقة الدفع</h3>
+@if (!Model.PaymentBreakdown.Any())
+{
+    <p class="text-muted">لا توجد جلسات مغلقة في هذا اليوم.</p>
+}
+else
+{
+    <table class="table table-striped mb-4">
+        <thead>
+            <tr>
+                <th>طريقة الدفع</th>
+                <th>عدد الجلسات</th>
+                <th>الإيراد</th>
+            </tr>
+        </thead>
+        <tbody>
+            @foreach (var p in Model.PaymentBreakdown)
+            {
+                <tr>
+                    <td>@p.PaymentTypeName</td>
+                    <td>@p.SessionsCount</td>
+                    <td>@p.Revenue.ToString("N2") ج</td>
+                </tr>
+            }
+        </tbody>
+    </table>
+}
+
+<!-- جدول الجلسات -->
+<h3>تقرير الجلسات</h3>
+@if (!Model.Sessions.Any())
+{
+    <p class="text-muted">لا توجد جلسات في هذا اليوم.</p>
+}
+else
+{
+    <table class="table table-striped mb-4">
+        <thead>
+            <tr>
+                <th>العميل</th>
+                <th>البداية</th>
+                <th>النهاية</th>
+                <th>طريقة الدفع</th>
+                <th>الحالة</th>
+                <th>الإجمالي</th>
+                <th>المنتجات</th>
+            </tr>
+        </thead>
+        <tbody>
+            @foreach (var s in Model.Sessions)
+            {
+                <tr class="@(s.IsClosed ? "" : "table-warning")">
+                    <td>@s.Customer.Name</td>
+                    <td>@s.StartTime.ToString("hh:mm tt")</td>
+                    <td>@(s.EndTime.HasValue? s.EndTime.Value.ToString("hh:mm tt") : "—")</td>
+                    <td>@s.PaymentType</td>
+                    <td>@(s.IsClosed ? "مغلقة" : "مفتوحة الآن")</td>
+                    <td>@s.GrandTotal.ToString("N2") ج</td>
+                    <td>@string.Join(", ", s.SessionProducts.Select(sp => sp.Product.Name + " (" + sp.Quantity + ")"))</td>
+                </tr>
+            }
+        </tbody>
+    </table>
+}
+
+<!-- جدول المخزون -->
+<h3>تقرير حركة المخزون</h3>
+<table class="table table-striped">
+    <thead>
+        <tr>
+            <th>المنتج</th>
+            <th>الافتتاحي</th>
+            <th>إضافة (+)</th>
+            <th>مبيعات (-)</th>
+            <th>عجز/تالف (-)</th>
+            <th>الختامي</th>
+        </tr>
+    </thead>
+    <tbody>
+        @foreach (var r in Model.InventoryReport)
+        {
+            <tr>
+                <td>@r.ProductName</td>
+                <td>@r.StartQuantity</td>
+                <td class="text-success">@r.AddedQuantity</td>
+                <td class="text-danger">@r.SoldQuantity</td>
+                <td class="text-warning">@r.DeficitQuantity</td>
+                <td><strong>@r.EndQuantity</strong></td>
+            </tr>
+        }
+    </tbody>
+</table>

@@ -13,10 +13,11 @@ namespace HubClub.Models
         [ForeignKey("ProductId")]
         public Product Product { get; set; } = null!;
 
-        public int QuantityChanged { get; set; } // الكمية بالسالب أو الموجب
-        public string MovementType { get; set; } = string.Empty; // نوع الحركة
-        public int? SessionId { get; set; } // رقم الجلسة لو مسحوب في جلسة
+        public int QuantityChanged { get; set; }
+        public string MovementType { get; set; } = string.Empty;
+        public int? SessionId { get; set; }
 
-        public DateTime CreatedAt { get; set; } = DateTime.Now;
+        // قمنا بتغيير الاسم هنا لـ Timestamp ليتوافق مع كود التقرير
+        public DateTime Timestamp { get; set; } = DateTime.Now;
     }
 }
