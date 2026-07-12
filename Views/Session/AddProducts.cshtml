@@ -1,0 +1,100 @@
+﻿@model HubClub.ViewModels.AddProductToSessionViewModel
+@{
+    ViewData["Title"] = "إضافة طلبات للجلسة";
+}
+
+<div class="d-flex justify-content-between align-items-center mb-4">
+    <h3 style="font-weight: 800; color: var(--sapphire); margin-bottom: 0;">
+        إضافة طلبات للعميل: <span style="color: var(--azure);">@Model.CustomerName</span>
+    </h3>
+</div>
+
+<form asp-action="ConfirmAddProducts" method="post" dir="rtl">
+    @Html.AntiForgeryToken()
+    <input type="hidden" asp-for="SessionId" />
+
+    <div class="row">
+        <!-- شبكة المنتجات المتاحة -->
+        <div class="col-md-8 mb-4">
+            <div class="product-squares-grid">
+                @for (int i = 0; i < Model.AvailableProducts.Count; i++)
+                {
+                    var p = Model.AvailableProducts[i];
+                    <div class="product-square" id="pcard-@i" style="@(p.AvailableStock <= 0 ? "opacity: 0.5; pointer-events: none;" : "")">
+                        <input type="hidden" name="AvailableProducts[@i].ProductId" value="@p.ProductId" />
+                        <input type="hidden" name="AvailableProducts[@i].Price" value="@p.Price.ToString("F2", System.Globalization.CultureInfo.InvariantCulture)" />
+
+                        <div class="ps-info">
+                            <div class="ps-name">@p.Name</div>
+                            <div style="font-size: 0.85rem; color: var(--text-slate); font-weight: 600;">@p.Price.ToString("N2") ج.م</div>
+                        </div>
+
+                        <div class="ps-action-bar">
+                            <button type="button" class="ps-btn" onclick="changeQty(@i, -1, @p.AvailableStock)">-</button>
+                            <input type="number" id="qty-@i" class="ps-qty" name="AvailableProducts[@i].SelectedQuantity" value="0" readonly />
+                            <button type="button" class="ps-btn" onclick="changeQty(@i, 1, @p.AvailableStock)">+</button>
+                        </div>
+                    </div>
+                }
+            </div>
+        </div>
+
+        <!-- ملخص الطلبات -->
+        <div class="col-md-4">
+            <div class="wf-card" style="width: 100%; max-width: 100%;">
+                <h4 style="font-weight: 800; color: var(--sapphire); border-bottom: 2px solid var(--glass-edge-blue); padding-bottom: 0.8rem; margin-bottom: 1rem;">الطلبات المسجلة مسبقاً</h4>
+
+                @if (!Model.AlreadyAdded.Any())
+                {
+                    <p class="text-muted text-center mt-3 mb-4" style="font-size: 0.95rem; font-weight: 600;">لم يتم تسجيل أي طلبات بعد.</p>
+                }
+                else
+                {
+                    <ul class="list-unstyled mt-2">
+                        @foreach (var item in Model.AlreadyAdded)
+                        {
+                            <li class="wf-data-row mb-2">
+                                <span>@item.ProductName (x@(item.Quantity))</span>
+                                <span style="font-weight: 800; color: var(--sapphire);">@item.LineTotal.ToString("N2")</span>
+                            </li>
+                        }
+                    </ul>
+                }
+
+                <div class="wf-data-row mt-4" style="background: var(--sapphire); border-color: var(--sapphire);">
+                    <span class="wf-data-label" style="color: rgba(255,255,255,0.85);">إجمالي الطلبات الجديدة</span>
+                    <span class="wf-data-val" id="newProductsTotal" style="color: #ffffff; font-size: 1.2rem;">0.00</span>
+                </div>
+
+                <div class="d-flex gap-2 mt-4">
+                    <button type="submit" class="btn-aurelian-primary flex-grow-1">تأكيد الإضافة</button>
+                    <a asp-controller="Home" asp-action="Index" class="btn-aurelian-outline flex-grow-1">إلغاء الأمر</a>
+                </div>
+            </div>
+        </div>
+    </div>
+</form>
+
+<script>
+    const prices = {
+        @for (int i = 0; i < Model.AvailableProducts.Count; i++)
+        {
+                    @:@i: @Model.AvailableProducts[i].Price.ToString("F2", System.Globalization.CultureInfo.InvariantCulture),
+        }
+    };
+    function changeQty(index, delta, maxStock) {
+        const input = document.getElementById('qty-' + index);
+        const current = parseInt(input.value) || 0;
+        const newVal = Math.max(0, Math.min(current + delta, maxStock));
+        input.value = newVal;
+        recalc();
+    }
+    function recalc() {
+        let total = 0;
+        Object.keys(prices).forEach(i => {
+            const qty = parseInt(document.getElementById('qty-' + i)?.value) || 0;
+            total += qty * prices[i];
+        });
+        document.getElementById('newProductsTotal').textContent = total.toFixed(2);
+    }
+</script>

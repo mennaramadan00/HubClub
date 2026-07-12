@@ -63,6 +63,18 @@ namespace HubClub.Controllers
                     return View(pricingSetting);
                 }
 
+                // منع تداخل الشرائح (Overlap Validation)
+                bool isOverlapping = await _context.PricingSettings
+                    .AnyAsync(p => p.IsActive
+                                && pricingSetting.MinNumberOfHours < p.MaxNumberOfHours
+                                && pricingSetting.MaxNumberOfHours > p.MinNumberOfHours);
+
+                if (isOverlapping)
+                {
+                    ModelState.AddModelError("MaxNumberOfHours", "عفواً، هذه الشريحة تتداخل في ساعاتها مع شريحة أخرى نشطة. يرجى تعديل الساعات.");
+                    return View(pricingSetting);
+                }
+
                 _context.Add(pricingSetting);
                 await _context.SaveChangesAsync();
                 TempData["Success"] = "تم إضافة شريحة التسعير بنجاح";
@@ -94,6 +106,19 @@ namespace HubClub.Controllers
                 if (pricingSetting.MaxNumberOfHours <= pricingSetting.MinNumberOfHours)
                 {
                     ModelState.AddModelError("MaxNumberOfHours", "الحد الأقصى يجب أن يكون أكبر من الحد الأدنى");
+                    return View(pricingSetting);
+                }
+
+                // منع تداخل الشرائح مع استثناء الشريحة الحالية التي يتم تعديلها
+                bool isOverlapping = await _context.PricingSettings
+                    .AnyAsync(p => p.IsActive
+                                && p.PricingSettingId != pricingSetting.PricingSettingId
+                                && pricingSetting.MinNumberOfHours < p.MaxNumberOfHours
+                                && pricingSetting.MaxNumberOfHours > p.MinNumberOfHours);
+
+                if (isOverlapping)
+                {
+                    ModelState.AddModelError("MaxNumberOfHours", "عفواً، هذه الشريحة تتداخل في ساعاتها مع شريحة أخرى نشطة. يرجى تعديل الساعات.");
                     return View(pricingSetting);
                 }
 
@@ -136,7 +161,7 @@ namespace HubClub.Controllers
             {
                 // Business Logic: هل الشريحة دي تم استخدامها في أي جلسة سابقة؟
                 bool usedInSessions = await _context.Sessions
-                    .AnyAsync(s => s.PriceSettingId == id); // تأكدي إن اسم الـ FK في جدول الـ Sessions مكتوب كده
+                    .AnyAsync(s => s.PriceSettingId == id);
 
                 if (usedInSessions)
                 {

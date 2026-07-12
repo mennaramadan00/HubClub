@@ -1,67 +1,67 @@
 ﻿@model IEnumerable<HubClub.ViewModels.UserPackageListViewModel>
 @{
-    ViewData["Title"] = "باقات العملاء";
+    ViewData["Title"] = "باقات المشتركين";
 }
 
-<div class="container-fluid py-4" dir="rtl">
-
-    @if (TempData["Success"] != null)
-    {
-        <div class="alert alert-success alert-dismissible fade show shadow-sm mb-4" role="alert" style="border-radius: 0.6rem;">
-            <strong>✅ نجاح!</strong> @TempData["Success"]
-            <button type="button" class="btn-close" data-bs-dismiss="alert" aria-label="Close"></button>
-        </div>
-    }
-
-    <div class="page-header">
-        <div>
-            <h1> باقات العملاء</h1>
-            <p>متابعة أرصدة الساعات للعملاء المشتركين في النظام</p>
-        </div>
-        <a asp-action="Buy" class="btn-add">
-             شحن باقة جديدة
-        </a>
+<!-- الرأس العلوي وأزرار الإضافة -->
+<div class="d-flex justify-content-between align-items-center mb-4">
+    <div>
+        <h2 style="color: var(--sapphire); font-weight: 800; margin: 0;">أرصدة باقات العملاء</h2>
+        <p style="color: var(--text-slate); margin: 0;">متابعة أرصدة الساعات للمشتركين في النظام</p>
     </div>
-
-    @if (!Model.Any())
-    {
-        <div class="empty-state bg-white rounded border" style="border-radius: 1.2rem; box-shadow: 0 4px 15px rgba(0,0,0,0.03);">
-            <div class="icon">🪹</div>
-            <h3>لا توجد باقات مفعلة</h3>
-            <p>لم يتم شحن أي باقات للعملاء حتى الآن. ابدأ بإضافة باقة جديدة.</p>
-        </div>
-    }
-    else
-    {
-        <div class="packages-grid">
-            @foreach (var item in Model)
-            {
-                <div class="package-card">
-                    <div class="card-top">
-                        @if (item.RemainingHours > 0)
-                        {
-                            <span class="status-badge active" style="top: 1rem; left: auto; right: 1rem;"> فعالة</span>
-                        }
-                        else
-                        {
-                            <span class="status-badge inactive" style="top: 1rem; left: auto; right: 1rem;"> منتهية</span>
-                        }
-
-                        <h3 class="package-name mt-4 pt-2">@item.CustomerName</h3>
-                        <div class="text-white small opacity-75">📞 @item.CustomerPhone</div>
-                    </div>
-
-                    <div class="card-body" style="flex-direction: column; align-items: stretch; gap: 0.5rem;">
-                        <div class="info-row border-0 py-2">
-                            <span class="info-key">الرصيد المتبقي</span>
-                            <span class="info-val fs-3 fw-bold @(item.RemainingHours > 0 ? "text-success" : "text-danger")">
-                                @item.RemainingHours
-                                <small class="text-muted fs-6 fw-normal">ساعة</small>
-                            </span>
-                        </div>
-                    </div>
-                </div>
-            }
-        </div>
-    }
+    <a asp-action="Buy" class="btn-aurelian-primary">
+        شحن رصيد جديد
+    </a>
 </div>
+
+<!-- ودجات الإحصائيات -->
+<div class="analysis-summary-grid mb-5">
+    <div class="summary-box">
+        <div class="sb-title">إجمالي الباقات المشحونة</div>
+        <div class="sb-val">@Model.Count()</div>
+    </div>
+    <div class="summary-box">
+        <div class="sb-title">باقات تحتوي على رصيد</div>
+        <div class="sb-val">@Model.Count(p => p.RemainingHours > 0)</div>
+    </div>
+</div>
+
+<!-- شبكة كروت الباقات الزجاجية -->
+@if (!Model.Any())
+{
+    <div class="glass-form-container text-center mt-5">
+        <h3 class="mt-3" style="color: var(--sapphire); font-weight: 800;">لا توجد باقات مفعلة للعملاء</h3>
+        <p style="color: var(--text-slate);">لم يتم شحن أي باقات للعملاء حتى الآن.</p>
+        <a asp-action="Buy" class="btn-aurelian-primary mt-3">شحن أول باقة</a>
+    </div>
+}
+else
+{
+    <div class="cards-grid-3">
+        @foreach (var item in Model)
+        {
+            <div class="wf-card">
+
+                <div class="wf-card-header d-flex justify-content-between align-items-center" style="border-bottom: 2px solid var(--glass-edge-blue);">
+                    <h4 style="color: var(--sapphire); font-weight: 800; margin: 0; font-size: 1.2rem;">@item.CustomerName</h4>
+                    <span class="badge-glass" style="background: @(item.RemainingHours > 0 ? "var(--azure-glow-soft)" : "rgba(239, 68, 68, 0.1)"); color: @(item.RemainingHours > 0 ? "var(--sapphire)" : "#ef4444"); border-color: @(item.RemainingHours > 0 ? "var(--azure-glow)" : "rgba(239, 68, 68, 0.2)");">
+                        @(item.RemainingHours > 0 ? "رصيد فعال" : "رصيد منتهي")
+                    </span>
+                </div>
+
+                <div class="wf-data-row mt-3 border-0 bg-transparent px-0">
+                    <span class="wf-data-label">رقم الهاتف</span>
+                    <span class="wf-data-val">@item.CustomerPhone</span>
+                </div>
+
+                <div class="wf-data-row mt-auto" style="background: @(item.RemainingHours > 0 ? "var(--sapphire)" : "#ef4444"); border-color: @(item.RemainingHours > 0 ? "var(--sapphire)" : "#ef4444"); margin-bottom: 0;">
+                    <span class="wf-data-label" style="color: rgba(255,255,255,0.85);">الرصيد المتبقي</span>
+                    <span class="wf-data-val" style="color: #ffffff; font-size: 1.4rem;">
+                        @item.RemainingHours <span style="font-size: 0.9rem; font-weight: 600;">ساعة</span>
+                    </span>
+                </div>
+
+            </div>
+        }
+    </div>
+}

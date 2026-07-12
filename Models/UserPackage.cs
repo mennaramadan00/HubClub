@@ -45,6 +45,9 @@ namespace HubClub.Models
         [Display(Name = "سعر الشراء")]
         public decimal Price { get; set; }
 
+        [Timestamp]
+        public DateTime RowVersion { get; set; }
+
         // Navigation properties
         public Customer Customer { get; set; } = null!;
         public Package Package { get; set; } = null!;

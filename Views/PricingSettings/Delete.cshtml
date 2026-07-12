@@ -3,39 +3,38 @@
     ViewData["Title"] = "حذف الشريحة";
 }
 
-<link rel="stylesheet" href="~/css/products.css" asp-append-version="true" />
+<div class="glass-form-container" dir="rtl" style="max-width: 600px;">
+    <div class="form-header text-center">
+        <h2 style="color: #ef4444;">تأكيد الحذف</h2>
+        <p>هذا الإجراء نهائي ولا يمكن التراجع عنه</p>
+    </div>
 
-<div class="delete-page">
-    <div class="delete-card">
-        <div class="delete-header">
-            <div class="delete-icon">🗑️</div>
-            <h2>تأكيد الحذف</h2>
-            <p>هذا الإجراء لا يمكن التراجع عنه</p>
+    <div class="wf-card mx-auto mt-4" style="width: 100%; max-width: 100%;">
+        <div class="wf-card-header text-center pb-3 mb-3">
+            <h4 style="color: var(--sapphire); font-weight: 800; margin: 0;">شريحة التسعير الحالية</h4>
         </div>
-
-        <div class="delete-body">
-            <div class="product-preview">
-                <div class="pname">الشريحة الحالية</div>
-                <div class="pdetails" style="flex-direction: column; align-items: center; gap: 0.5rem;">
-                    <span>المدة: <strong>من @Model.MinNumberOfHours إلى @Model.MaxNumberOfHours ساعة</strong></span>
-                    <span>السعر: <strong>@Model.Price.ToString("N2") جنيه</strong></span>
-                </div>
-            </div>
-
-            <div class="warning-box">
-                ⚠️ هل أنت متأكد من حذف هذه الشريحة؟ <br />
-                لن يؤثر الحذف على الجلسات السابقة، ولكن الجلسات الجديدة لن تتمكن من استخدام هذا السعر.
-            </div>
+        <div class="wf-data-row">
+            <span class="wf-data-label">المدة الزمنية:</span>
+            <span class="wf-data-val">من @Model.MinNumberOfHours إلى @Model.MaxNumberOfHours ساعة</span>
         </div>
-
-        <div class="delete-actions">
-            <a asp-action="Index" class="btn-cancel">← إلغاء</a>
-            <form asp-action="Delete" method="post" style="flex:1;">
-                <input type="hidden" asp-for="PricingSettingId" />
-                <button type="submit" class="btn-confirm-delete" style="width:100%;">
-                    🗑 نعم، احذف الشريحة
-                </button>
-            </form>
+        <div class="wf-data-row mb-0">
+            <span class="wf-data-label">السعر المحدد:</span>
+            <span class="wf-data-val">@Model.Price.ToString("N2") ج.م</span>
         </div>
+    </div>
+
+    <div class="alert-glass mt-4" style="border-right-color: #ef4444;">
+        <strong>تنبيه: هل أنت متأكد من حذف هذه الشريحة؟</strong> <br />
+        لن يؤثر الحذف على الجلسات السابقة، ولكن الجلسات الجديدة لن تتمكن من استخدام هذا التسعير.
+    </div>
+
+    <div class="form-actions mt-4">
+        <form asp-action="Delete" method="post" style="flex: 1; display: flex; gap: 1rem; width: 100%;">
+            <input type="hidden" asp-for="PricingSettingId" />
+            <button type="submit" class="btn-aurelian-primary" style="flex: 1; background: linear-gradient(135deg, #ef4444 0%, #b91c1c 100%);">
+                نعم، تأكيد الحذف
+            </button>
+            <a asp-action="Index" class="btn-aurelian-outline" style="flex: 1;">إلغاء الأمر</a>
+        </form>
     </div>
 </div>

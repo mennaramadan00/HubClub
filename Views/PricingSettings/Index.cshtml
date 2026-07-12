@@ -1,73 +1,70 @@
 ﻿@model IEnumerable<HubClub.Models.PricingSetting>
 @{
     ViewData["Title"] = "إعدادات التسعير";
-    Layout = "~/Views/Shared/_Layout.cshtml";
 }
 
-<link rel="stylesheet" href="~/css/products.css" asp-append-version="true" />
-
-<div class="container-fluid px-4 py-4">
-
-    <div class="page-header">
-        <div>
-            <h1>⚙️ إعدادات التسعير</h1>
-            <p>إدارة شرائح الأسعار بناءً على عدد الساعات</p>
-        </div>
-        <a asp-action="Create" class="btn-add">
-            ＋ إضافة شريحة جديدة
-        </a>
+<!-- الرأس العلوي وأزرار الإضافة -->
+<div class="d-flex justify-content-between align-items-center mb-4">
+    <div>
+        <h2 style="color: var(--sapphire); font-weight: 800; margin: 0;">إعدادات التسعير</h2>
+        <p style="color: var(--text-slate); margin: 0;">إدارة شرائح الأسعار بناءً على عدد الساعات</p>
     </div>
-
-    <div class="stats-bar">
-        <div class="stat-card">
-            <div class="stat-icon blue">💰</div>
-            <div>
-                <div class="stat-label">إجمالي الشرائح</div>
-                <div class="stat-value">@Model.Count()</div>
-            </div>
-        </div>
-    </div>
-
-    @if (!Model.Any())
-    {
-        <div class="empty-state">
-            <div class="icon">⏱️</div>
-            <h3>لا توجد شرائح أسعار بعد</h3>
-            <p>ابدأ بإضافة شرائح التسعير لحساب الجلسات تلقائياً</p>
-            <a asp-action="Create" class="btn-add" style="display:inline-flex;margin-top:1rem;">＋ أضف أول شريحة</a>
-        </div>
-    }
-    else
-    {
-        <div class="packages-grid">
-            @foreach (var item in Model.OrderBy(m => m.MinNumberOfHours))
-            {
-                <div class="package-card">
-                    <div class="card-top">
-                        <div class="package-name">من @item.MinNumberOfHours إلى @item.MaxNumberOfHours ساعة</div>
-                        <div class="package-price">
-                            @item.Price.ToString("N2") <span>جنيه</span>
-                        </div>
-                    </div>
-                    <div class="card-body">
-                        <div class="qty-wrap">
-                            <span class="qty-label">الحد الأدنى:</span>
-                            <span class="qty-value">@item.MinNumberOfHours ساعة</span>
-                        </div>
-                        <div class="qty-wrap">
-                            <span class="qty-label">الحد الأقصى:</span>
-                            <span class="qty-value" style="background:var(--gray-100); color:var(--gray-600)">@item.MaxNumberOfHours ساعة</span>
-                        </div>
-                    </div>
-                    <div class="card-body" style="padding-top: 0; border-top: 1px solid var(--gray-100); padding-bottom: 1rem;">
-                        <div class="card-actions" style="width: 100%; justify-content: center;">
-                            <a asp-action="Details" asp-route-id="@item.PricingSettingId" class="action-btn details" style="flex:1" title="التفاصيل">👁</a>
-                            <a asp-action="Edit" asp-route-id="@item.PricingSettingId" class="action-btn edit" style="flex:1" title="تعديل">✏️</a>
-                            <a asp-action="Delete" asp-route-id="@item.PricingSettingId" class="action-btn delete" style="flex:1" title="حذف">🗑</a>
-                        </div>
-                    </div>
-                </div>
-            }
-        </div>
-    }
+    <a asp-action="Create" class="btn-aurelian-primary">
+        إضافة شريحة جديدة
+    </a>
 </div>
+
+<!-- ودجات الإحصائيات -->
+<div class="analysis-summary-grid mb-5">
+    <div class="summary-box">
+        <div class="sb-title">إجمالي الشرائح المسجلة</div>
+        <div class="sb-val">@Model.Count()</div>
+    </div>
+</div>
+
+<!-- شبكة كروت الشرائح الزجاجية -->
+@if (!Model.Any())
+{
+    <div class="glass-form-container text-center mt-5">
+        <h3 class="mt-3" style="color: var(--sapphire); font-weight: 800;">لا توجد شرائح أسعار حتى الآن</h3>
+        <p style="color: var(--text-slate);">ابدأ بإضافة شرائح التسعير ليتمكن النظام من حساب تكلفة الجلسات تلقائياً.</p>
+        <a asp-action="Create" class="btn-aurelian-primary mt-3">إضافة أول شريحة</a>
+    </div>
+}
+else
+{
+    <div class="cards-grid-3">
+        @foreach (var item in Model.OrderBy(m => m.MinNumberOfHours))
+        {
+            <div class="wf-card">
+
+                <div class="wf-card-header d-flex justify-content-between align-items-center">
+                    <h4 style="color: var(--sapphire); font-weight: 800; margin: 0; font-size: 1.1rem;">من @item.MinNumberOfHours إلى @item.MaxNumberOfHours ساعة</h4>
+                </div>
+
+                <div class="wf-data-row" style="background: var(--sapphire); border-color: var(--sapphire);">
+                    <span class="wf-data-label" style="color: rgba(255,255,255,0.85);">سعر الشريحة</span>
+                    <span class="wf-data-val" style="color: #ffffff;">@item.Price.ToString("N2") ج.م</span>
+                </div>
+
+                <div class="wf-data-row">
+                    <span class="wf-data-label">الحد الأدنى</span>
+                    <span class="wf-data-val">@item.MinNumberOfHours ساعة</span>
+                </div>
+
+                <div class="wf-data-row">
+                    <span class="wf-data-label">الحد الأقصى</span>
+                    <span class="wf-data-val">@item.MaxNumberOfHours ساعة</span>
+                </div>
+
+                <!-- أزرار الأكشن بنصوص احترافية -->
+                <div class="form-actions mt-auto pt-3">
+                    <a asp-action="Details" asp-route-id="@item.PricingSettingId" class="btn-aurelian-outline" style="padding: 0.5rem 1rem;">تفاصيل</a>
+                    <a asp-action="Edit" asp-route-id="@item.PricingSettingId" class="btn-aurelian-outline" style="padding: 0.5rem 1rem;">تعديل</a>
+                    <a asp-action="Delete" asp-route-id="@item.PricingSettingId" class="btn-aurelian-outline" style="padding: 0.5rem 1rem; color: #ef4444; border-color: #ef4444;">حذف</a>
+                </div>
+
+            </div>
+        }
+    </div>
+}

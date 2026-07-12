@@ -1,374 +1,172 @@
 @model HubClub.ViewModels.SessionCloseViewModel
-@using HubClub.Models.Enums
 @{
-    ViewData["Title"] = "إغلاق الجلسة";
+    ViewData["Title"] = "إنهاء وإغلاق الجلسة";
 }
 
-<link rel="stylesheet" href="~/css/product.css" />
+<form asp-action="ConfirmClose" method="post" id="closeForm" dir="rtl">
+    @Html.AntiForgeryToken()
+    <input type="hidden" asp-for="SessionId" />
+    <input type="hidden" asp-for="PaymentType" />
+    <input type="hidden" asp-for="StartTime" />
+    <input type="hidden" asp-for="EndTime" />
+    <input type="hidden" asp-for="HoursElapsed" />
+    <input type="hidden" asp-for="CalculatedTimePrice" />
 
-<style>
-    .close-hero {
-        background: linear-gradient(135deg, var(--blue-900), var(--blue-700));
-        border-radius: 1rem;
-        padding: 1.5rem 2rem;
-        color: var(--white);
-        margin-bottom: 1.5rem;
-        display: flex;
-        align-items: center;
-        justify-content: space-between;
-        flex-wrap: wrap;
-        gap: 1rem;
-    }
-    .close-hero h2 { margin: 0; font-size: 1.4rem; font-weight: 800; }
-    .close-hero p  { margin: 0.2rem 0 0; color: var(--blue-100); font-size: 0.85rem; }
+    <div class="row">
+        <!-- قسم إضافة منتجات جديدة -->
+        <div class="col-md-8 mb-4">
+            <h4 style="font-weight: 800; color: var(--sapphire); margin-bottom: 1.5rem;">إضافة طلبات جديدة (اختياري)</h4>
 
-    /* Time summary card */
-    .time-card {
-        background: var(--white);
-        border: 1px solid var(--blue-100);
-        border-radius: 0.85rem;
-        padding: 1.2rem 1.5rem;
-        margin-bottom: 1.2rem;
-        box-shadow: 0 1px 4px rgba(0,0,0,0.05);
-    }
-    .time-card .tc-head {
-        font-size: 0.82rem;
-        font-weight: 700;
-        color: var(--blue-700);
-        margin-bottom: 0.9rem;
-        display: flex;
-        align-items: center;
-        gap: 0.4rem;
-    }
-    .time-grid {
-        display: grid;
-        grid-template-columns: repeat(3, 1fr);
-        gap: 1rem;
-        margin-bottom: 0.9rem;
-    }
-    .time-tile { text-align: center; }
-    .time-tile .tt-label { font-size: 0.72rem; color: var(--gray-400); margin-bottom: 0.2rem; }
-    .time-tile .tt-val   { font-size: 1.1rem; font-weight: 800; color: var(--blue-900); }
-
-    .pricing-badge {
-        background: var(--blue-50);
-        border: 1px solid var(--blue-100);
-        border-radius: 0.5rem;
-        padding: 0.6rem 1rem;
-        font-size: 0.82rem;
-        color: var(--blue-800);
-        display: flex;
-        align-items: center;
-        justify-content: space-between;
-        flex-wrap: wrap;
-        gap: 0.5rem;
-    }
-    .pricing-badge .pb-price {
-        font-size: 1.2rem;
-        font-weight: 800;
-        color: var(--yellow);
-    }
-
-    .package-badge {
-        background: var(--yellow-light);
-        border: 1px solid #fcd34d;
-        border-radius: 0.5rem;
-        padding: 0.6rem 1rem;
-        font-size: 0.83rem;
-        color: #92400e;
-        display: flex;
-        align-items: center;
-        gap: 0.5rem;
-    }
-
-    /* Products section */
-    .section-title {
-        font-size: 0.95rem;
-        font-weight: 700;
-        color: var(--blue-900);
-        margin: 1.4rem 0 0.9rem;
-        display: flex;
-        align-items: center;
-        gap: 0.4rem;
-    }
-
-    .products-select-grid {
-        display: grid;
-        grid-template-columns: repeat(auto-fill, minmax(160px, 1fr));
-        gap: 0.8rem;
-        margin-bottom: 1.5rem;
-    }
-
-    .psc-card {
-        background: var(--white);
-        border: 2px solid var(--blue-100);
-        border-radius: 0.75rem;
-        padding: 0.9rem;
-        text-align: center;
-        transition: border-color 0.2s, box-shadow 0.2s;
-    }
-    .psc-card.selected {
-        border-color: var(--blue-600);
-        box-shadow: 0 0 0 3px rgba(37,99,168,0.1);
-        background: var(--blue-50);
-    }
-    .psc-card.out-of-stock {
-        opacity: 0.45;
-        pointer-events: none;
-    }
-    .psc-name  { font-weight: 700; color: var(--blue-900); font-size: 0.88rem; margin-bottom: 0.2rem; }
-    .psc-price { color: var(--yellow); font-weight: 800; font-size: 0.95rem; margin-bottom: 0.6rem; }
-    .psc-stock { font-size: 0.7rem; color: var(--gray-400); margin-bottom: 0.6rem; }
-
-    .qty-control {
-        display: flex;
-        align-items: center;
-        justify-content: center;
-        gap: 0.4rem;
-    }
-    .qty-btn {
-        width: 28px; height: 28px; border-radius: 50%;
-        border: none;
-        font-size: 1rem; font-weight: 700; line-height: 1;
-        cursor: pointer;
-        display: flex; align-items: center; justify-content: center;
-        transition: background 0.15s;
-    }
-    .qty-btn.plus  { background: var(--blue-600); color: white; }
-    .qty-btn.plus:hover  { background: var(--blue-800); }
-    .qty-btn.minus { background: var(--gray-300); color: var(--gray-600); }
-    .qty-btn.minus:hover { background: var(--gray-400); }
-    .qty-display {
-        width: 34px; height: 28px;
-        text-align: center;
-        border: 1.5px solid var(--gray-300);
-        border-radius: 0.4rem;
-        font-size: 0.88rem; font-weight: 700;
-        color: var(--blue-900);
-    }
-
-    /* Totals box */
-    .totals-box {
-        background: var(--blue-900);
-        border-radius: 0.85rem;
-        padding: 1.2rem 1.5rem;
-        color: var(--white);
-        margin-bottom: 1.5rem;
-    }
-    .total-row {
-        display: flex;
-        justify-content: space-between;
-        font-size: 0.88rem;
-        color: var(--blue-100);
-        padding: 0.35rem 0;
-    }
-    .total-row.grand {
-        border-top: 1px solid rgba(255,255,255,0.15);
-        margin-top: 0.5rem;
-        padding-top: 0.8rem;
-        font-size: 1.15rem;
-        font-weight: 800;
-        color: var(--yellow);
-    }
-
-    .action-bar { display: flex; gap: 0.8rem; flex-wrap: wrap; }
-    .btn-confirm {
-        flex: 1; min-width: 160px;
-        background: var(--danger);
-        color: white;
-        border: none;
-        border-radius: 0.6rem;
-        padding: 0.85rem 1.2rem;
-        font-size: 1rem; font-weight: 700;
-        cursor: pointer;
-        transition: transform 0.15s, box-shadow 0.15s;
-    }
-    .btn-confirm:hover {
-        transform: translateY(-2px);
-        box-shadow: 0 6px 20px rgba(239,68,68,0.3);
-    }
-</style>
-
-<div class="container-fluid px-4 py-4">
-
-    <!-- Header -->
-    <div class="close-hero">
-        <div>
-            <h2>🏁 إغلاق جلسة — @Model.CustomerName</h2>
-            <p>مراجعة الحساب قبل تأكيد الإغلاق</p>
-        </div>
-        <a asp-controller="Home" asp-action="Index" class="btn-back"
-           style="color:white; border-color:rgba(255,255,255,0.3);">
-            ← رجوع
-        </a>
-    </div>
-
-    <form asp-action="ConfirmClose" method="post" id="closeForm">
-        @Html.AntiForgeryToken()
-        <input type="hidden" asp-for="SessionId" />
-        <input type="hidden" asp-for="PaymentType" />
-        <input type="hidden" asp-for="StartTime" />
-        <input type="hidden" asp-for="EndTime" />
-        <input type="hidden" asp-for="HoursElapsed" />
-        <input type="hidden" asp-for="CalculatedTimePrice" />
-
-        <!-- Time summary -->
-        <div class="time-card">
-            <div class="tc-head">⏱ ملخص الوقت</div>
-            <div class="time-grid">
-                <div class="time-tile">
-                    <div class="tt-label">وقت الدخول</div>
-                    <div class="tt-val">@Model.StartTime.ToString("hh:mm tt")</div>
-                </div>
-                <div class="time-tile">
-                    <div class="tt-label">وقت الخروج</div>
-                    <div class="tt-val">@Model.EndTime.ToString("hh:mm tt")</div>
-                </div>
-                <div class="time-tile">
-                    <div class="tt-label">المدة الكلية</div>
-                    <div class="tt-val">@Model.HoursElapsed.ToString("0.##") ساعة</div>
-                </div>
-            </div>
-
-            @if (Model.IsPackageSession)
-            {
-                <div class="package-badge">
-                    📦 العميل مشترك بباقة — لا يوجد رسوم وقت — سيتم خصم الساعات من رصيده
-                </div>
-            }
-            else
-            {
-                <div class="pricing-badge">
-                    <span>
-                        🏷️ شريحة التسعير المطبقة:
-                        <strong>@(Model.PricingRangeLabel ?? "غير محدد")</strong>
-                    </span>
-                    <span class="pb-price">@Model.CalculatedTimePrice.ToString("N2") ج</span>
-                </div>
-            }
-        </div>
-
-        <!-- Products selection -->
-        <div class="section-title">🛒 ما أخده العميل من البار</div>
-        <p style="font-size: 0.82rem; color: var(--gray-400); margin-bottom: 1rem;">
-            حدد المنتجات التي طلبها العميل خلال الجلسة — الكميات ستُخصم من المخزون تلقائياً
-        </p>
-
-        @if (!Model.AvailableProducts.Any())
-        {
-            <div class="empty-state" style="padding: 1.5rem;">
-                <p>لا توجد منتجات متاحة في المخزون</p>
-            </div>
-        }
-        else
-        {
-            <div class="products-select-grid">
+            <div class="product-squares-grid">
                 @for (int i = 0; i < Model.AvailableProducts.Count; i++)
                 {
                     var p = Model.AvailableProducts[i];
-                    <div class="psc-card @(p.AvailableStock <= 0 ? "out-of-stock" : "")" id="pcard-@i">
-                        <input type="hidden" name="AvailableProducts[@i].ProductId"    value="@p.ProductId" />
-                        <input type="hidden" name="AvailableProducts[@i].Name"         value="@p.Name" />
-                        <input type="hidden" name="AvailableProducts[@i].Price"        value="@p.Price.ToString("F2", System.Globalization.CultureInfo.InvariantCulture)" />
-                        <input type="hidden" name="AvailableProducts[@i].AvailableStock" value="@p.AvailableStock" />
+                    <div class="product-square" id="pcard-@i" style="@(p.AvailableStock <= 0 ? "opacity: 0.5; pointer-events: none;" : "")">
+                        <input type="hidden" name="AvailableProducts[@i].ProductId" value="@p.ProductId" />
+                        <input type="hidden" name="AvailableProducts[@i].Name" value="@p.Name" />
+                        <input type="hidden" name="AvailableProducts[@i].Price" value="@p.Price.ToString("F2", System.Globalization.CultureInfo.InvariantCulture)" />
 
-                        <div class="psc-name">@p.Name</div>
-                        <div class="psc-price">@p.Price.ToString("N2") ج</div>
-                        <div class="psc-stock">
-                            @(p.AvailableStock <= 0 ? "نفد المخزون" : $"متاح: {p.AvailableStock}")
+                        <div class="ps-info">
+                            <div class="ps-name">@p.Name</div>
+                            <div style="font-size: 0.85rem; color: var(--text-slate); font-weight: 600;">@p.Price.ToString("N2") ج.م</div>
                         </div>
 
-                        <div class="qty-control">
-                            <button type="button" class="qty-btn minus"
-                                    onclick="changeQty(@i, -1, @p.AvailableStock)">−</button>
-                            <input type="number"
-                                   class="qty-display"
-                                   id="qty-@i"
-                                   name="AvailableProducts[@i].SelectedQuantity"
-                                   value="0"
-                                   min="0"
-                                   max="@p.AvailableStock"
-                                   readonly />
-                            <button type="button" class="qty-btn plus"
-                                    onclick="changeQty(@i, 1, @p.AvailableStock)">＋</button>
+                        <div class="ps-action-bar">
+                            <button type="button" class="ps-btn" onclick="changeQty(@i, -1, @p.AvailableStock)">-</button>
+                            <input type="number" id="qty-@i" class="ps-qty" name="AvailableProducts[@i].SelectedQuantity" value="0" readonly />
+                            <button type="button" class="ps-btn" onclick="changeQty(@i, 1, @p.AvailableStock)">+</button>
                         </div>
                     </div>
                 }
             </div>
-        }
-
-        <!-- Totals -->
-        <div class="totals-box">
-            <div class="total-row">
-                <span>⏱ تكلفة الوقت</span>
-                <span id="timeTotal">
-                    @(Model.IsPackageSession
-                        ? "مشمول في الباقة"
-                        : Model.CalculatedTimePrice.ToString("N2") + " ج")
-                </span>
-            </div>
-            <div class="total-row">
-                <span>🛒 تكلفة المنتجات</span>
-                <span id="productsTotal">0.00 ج</span>
-            </div>
-            <div class="total-row grand">
-                <span>💰 الإجمالي المطلوب</span>
-                <span id="grandTotal">
-                    @(Model.IsPackageSession
-                        ? "0.00"
-                        : Model.CalculatedTimePrice.ToString("F2", System.Globalization.CultureInfo.InvariantCulture))
-                    ج
-                </span>
-            </div>
         </div>
 
-        <!-- Actions -->
-        <div class="action-bar">
-            <a asp-controller="Home" asp-action="Index" class="btn-back">← إلغاء</a>
-            <button type="submit" class="btn-confirm"
-                    onclick="return confirm('تأكيد إغلاق الجلسة وحفظ الحساب؟')">
-                ✅ تأكيد الإغلاق
-            </button>
+        <!-- ملخص الجلسة وتعديل الطلبات القديمة -->
+        <div class="col-md-4">
+            <div class="wf-card" style="width: 100%; max-width: 100%;">
+                <h4 style="font-weight: 800; color: var(--sapphire); margin-bottom: 1rem; border-bottom: 2px solid var(--glass-edge-blue); padding-bottom: 0.8rem;">فاتورة الجلسة</h4>
+
+                <div class="wf-data-row"><span class="wf-data-label">العميل</span> <span class="wf-data-val">@Model.CustomerName</span></div>
+                <div class="wf-data-row"><span class="wf-data-label">مدة الجلسة</span> <span class="wf-data-val">@Model.HoursElapsed.ToString("0.##") ساعة</span></div>
+
+                <!-- قائمة الطلبات القديمة (أصبحت قابلة للتعديل الآن) -->
+                @if (Model.AlreadyAddedProducts.Any())
+                {
+                    <div class="mt-3 mb-2 px-2" style="font-size: 0.9rem; color: var(--sapphire); font-weight: 800;">الطلبات المسجلة مسبقاً (يمكنك تعديلها):</div>
+                    <div style="background: rgba(255, 255, 255, 0.6); padding: 0.5rem; border-radius: 4px; border: 1px solid var(--glass-edge-blue); margin-bottom: 1rem;">
+
+                        @for (int j = 0; j < Model.AlreadyAddedProducts.Count; j++)
+                        {
+                            var oldItem = Model.AlreadyAddedProducts[j];
+                            <div class="d-flex justify-content-between align-items-center mb-2 pb-2 border-bottom" style="border-color: rgba(22, 41, 107, 0.05) !important;">
+                                <!-- حقل مخفي لإرسال الـ ID للـ Backend -->
+                                <input type="hidden" name="AlreadyAddedProducts[@j].ProductId" value="@oldItem.ProductId" />
+
+                                <div class="d-flex flex-column">
+                                    <span style="font-size: 0.9rem; font-weight: 800; color: var(--sapphire);">@oldItem.ProductName</span>
+                                    <strong style="color: var(--text-slate); font-size: 0.8rem;" id="old-line-total-@j">@oldItem.LineTotal.ToString("F2", System.Globalization.CultureInfo.InvariantCulture) ج.م</strong>
+                                </div>
+
+                                <!-- زراير التحكم في الكمية للمنتجات القديمة -->
+                                <div class="ps-action-bar" style="background: transparent; border: 1px solid var(--glass-edge-blue); border-radius: 6px;">
+                                    <button type="button" class="ps-btn" style="padding: 0.1rem 0.5rem; font-size: 1rem;" onclick="changeOldQty(@j, -1)">-</button>
+                                    <input type="number" id="old-qty-@j" name="AlreadyAddedProducts[@j].Quantity" value="@oldItem.Quantity" readonly style="width: 30px; text-align: center; border: none; background: transparent; font-weight: bold; color: var(--sapphire);" />
+                                    <button type="button" class="ps-btn" style="padding: 0.1rem 0.5rem; font-size: 1rem;" onclick="changeOldQty(@j, 1)">+</button>
+                                </div>
+                            </div>
+                        }
+
+                    </div>
+                }
+
+                <div class="wf-data-row mt-3">
+                    <span class="wf-data-label">تكلفة الوقت</span>
+                    <span class="wf-data-val" id="timeTotal">@(Model.IsPackageSession ? "0.00 (باقة)" : Model.CalculatedTimePrice.ToString("N2"))</span>
+                </div>
+
+                <div class="wf-data-row">
+                    <span class="wf-data-label">إجمالي البار</span>
+                    <span class="wf-data-val" id="productsTotal">@Model.TotalProductPrice.ToString("N2")</span>
+                </div>
+
+                <div class="wf-data-row mt-4" style="background: var(--sapphire); border-color: var(--sapphire);">
+                    <span class="wf-data-label" style="color: rgba(255,255,255,0.85);">الإجمالي النهائي المطلوب</span>
+                    <span class="wf-data-val" id="grandTotal" style="font-size: 1.3rem; color: #ffffff;">
+                        @((Model.IsPackageSession ? Model.TotalProductPrice : Model.CalculatedTimePrice + Model.TotalProductPrice).ToString("F2", System.Globalization.CultureInfo.InvariantCulture))
+                    </span>
+                </div>
+
+                <div class="d-flex gap-2 mt-4">
+                    <button type="submit" class="btn-aurelian-primary flex-grow-1" onclick="return confirm('هل أنت متأكد من إغلاق الجلسة بشكل نهائي؟')">
+                        تأكيد وإغلاق الجلسة
+                    </button>
+                    <a asp-controller="Home" asp-action="Index" class="btn-aurelian-outline flex-grow-1">إلغاء</a>
+                </div>
+            </div>
         </div>
-    </form>
-</div>
+    </div>
+</form>
 
 <script>
+    // أسعار المنتجات الجديدة
     const prices = {
         @for (int i = 0; i < Model.AvailableProducts.Count; i++)
         {
-            @:@i: @Model.AvailableProducts[i].Price.ToString("F2", System.Globalization.CultureInfo.InvariantCulture),
+                    @:@i: @Model.AvailableProducts[i].Price.ToString("F2", System.Globalization.CultureInfo.InvariantCulture),
+        }
+    };
+
+    // أسعار المنتجات القديمة
+    const oldPrices = {
+        @for (int j = 0; j < Model.AlreadyAddedProducts.Count; j++)
+        {
+                var price = Model.AlreadyAddedProducts[j].Quantity > 0 ? (Model.AlreadyAddedProducts[j].LineTotal / Model.AlreadyAddedProducts[j].Quantity) : 0;
+                @:@j: @price.ToString("F2", System.Globalization.CultureInfo.InvariantCulture),
         }
     };
 
     const timeCost = @(Model.IsPackageSession ? "0" : Model.CalculatedTimePrice.ToString("F2", System.Globalization.CultureInfo.InvariantCulture));
 
+    // تعديل كمية المنتجات الجديدة
     function changeQty(index, delta, maxStock) {
         const input = document.getElementById('qty-' + index);
         const current = parseInt(input.value) || 0;
         const newVal = Math.max(0, Math.min(current + delta, maxStock));
         input.value = newVal;
+        recalc();
+    }
 
-        const card = document.getElementById('pcard-' + index);
-        card.classList.toggle('selected', newVal > 0);
+    // تعديل كمية المنتجات القديمة
+    function changeOldQty(index, delta) {
+        const input = document.getElementById('old-qty-' + index);
+        const current = parseInt(input.value) || 0;
+        const newVal = Math.max(0, current + delta); // يسمح بالنزول حتى صفر (لإلغاء المنتج)
+        input.value = newVal;
+
+        const lineTotal = newVal * oldPrices[index];
+        document.getElementById('old-line-total-' + index).textContent = lineTotal.toFixed(2) + " ج.م";
 
         recalc();
     }
 
+    // إعادة الحساب الشاملة
     function recalc() {
-        let productTotal = 0;
+        let newProductTotal = 0;
         Object.keys(prices).forEach(i => {
             const qty = parseInt(document.getElementById('qty-' + i)?.value) || 0;
-            productTotal += qty * prices[i];
+            newProductTotal += qty * prices[i];
         });
 
-        const grand = timeCost + productTotal;
+        let oldProductTotal = 0;
+        Object.keys(oldPrices).forEach(j => {
+            const qty = parseInt(document.getElementById('old-qty-' + j)?.value) || 0;
+            oldProductTotal += qty * oldPrices[j];
+        });
 
-        document.getElementById('productsTotal').textContent = productTotal.toFixed(2) + ' ج';
-        document.getElementById('grandTotal').textContent    = grand.toFixed(2) + ' ج';
+        const finalProductTotal = oldProductTotal + newProductTotal;
+        const grand = timeCost + finalProductTotal;
+
+        document.getElementById('productsTotal').textContent = finalProductTotal.toFixed(2);
+        document.getElementById('grandTotal').textContent    = grand.toFixed(2);
     }
 </script>
-
-@section Scripts {
-    @{ await Html.RenderPartialAsync("_ValidationScriptsPartial"); }
-}

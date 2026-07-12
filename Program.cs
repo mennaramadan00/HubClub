@@ -38,7 +38,24 @@ namespace HubClub
                 name: "default",
                 pattern: "{controller=Home}/{action=Index}/{id?}")
                 .WithStaticAssets();
+            // åĞÇ ÇáßæÏ íŞæã ÈÅäÔÇÁ ŞÇÚÏÉ ÇáÈíÇäÇÊ æÇáÌÏÇæá ÊáŞÇÆíÇğ ÚäÏ ÇáÚãíá
+            using (var scope = app.Services.CreateScope())
+            {
+                var services = scope.ServiceProvider;
+                try
+                {
+                    var context = services.GetRequiredService<AppDbContext>();
+                    context.Database.Migrate(); // íäİĞ ßá ÇáÜ Migrations
+                }
+                catch (Exception ex)
+                {
+                    // ÊÓÌíá ÇáÎØÃ Åä æÌÏ
+                    var logger = services.GetRequiredService<ILogger<Program>>();
+                    logger.LogError(ex, "ÍÏË ÎØÃ ÃËäÇÁ ÅäÔÇÁ ŞÇÚÏÉ ÇáÈíÇäÇÊ.");
+                }
+            }
 
+           
             app.Run();
         }
     }

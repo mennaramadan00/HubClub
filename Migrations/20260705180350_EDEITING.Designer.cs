@@ -4,6 +4,7 @@ using HubClub.Data;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.EntityFrameworkCore.Infrastructure;
 using Microsoft.EntityFrameworkCore.Metadata;
+using Microsoft.EntityFrameworkCore.Migrations;
 using Microsoft.EntityFrameworkCore.Storage.ValueConversion;
 
 #nullable disable
@@ -11,9 +12,11 @@ using Microsoft.EntityFrameworkCore.Storage.ValueConversion;
 namespace HubClub.Migrations
 {
     [DbContext(typeof(AppDbContext))]
-    partial class AppDbContextModelSnapshot : ModelSnapshot
+    [Migration("20260705180350_EDEITING")]
+    partial class EDEITING
     {
-        protected override void BuildModel(ModelBuilder modelBuilder)
+        /// <inheritdoc />
+        protected override void BuildTargetModel(ModelBuilder modelBuilder)
         {
 #pragma warning disable 612, 618
             modelBuilder
@@ -164,11 +167,6 @@ namespace HubClub.Migrations
                     b.Property<int>("Quantity")
                         .HasColumnType("int");
 
-                    b.Property<DateTime>("RowVersion")
-                        .IsConcurrencyToken()
-                        .ValueGeneratedOnAddOrUpdate()
-                        .HasColumnType("datetime(6)");
-
                     b.HasKey("ProductId");
 
                     b.ToTable("products");
@@ -202,11 +200,6 @@ namespace HubClub.Migrations
 
                     b.Property<int?>("PriceSettingId")
                         .HasColumnType("int");
-
-                    b.Property<DateTime>("RowVersion")
-                        .IsConcurrencyToken()
-                        .ValueGeneratedOnAddOrUpdate()
-                        .HasColumnType("datetime(6)");
 
                     b.Property<DateTime>("StartTime")
                         .HasColumnType("datetime(6)");
@@ -263,37 +256,6 @@ namespace HubClub.Migrations
                     b.ToTable("session_products");
                 });
 
-            modelBuilder.Entity("HubClub.Models.StockMovement", b =>
-                {
-                    b.Property<int>("StockMovementId")
-                        .ValueGeneratedOnAdd()
-                        .HasColumnType("int");
-
-                    MySqlPropertyBuilderExtensions.UseMySqlIdentityColumn(b.Property<int>("StockMovementId"));
-
-                    b.Property<DateTime>("CreatedAt")
-                        .HasColumnType("datetime(6)");
-
-                    b.Property<string>("MovementType")
-                        .IsRequired()
-                        .HasColumnType("longtext");
-
-                    b.Property<int>("ProductId")
-                        .HasColumnType("int");
-
-                    b.Property<int>("QuantityChanged")
-                        .HasColumnType("int");
-
-                    b.Property<int?>("SessionId")
-                        .HasColumnType("int");
-
-                    b.HasKey("StockMovementId");
-
-                    b.HasIndex("ProductId");
-
-                    b.ToTable("StockMovements");
-                });
-
             modelBuilder.Entity("HubClub.Models.UserPackage", b =>
                 {
                     b.Property<int>("UserPackageId")
@@ -316,11 +278,6 @@ namespace HubClub.Migrations
 
                     b.Property<decimal>("RemainingHours")
                         .HasColumnType("decimal(6,2)");
-
-                    b.Property<DateTime>("RowVersion")
-                        .IsConcurrencyToken()
-                        .ValueGeneratedOnAddOrUpdate()
-                        .HasColumnType("datetime(6)");
 
                     b.Property<DateTime>("StartDate")
                         .HasColumnType("datetime(6)");
@@ -377,17 +334,6 @@ namespace HubClub.Migrations
                     b.Navigation("Product");
 
                     b.Navigation("Session");
-                });
-
-            modelBuilder.Entity("HubClub.Models.StockMovement", b =>
-                {
-                    b.HasOne("HubClub.Models.Product", "Product")
-                        .WithMany()
-                        .HasForeignKey("ProductId")
-                        .OnDelete(DeleteBehavior.Cascade)
-                        .IsRequired();
-
-                    b.Navigation("Product");
                 });
 
             modelBuilder.Entity("HubClub.Models.UserPackage", b =>

@@ -1,104 +1,96 @@
 ﻿@model IEnumerable<HubClub.Models.Product>
 @{
-    ViewData["Title"] = "المنتجات";
-    Layout = "~/Views/Shared/_Layout.cshtml";
+    ViewData["Title"] = "إدارة المنتجات";
 }
 
-<link rel="stylesheet" href="~/css/products.css" asp-append-version="true" />
-
-<div class="container-fluid px-4 py-4">
-
-    <!-- Header -->
-    <div class="page-header">
-        <div>
-            <h1>🛒 إدارة المنتجات</h1>
-            <p>قائمة منتجات البار والمشروبات المتاحة</p>
-        </div>
-        <a asp-action="Create" class="btn-add">
-            ＋ إضافة منتج
-        </a>
+<!-- الرأس العلوي وأزرار الإضافة -->
+<div class="d-flex justify-content-between align-items-center mb-4">
+    <div>
+        <h2 style="color: var(--sapphire); font-weight: 800; margin: 0;">إدارة المنتجات</h2>
+        <p style="color: var(--text-slate); margin: 0;">قائمة منتجات البار والمشروبات المتاحة للبيع</p>
     </div>
-
-    <!-- Stats -->
-    <div class="stats-bar">
-        <div class="stat-card">
-            <div class="stat-icon blue">📦</div>
-            <div>
-                <div class="stat-label">إجمالي المنتجات</div>
-                <div class="stat-value">@Model.Count()</div>
-            </div>
-        </div>
-        <div class="stat-card">
-            <div class="stat-icon green">✅</div>
-            <div>
-                <div class="stat-label">المنتجات المتاحة</div>
-                <div class="stat-value">@Model.Count(p => p.IsActive)</div>
-            </div>
-        </div>
-        <div class="stat-card">
-            <div class="stat-icon yellow">⚠️</div>
-            <div>
-                <div class="stat-label">مخزون منخفض (أقل من 5)</div>
-                <div class="stat-value">@Model.Count(p => p.Quantity < 5)</div>
-            </div>
-        </div>
-    </div>
-
-    <!-- Search -->
-    <div class="search-wrap">
-        <span class="icon">🔍</span>
-        <input type="text" id="searchInput" placeholder="ابحث عن منتج بالاسم..." />
-    </div>
-
-    <!-- Grid -->
-    @if (!Model.Any())
-    {
-        <div class="empty-state">
-            <div class="icon">🛍️</div>
-            <h3>لا توجد منتجات بعد</h3>
-            <p>ابدأ بإضافة منتجات البار والمشروبات المتاحة لديك</p>
-            <a asp-action="Create" class="btn-add" style="display:inline-flex;margin-top:1rem;">＋ أضف أول منتج</a>
-        </div>
-    }
-    else
-    {
-        <div class="products-grid" id="productsGrid">
-            @foreach (var item in Model)
-            {
-                <div class="product-card" data-name="@item.Name.ToLower()">
-                    <div class="card-top">
-                        <span class="status-badge @(item.IsActive ? "active" : "inactive")">
-                            @(item.IsActive ? "متاح ✓" : "غير متاح")
-                        </span>
-                        <div class="product-name">@item.Name</div>
-                        <div class="product-price">
-                            @item.Price.ToString("N2") <span>جنيه</span>
-                        </div>
-                    </div>
-                    <div class="card-body">
-                        <div class="qty-wrap">
-                            <span class="qty-label">المخزون</span>
-                            <span class="qty-value @(item.Quantity < 5 ? "low" : "")">
-                                @item.Quantity قطعة
-                            </span>
-                        </div>
-                        <div class="card-actions">
-                            <a asp-action="Details" asp-route-id="@item.ProductId" class="action-btn details" title="التفاصيل">👁</a>
-                            <a asp-action="Edit" asp-route-id="@item.ProductId" class="action-btn edit" title="تعديل">✏️</a>
-                            <a asp-action="Delete" asp-route-id="@item.ProductId" class="action-btn delete" title="حذف">🗑</a>
-                        </div>
-                    </div>
-                </div>
-            }
-        </div>
-    }
+    <a asp-action="Create" class="btn-aurelian-primary">
+        إضافة منتج جديد
+    </a>
 </div>
 
-<script>
-    document.getElementById('searchInput')?.addEventListener('input', function () {
-        const q = this.value.toLowerCase();
-        document.querySelectorAll('.product-card').forEach(card => {
-            card.style.display = card.dataset.name.includes(q) ? '' : 'none';
+<!-- ودجات الإحصائيات الفخمة -->
+<div class="analysis-summary-grid mb-5">
+    <div class="summary-box">
+        <div class="sb-title">إجمالي المنتجات</div>
+        <div class="sb-val">@Model.Count()</div>
+    </div>
+    <div class="summary-box">
+        <div class="sb-title">المنتجات المتاحة</div>
+        <div class="sb-val">@Model.Count(p => p.IsActive)</div>
+    </div>
+    <div class="summary-box" style="border-color: @(Model.Count(p => p.Quantity < 5) > 0 ? "#ef4444" : "var(--glass-border)");">
+        <div class="sb-title">تنبيهات نقص المخزون</div>
+        <div class="sb-val" style="color: @(Model.Count(p => p.Quantity < 5) > 0 ? "#ef4444" : "var(--sapphire)");">
+            @Model.Count(p => p.Quantity < 5)
+        </div>
+    </div>
+</div>
+
+<!-- شريط البحث -->
+<div class="mb-4">
+    <input type="text" id="searchInput" class="premium-input" placeholder="ابحث عن منتج بالاسم..." style="max-width: 500px;" />
+</div>
+
+<!-- شبكة كروت المنتجات الزجاجية -->
+@if (!Model.Any())
+{
+    <div class="glass-form-container text-center mt-5">
+        <h3 class="mt-3" style="color: var(--sapphire); font-weight: 800;">لا توجد منتجات مسجلة</h3>
+        <p style="color: var(--text-slate);">ابدأ بإضافة منتجات البار والمشروبات المتاحة لديك لتظهر في شاشة المبيعات.</p>
+        <a asp-action="Create" class="btn-aurelian-primary mt-3">تسجيل أول منتج</a>
+    </div>
+}
+else
+{
+    <div class="cards-grid-3">
+        @foreach (var item in Model)
+        {
+            <div class="wf-card product-card" data-name="@item.Name.ToLower()">
+
+                <div class="wf-card-header d-flex justify-content-between align-items-center">
+                    <h4 style="color: var(--sapphire); font-weight: 800; margin: 0;">@item.Name</h4>
+                    <span class="badge-glass" style="background: @(item.IsActive ? "var(--azure-glow-soft)" : "rgba(239, 68, 68, 0.1)"); color: @(item.IsActive ? "var(--sapphire)" : "#ef4444"); border-color: @(item.IsActive ? "var(--azure-glow)" : "rgba(239, 68, 68, 0.2)");">
+                        @(item.IsActive ? "متاح" : "غير متاح")
+                    </span>
+                </div>
+
+                <div class="wf-data-row">
+                    <span class="wf-data-label">السعر</span>
+                    <span class="wf-data-val">@item.Price.ToString("N2") ج.م</span>
+                </div>
+
+                <div class="wf-data-row">
+                    <span class="wf-data-label">المخزون المتوفر</span>
+                    <span class="wf-data-val" style="color: @(item.Quantity < 5 ? "#ef4444" : "var(--sapphire)");">
+                        @item.Quantity قطعة
+                    </span>
+                </div>
+
+                <!-- أزرار الأكشن بنصوص عربية صريحة ورسمية -->
+                <div class="form-actions mt-auto pt-3">
+                    <a asp-action="Details" asp-route-id="@item.ProductId" class="btn-aurelian-outline" style="padding: 0.5rem 1rem;">تفاصيل</a>
+                    <a asp-action="Edit" asp-route-id="@item.ProductId" class="btn-aurelian-outline" style="padding: 0.5rem 1rem;">تعديل</a>
+                    <a asp-action="Delete" asp-route-id="@item.ProductId" class="btn-aurelian-outline" style="padding: 0.5rem 1rem; color: #ef4444; border-color: #ef4444;">حذف</a>
+                </div>
+
+            </div>
+        }
+    </div>
+}
+
+@section Scripts {
+    <script>
+        document.getElementById('searchInput')?.addEventListener('input', function () {
+            const q = this.value.toLowerCase();
+            document.querySelectorAll('.product-card').forEach(card => {
+                card.style.display = card.dataset.name.includes(q) ? '' : 'none';
+            });
         });
-    });
-</script>
+    </script>
+}

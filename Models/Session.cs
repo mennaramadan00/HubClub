@@ -60,6 +60,10 @@ namespace HubClub.Models
         //[Display(Name = "التاريخ")]
         //public DateTime Date { get; set; } = DateTime.Now;
 
+        
+        [Timestamp]
+        public DateTime RowVersion { get; set; }
+
         // Navigation properties
         public Customer Customer { get; set; } = null!;
         public UserPackage? UserPackage { get; set; }

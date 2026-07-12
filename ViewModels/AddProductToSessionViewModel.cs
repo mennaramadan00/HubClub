@@ -13,12 +13,5 @@ namespace HubClub.ViewModels
         public List<SessionProductLineViewModel> AlreadyAdded { get; set; } = new();
     }
 
-    //public class ProductSelectionItem
-    //{
-    //    public int ProductId { get; set; }
-    //    public string Name { get; set; }
-    //    public decimal Price { get; set; }
-    //    public int SelectedQuantity { get; set; } = 0;
-    //    public int AvailableStock { get; set; };
-    //}
+    
 }

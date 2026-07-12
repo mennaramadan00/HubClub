@@ -3,53 +3,39 @@
     ViewData["Title"] = "تعديل بيانات العميل";
 }
 
-<link rel="stylesheet" href="~/css/products.css" asp-append-version="true" />
-
-<div class="form-page">
-    <div class="form-card">
-        <div class="form-card-header">
-            <div class="icon">✏️</div>
-            <div>
-                <h2>تعديل العميل</h2>
-                <p>@Model.Name</p>
-            </div>
-        </div>
-        <div class="form-body">
-            <form asp-action="Edit" method="post">
-                <div asp-validation-summary="ModelOnly" class="validation-summary text-danger"></div>
-                <input type="hidden" asp-for="CustomerId" />
-                <input type="hidden" asp-for="CreatedAt" />
-
-                <div class="field-group">
-                    <label class="field-label" asp-for="Name">
-                        اسم العميل <span class="required">*</span>
-                    </label>
-                    <input asp-for="Name" class="field-input" />
-                    <span asp-validation-for="Name" class="field-error"></span>
-                </div>
-
-                <div class="field-group">
-                    <label class="field-label" asp-for="Phone">
-                        رقم الهاتف <span class="required">*</span>
-                    </label>
-                    <input asp-for="Phone" class="field-input" />
-                    <span asp-validation-for="Phone" class="field-error"></span>
-                </div>
-
-                <div class="field-group">
-                    <div class="toggle-group">
-                        <input asp-for="IsActive" type="checkbox" id="IsActive" />
-                        <label for="IsActive">حساب نشط</label>
-                    </div>
-                </div>
-
-                <div class="form-actions">
-                    <a asp-action="Index" class="btn-back">← رجوع</a>
-                    <button type="submit" class="btn-save">💾 حفظ التعديلات</button>
-                </div>
-            </form>
-        </div>
+<div class="glass-form-container" dir="rtl">
+    <div class="form-header">
+        <h2>تعديل العميل</h2>
+        <p>تحديث بيانات العميل: <strong>@Model.Name</strong></p>
     </div>
+
+    <form asp-action="Edit" method="post">
+        <div asp-validation-summary="ModelOnly" class="text-danger mb-3 fw-bold"></div>
+        <input type="hidden" asp-for="CustomerId" />
+        <input type="hidden" asp-for="CreatedAt" />
+
+        <div>
+            <label class="premium-label" asp-for="Name">اسم العميل <span class="text-danger">*</span></label>
+            <input asp-for="Name" class="premium-input" />
+            <span asp-validation-for="Name" class="text-danger small mt-1 d-block fw-bold mb-3"></span>
+        </div>
+
+        <div>
+            <label class="premium-label" asp-for="Phone">رقم الهاتف <span class="text-danger">*</span></label>
+            <input asp-for="Phone" class="premium-input" />
+            <span asp-validation-for="Phone" class="text-danger small mt-1 d-block fw-bold mb-3"></span>
+        </div>
+
+        <div class="d-flex align-items-center gap-3 mb-4 mt-2">
+            <input asp-for="IsActive" type="checkbox" id="IsActive" style="transform: scale(1.5); accent-color: var(--sapphire);" />
+            <label for="IsActive" class="premium-label mb-0" style="cursor: pointer;">حساب نشط</label>
+        </div>
+
+        <div class="form-actions">
+            <button type="submit" class="btn-aurelian-primary">حفظ التعديلات</button>
+            <a asp-action="Index" class="btn-aurelian-outline">العودة للقائمة</a>
+        </div>
+    </form>
 </div>
 
 @section Scripts {

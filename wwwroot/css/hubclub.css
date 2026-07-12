@@ -1,0 +1,676 @@
+﻿/* ========================================================
+   HubClub — Apple-Inspired Edition (Neutral Glass Pass)
+   Light glassmorphism · gradient-glass · graphite/silver premium · nav-left
+   ======================================================== */
+@import url('https://fonts.googleapis.com/css2?family=Sora:wght@400;500;600;700;800&family=Tajawal:wght@400;500;700;800&display=swap');
+
+:root {
+    /* ---- Canvas ---- */
+    --bg-canvas: #F5F5F7;
+    --bg-canvas-2: #EAEAEC;
+    /* ---- Graphite / Apple palette ---- */
+    --sapphire: #0B3D91;
+    --sapphire-deep: #052659;
+    --azure: #0071E3;
+    --azure-soft: #4DA3FF;
+    --violet-hint: #86868B; /* neutral secondary hue, kept minor */
+    --azure-glow: rgba(0, 113, 227, 0.28);
+    --azure-glow-soft: rgba(0, 113, 227, 0.12);
+    /* ---- Glass gradients (the upgrade) ---- */
+    --glass-grad: linear-gradient(135deg, rgba(255,255,255,0.75) 0%, rgba(234,234,236,0.40) 55%, rgba(255,255,255,0.58) 100%);
+    --glass-grad-strong: linear-gradient(135deg, rgba(255,255,255,0.92) 0%, rgba(236,236,238,0.68) 100%);
+    --glass-border-grad: linear-gradient(135deg, rgba(255,255,255,0.95) 0%, var(--azure-soft) 45%, var(--sapphire) 100%);
+    --glass-sheen: linear-gradient(120deg, transparent 30%, rgba(255,255,255,0.55) 48%, transparent 66%);
+    --glass-border: rgba(255, 255, 255, 0.9);
+    --glass-edge-blue: rgba(0, 0, 0, 0.08);
+    /* ---- Type ---- */
+    --text-ink: #1D1D1F;
+    --text-slate: #6E6E73;
+    --text-slate-soft: #86868B;
+    --font-ar: 'Tajawal', sans-serif;
+    --font-en: 'Sora', sans-serif;
+    /* ---- Spacing / radii ---- */
+    --sidebar-width: 280px;
+    --radius-sharp: 10px;
+    --radius-medium: 18px;
+    --radius-glass: 26px;
+    /* ---- Shadows ---- */
+    --shadow-glass: 0 8px 32px 0 rgba(0, 0, 0, 0.08);
+    --shadow-float: 0 24px 50px -12px rgba(0, 0, 0, 0.18);
+    --shadow-inset-light: inset 0 1px 0 rgba(255, 255, 255, 0.95);
+}
+
+/* ================= 1. Ambient Aurora (soft neutral mesh) ================= */
+body {
+    background: var(--bg-canvas);
+    color: var(--text-ink);
+    font-family: var(--font-ar);
+    -webkit-font-smoothing: antialiased;
+    margin: 0;
+    padding: 0;
+    overflow-x: hidden;
+    min-height: 100vh;
+    position: relative;
+    z-index: 1;
+}
+
+    body::before {
+        content: '';
+        position: fixed;
+        inset: -50%;
+        width: 200%;
+        height: 200%;
+        background: radial-gradient(circle at 12% 18%, rgba(0, 113, 227, 0.12), transparent 42%), radial-gradient(circle at 88% 12%, rgba(120, 120, 128, 0.10), transparent 48%), radial-gradient(circle at 80% 88%, rgba(0, 113, 227, 0.09), transparent 45%), radial-gradient(circle at 8% 92%, rgba(0, 0, 0, 0.06), transparent 42%), radial-gradient(circle at 50% 50%, rgba(255, 255, 255, 0.9), transparent 55%);
+        z-index: -2;
+        animation: auroraDrift 34s ease-in-out infinite alternate;
+    }
+
+    body::after {
+        /* soft diagonal gradient wash sitting above the aurora, under the glass */
+        content: '';
+        position: fixed;
+        inset: 0;
+        background: linear-gradient(160deg, rgba(255,255,255,0.35) 0%, rgba(234,234,236,0.15) 45%, rgba(0,113,227,0.04) 100%);
+        z-index: -1;
+        pointer-events: none;
+    }
+
+@keyframes auroraDrift {
+    0% {
+        transform: rotate(0deg) scale(1);
+    }
+
+    100% {
+        transform: rotate(4deg) scale(1.12);
+    }
+}
+
+@media (prefers-reduced-motion: reduce) {
+    body::before {
+        animation: none;
+    }
+}
+
+/* ================= App Layout (nav on the LEFT) ================= */
+.app-wrapper {
+    display: flex;
+    min-height: 100vh;
+    direction: ltr;
+}
+
+/* 🧊 Sidebar — Frosted Gradient Glass, left-fixed */
+.app-sidebar {
+    width: var(--sidebar-width);
+    background: var(--glass-grad);
+    backdrop-filter: blur(26px) saturate(150%);
+    -webkit-backdrop-filter: blur(26px) saturate(150%);
+    border-right: 1px solid transparent;
+    border-image: var(--glass-border-grad) 1;
+    box-shadow: 4px 0 32px rgba(0, 0, 0, 0.06);
+    position: fixed;
+    top: 0;
+    left: 0;
+    bottom: 0;
+    z-index: 1000;
+    display: flex;
+    flex-direction: column;
+    direction: rtl;
+}
+
+.sidebar-header {
+    padding: 2rem 1.5rem;
+    border-bottom: 1px solid var(--glass-edge-blue);
+    background: linear-gradient(180deg, rgba(255,255,255,0.9) 0%, transparent 100%);
+    position: relative;
+}
+
+.sidebar-brand {
+    color: var(--sapphire);
+    font-family: var(--font-en);
+    font-weight: 800;
+    font-size: 1.8rem;
+    text-decoration: none;
+    letter-spacing: 0.5px;
+    display: inline-flex;
+    align-items: baseline;
+}
+
+    .sidebar-brand span {
+        background: linear-gradient(120deg, var(--azure) 0%, var(--violet-hint) 45%, var(--sapphire) 100%);
+        -webkit-background-clip: text;
+        background-clip: text;
+        color: transparent;
+    }
+
+.sidebar-nav {
+    flex: 1;
+    padding: 1.5rem 1.1rem;
+    display: flex;
+    flex-direction: column;
+    gap: 0.6rem;
+    text-align: right;
+}
+
+.nav-item-link {
+    color: var(--text-slate);
+    text-decoration: none;
+    font-weight: 600;
+    padding: 0.95rem 1.2rem;
+    border-radius: var(--radius-sharp);
+    transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+    border: 1px solid transparent;
+    display: flex;
+    align-items: center;
+    gap: 10px;
+    position: relative;
+    overflow: hidden;
+}
+
+    .nav-item-link::before {
+        content: '';
+        position: absolute;
+        top: 8%;
+        bottom: 8%;
+        left: -2px;
+        width: 3px;
+        border-radius: 4px;
+        background: linear-gradient(180deg, var(--azure-soft), var(--azure));
+        box-shadow: 0 0 16px 2px var(--azure-glow);
+        transform: scaleY(0);
+        transition: transform 0.28s ease;
+    }
+
+    .nav-item-link:hover {
+        background: var(--glass-grad-strong);
+        color: var(--sapphire);
+        transform: translateX(4px);
+    }
+
+    .nav-item-link.active {
+        background: linear-gradient(135deg, var(--azure) 0%, var(--sapphire) 55%, var(--sapphire-deep) 100%);
+        color: #ffffff;
+        font-weight: 700;
+        box-shadow: 0 10px 26px var(--azure-glow-soft), var(--shadow-inset-light);
+        transform: translateX(4px);
+    }
+
+        .nav-item-link.active::before {
+            transform: scaleY(1);
+        }
+
+/* 🧊 Main Content & Topbar */
+.app-main {
+    flex: 1;
+    margin-left: var(--sidebar-width);
+    display: flex;
+    flex-direction: column;
+    direction: rtl;
+}
+
+.app-topbar {
+    background: linear-gradient(120deg, rgba(255,255,255,0.9) 0%, rgba(234,234,236,0.65) 100%);
+    backdrop-filter: blur(18px) saturate(150%);
+    -webkit-backdrop-filter: blur(18px) saturate(150%);
+    padding: 1.2rem 2.5rem;
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    border-bottom: 1px solid var(--glass-edge-blue);
+    position: sticky;
+    top: 0;
+    z-index: 100;
+    box-shadow: 0 4px 22px rgba(0, 0, 0, 0.05);
+}
+
+.topbar-title {
+    font-weight: 800;
+    color: var(--sapphire);
+    margin: 0;
+    font-size: 1.4rem;
+    letter-spacing: 0.3px;
+}
+
+/* ================= Premium Buttons (richer multi-stop gradients + sheen) ================= */
+.btn-aurelian-primary {
+    background: linear-gradient(135deg, var(--azure) 0%, var(--sapphire) 55%, var(--sapphire-deep) 100%);
+    color: #ffffff;
+    font-weight: 800;
+    border: none;
+    border-radius: var(--radius-sharp);
+    padding: 0.8rem 1.8rem;
+    text-decoration: none;
+    display: inline-block;
+    position: relative;
+    overflow: hidden;
+    transition: all 0.3s ease;
+    box-shadow: 0 6px 20px rgba(0, 0, 0, 0.22);
+}
+
+    .btn-aurelian-primary::before {
+        content: '';
+        position: absolute;
+        inset: 0;
+        background: var(--glass-sheen);
+        transform: translateX(-100%);
+        transition: transform 0.5s ease;
+    }
+
+    .btn-aurelian-primary:hover {
+        box-shadow: 0 12px 30px var(--azure-glow);
+        transform: translateY(-2px);
+        color: #ffffff;
+    }
+
+        .btn-aurelian-primary:hover::before {
+            transform: translateX(100%);
+        }
+
+.btn-aurelian-outline {
+    background: var(--glass-grad);
+    backdrop-filter: blur(12px);
+    color: var(--sapphire);
+    font-weight: 700;
+    border: 1px solid transparent;
+    border-image: var(--glass-border-grad) 1;
+    border-radius: var(--radius-sharp);
+    padding: 0.7rem 1.5rem;
+    text-decoration: none;
+    display: inline-block;
+    transition: all 0.3s ease;
+    text-align: center;
+}
+
+    .btn-aurelian-outline:hover {
+        background: linear-gradient(135deg, var(--azure) 0%, var(--sapphire) 100%);
+        color: #ffffff;
+        box-shadow: 0 10px 24px var(--azure-glow-soft);
+        transform: translateY(-2px);
+    }
+
+/* ================= 🧊 Glass Cards (gradient fill + gradient border + sheen sweep) ================= */
+.wf-card {
+    min-width: 340px;
+    max-width: 340px;
+    background: var(--glass-grad);
+    backdrop-filter: blur(20px) saturate(150%);
+    -webkit-backdrop-filter: blur(20px) saturate(150%);
+    border: 1px solid transparent;
+    border-image: var(--glass-border-grad) 1;
+    border-radius: var(--radius-medium);
+    padding: 1.5rem;
+    scroll-snap-align: start;
+    display: flex;
+    flex-direction: column;
+    box-shadow: var(--shadow-glass);
+    transition: transform 0.35s ease, box-shadow 0.35s ease;
+    position: relative;
+    overflow: hidden;
+}
+
+    .wf-card::after {
+        content: '';
+        position: absolute;
+        inset: 0;
+        background: var(--glass-sheen);
+        transform: translateX(-120%) skewX(-15deg);
+        transition: transform 0.7s ease;
+        pointer-events: none;
+    }
+
+    .wf-card:hover {
+        transform: translateY(-6px);
+        box-shadow: var(--shadow-float);
+    }
+
+        .wf-card:hover::after {
+            transform: translateX(120%) skewX(-15deg);
+        }
+
+.wf-card-header {
+    border-bottom: 1px solid var(--glass-edge-blue);
+    padding-bottom: 1rem;
+    margin-bottom: 1.2rem;
+}
+
+/* Data Rows inside cards */
+.wf-data-row {
+    display: flex;
+    justify-content: space-between;
+    margin-bottom: 0.8rem;
+    font-size: 0.95rem;
+    border: 1px solid var(--glass-edge-blue);
+    padding: 0.6rem 1rem;
+    border-radius: var(--radius-sharp);
+    background: linear-gradient(120deg, rgba(255,255,255,0.85), rgba(234,234,236,0.6));
+    transition: background 0.2s, border-color 0.2s;
+}
+
+    .wf-data-row:hover {
+        background: linear-gradient(120deg, var(--azure-glow-soft), rgba(255,255,255,0.7));
+        border-color: var(--azure-glow);
+    }
+
+.wf-data-label {
+    color: var(--text-slate);
+    font-weight: 600;
+}
+
+.wf-data-val {
+    color: var(--sapphire);
+    font-weight: 800;
+}
+
+/* ================= Analysis Summary Boxes ================= */
+.analysis-summary-grid {
+    display: grid;
+    grid-template-columns: repeat(auto-fit, minmax(250px, 1fr));
+    gap: 1.5rem;
+    margin-top: 2rem;
+}
+
+.summary-box {
+    background: linear-gradient(145deg, rgba(255,255,255,0.95) 0%, rgba(234,234,236,0.55) 60%, rgba(255,255,255,0.7) 100%);
+    backdrop-filter: blur(24px) saturate(150%);
+    -webkit-backdrop-filter: blur(24px) saturate(150%);
+    border: 1px solid transparent;
+    border-image: var(--glass-border-grad) 1;
+    border-radius: var(--radius-medium);
+    padding: 2rem;
+    text-align: center;
+    box-shadow: var(--shadow-glass);
+    position: relative;
+    overflow: hidden;
+}
+
+    .summary-box::before {
+        content: '';
+        position: absolute;
+        top: 0;
+        left: 0;
+        width: 100%;
+        height: 3px;
+        background: linear-gradient(90deg, transparent, var(--azure), var(--violet-hint), transparent);
+        opacity: 0.7;
+    }
+
+    .summary-box .sb-title {
+        font-weight: 600;
+        color: var(--text-slate);
+        margin-bottom: 0.8rem;
+        text-transform: uppercase;
+        letter-spacing: 1px;
+        font-size: 0.85rem;
+        font-family: var(--font-en);
+    }
+
+    .summary-box .sb-val {
+        font-size: 2.3rem;
+        font-weight: 800;
+        background: linear-gradient(120deg, var(--sapphire) 0%, var(--azure) 100%);
+        -webkit-background-clip: text;
+        background-clip: text;
+        color: transparent;
+        font-family: var(--font-en);
+    }
+
+/* ================= Product Squares ================= */
+.product-squares-grid {
+    display: grid;
+    grid-template-columns: repeat(auto-fill, minmax(150px, 1fr));
+    gap: 1.2rem;
+}
+
+.product-square {
+    background: linear-gradient(150deg, rgba(255,255,255,0.9) 0%, rgba(234,234,236,0.55) 100%);
+    backdrop-filter: blur(16px) saturate(150%);
+    border: 1px solid var(--glass-edge-blue);
+    border-radius: var(--radius-sharp);
+    display: flex;
+    flex-direction: column;
+    overflow: hidden;
+    box-shadow: 0 4px 16px rgba(0, 0, 0, 0.05);
+    transition: transform 0.2s ease, border 0.2s ease, box-shadow 0.2s ease;
+}
+
+    .product-square:hover {
+        border-color: var(--azure);
+        transform: translateY(-4px);
+        box-shadow: 0 12px 28px var(--azure-glow-soft);
+    }
+
+    .product-square .ps-info {
+        padding: 1.2rem;
+        text-align: center;
+        flex: 1;
+    }
+
+    .product-square .ps-name {
+        font-weight: 800;
+        color: var(--sapphire);
+        margin-bottom: 0.3rem;
+    }
+
+.ps-action-bar {
+    display: flex;
+    border-top: 1px solid var(--glass-edge-blue);
+    background: linear-gradient(90deg, rgba(0,113,227,0.04), rgba(120,120,128,0.04));
+}
+
+.ps-btn {
+    flex: 1;
+    border: none;
+    background: transparent;
+    font-weight: 800;
+    font-size: 1.4rem;
+    color: var(--sapphire);
+    cursor: pointer;
+    padding: 0.6rem;
+    transition: all 0.2s ease;
+}
+
+    .ps-btn:hover {
+        background: var(--azure-glow-soft);
+        color: var(--azure);
+    }
+
+.ps-qty {
+    flex: 1;
+    border: none;
+    border-left: 1px solid var(--glass-edge-blue);
+    border-right: 1px solid var(--glass-edge-blue);
+    text-align: center;
+    font-weight: 800;
+    font-size: 1.2rem;
+    background: transparent;
+    color: var(--sapphire);
+    width: 40px;
+}
+
+/* ================= Scrollbars ================= */
+.h-scroll-container {
+    display: flex;
+    gap: 1.5rem;
+    overflow-x: auto;
+    padding-bottom: 1.5rem;
+    padding-top: 1rem;
+    scroll-snap-type: x mandatory;
+}
+
+::-webkit-scrollbar {
+    width: 6px;
+    height: 6px;
+}
+
+::-webkit-scrollbar-track {
+    background: rgba(0, 0, 0, 0.05);
+    border-radius: 10px;
+}
+
+::-webkit-scrollbar-thumb {
+    background: linear-gradient(180deg, var(--azure-soft), var(--sapphire));
+    border-radius: 10px;
+}
+
+    ::-webkit-scrollbar-thumb:hover {
+        background: var(--sapphire);
+    }
+
+/* ================= 3 Columns Grid ================= */
+.cards-grid-3 {
+    display: grid;
+    grid-template-columns: repeat(auto-fill, minmax(320px, 1fr));
+    gap: 1.5rem;
+    max-height: calc(100vh - 200px);
+    overflow-y: auto;
+    padding: 0.5rem 5px 1rem 12px;
+}
+
+    .cards-grid-3 .wf-card {
+        min-width: unset;
+        max-width: unset;
+        width: 100%;
+    }
+
+/* ================= Premium Forms & Inputs ================= */
+.glass-form-container {
+    background: var(--glass-grad);
+    backdrop-filter: blur(26px) saturate(150%);
+    -webkit-backdrop-filter: blur(26px) saturate(150%);
+    border: 1px solid transparent;
+    border-image: var(--glass-border-grad) 1;
+    border-radius: var(--radius-medium);
+    padding: 2.5rem;
+    box-shadow: var(--shadow-glass);
+    max-width: 700px;
+    margin: 2rem auto;
+}
+
+.form-header {
+    margin-bottom: 2rem;
+    border-bottom: 1px solid var(--glass-edge-blue);
+    padding-bottom: 1rem;
+}
+
+    .form-header h2 {
+        color: var(--sapphire);
+        font-weight: 800;
+        margin: 0 0 0.5rem 0;
+    }
+
+    .form-header p {
+        color: var(--text-slate);
+        font-size: 0.95rem;
+        margin: 0;
+    }
+
+.premium-label {
+    font-weight: 700;
+    color: var(--sapphire);
+    margin-bottom: 0.5rem;
+    display: block;
+    font-size: 0.95rem;
+}
+
+.premium-input {
+    width: 100%;
+    padding: 0.8rem 1.2rem;
+    border: 2px solid rgba(0, 0, 0, 0.08);
+    border-radius: var(--radius-sharp);
+    background: linear-gradient(120deg, rgba(255,255,255,0.92), rgba(238,238,240,0.75));
+    color: var(--text-ink);
+    font-family: var(--font-ar);
+    font-size: 1rem;
+    transition: all 0.3s ease;
+    margin-bottom: 1.5rem;
+}
+
+    .premium-input:focus {
+        outline: none;
+        border-color: var(--azure);
+        box-shadow: 0 0 0 4px var(--azure-glow-soft);
+        background: #ffffff;
+    }
+
+.form-actions {
+    display: flex;
+    gap: 1rem;
+    margin-top: 2rem;
+}
+
+    .form-actions button,
+    .form-actions a {
+        flex: 1;
+        text-align: center;
+    }
+
+/* ================= Tables (products / customers / packages lists) ================= */
+.table-glass-wrap {
+    background: var(--glass-grad);
+    backdrop-filter: blur(20px) saturate(150%);
+    -webkit-backdrop-filter: blur(20px) saturate(150%);
+    border: 1px solid transparent;
+    border-image: var(--glass-border-grad) 1;
+    border-radius: var(--radius-medium);
+    box-shadow: var(--shadow-glass);
+    overflow: hidden;
+}
+
+.table-glass {
+    width: 100%;
+    border-collapse: collapse;
+}
+
+    .table-glass th {
+        background: linear-gradient(120deg, rgba(0,0,0,0.04), rgba(0,113,227,0.04));
+        color: var(--sapphire);
+        font-weight: 800;
+        text-align: right;
+        padding: 1rem 1.2rem;
+        font-size: 0.85rem;
+        text-transform: uppercase;
+        letter-spacing: 0.5px;
+        border-bottom: 1px solid var(--glass-edge-blue);
+    }
+
+    .table-glass td {
+        padding: 0.95rem 1.2rem;
+        border-bottom: 1px solid rgba(0, 0, 0, 0.06);
+        color: var(--text-ink);
+    }
+
+    .table-glass tbody tr {
+        transition: background 0.2s ease;
+    }
+
+        .table-glass tbody tr:hover {
+            background: var(--azure-glow-soft);
+        }
+
+        .table-glass tbody tr:last-child td {
+            border-bottom: none;
+        }
+
+/* ================= Badges & Alerts ================= */
+.badge-glass {
+    display: inline-flex;
+    align-items: center;
+    padding: 0.3rem 0.8rem;
+    border-radius: 100px;
+    font-size: 0.8rem;
+    font-weight: 700;
+    background: linear-gradient(120deg, var(--azure-glow-soft), rgba(120,120,128,0.1));
+    color: var(--sapphire);
+    border: 1px solid var(--azure-glow);
+}
+
+.alert-glass {
+    background: linear-gradient(120deg, rgba(255,255,255,0.88), rgba(234,234,236,0.6));
+    backdrop-filter: blur(18px);
+    border: 1px solid var(--glass-border);
+    border-right: 4px solid var(--azure);
+    color: var(--sapphire);
+    border-radius: var(--radius-sharp);
+    padding: 1rem 1.4rem;
+    font-weight: 600;
+    box-shadow: var(--shadow-glass);
+}

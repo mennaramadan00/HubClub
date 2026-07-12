@@ -3,37 +3,31 @@
     ViewData["Title"] = "تفاصيل الشريحة";
 }
 
-<link rel="stylesheet" href="~/css/products.css" asp-append-version="true" />
+<div class="glass-form-container" dir="rtl" style="max-width: 500px;">
+    <div class="form-header text-center pb-4">
+        <h2 style="font-size: 1.8rem; color: var(--sapphire);">تفاصيل شريحة التسعير</h2>
+        <div class="mt-3 mb-2" style="font-size: 2.2rem; font-weight: 800; color: var(--sapphire);">
+            @Model.Price.ToString("N2") <span style="font-size: 1.2rem;">ج.م</span>
+        </div>
+    </div>
 
-<div class="detail-page">
-    <div class="detail-card">
-        <div class="detail-hero">
-            <div class="product-icon">⚙️</div>
-            <h2>تفاصيل الشريحة</h2>
-            <div class="price-display">
-                @Model.Price.ToString("N2") <span>جنيه</span>
-            </div>
+    <div class="mt-4">
+        <div class="wf-data-row">
+            <span class="wf-data-label">الحد الأدنى</span>
+            <span class="wf-data-val">@Model.MinNumberOfHours ساعة</span>
         </div>
+        <div class="wf-data-row">
+            <span class="wf-data-label">الحد الأقصى</span>
+            <span class="wf-data-val">@Model.MaxNumberOfHours ساعة</span>
+        </div>
+    </div>
 
-        <div class="detail-body">
-            <div class="info-row">
-                <span class="info-key">⏳ من</span>
-                <span class="info-val">
-                    <span class="qty-badge">@Model.MinNumberOfHours ساعة</span>
-                </span>
-            </div>
-            <div class="info-row">
-                <span class="info-key">⌛ إلى</span>
-                <span class="info-val">@Model.MaxNumberOfHours ساعة</span>
-            </div>
-        </div>
+    <div class="form-actions mt-5">
+        <a asp-action="Edit" asp-route-id="@Model.PricingSettingId" class="btn-aurelian-primary">تعديل البيانات</a>
+        <a asp-action="Delete" asp-route-id="@Model.PricingSettingId" class="btn-aurelian-outline" style="color: #ef4444; border-color: #ef4444;">حذف الشريحة</a>
+    </div>
 
-        <div class="detail-actions">
-            <a asp-action="Edit" asp-route-id="@Model.PricingSettingId" class="btn-edit">✏️ تعديل</a>
-            <a asp-action="Delete" asp-route-id="@Model.PricingSettingId" class="btn-delete">🗑 حذف</a>
-        </div>
-        <div style="text-align: center; margin-bottom: 1rem;">
-            <a asp-action="Index" class="btn-back" style="border: none; background: transparent;">← العودة للقائمة</a>
-        </div>
+    <div class="text-center mt-4">
+        <a asp-action="Index" style="color: var(--sapphire); font-weight: 700; text-decoration: none;">العودة للقائمة</a>
     </div>
 </div>

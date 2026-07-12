@@ -3,65 +3,51 @@
     ViewData["Title"] = "تعديل المنتج";
 }
 
-<link rel="stylesheet" href="~/css/products.css" asp-append-version="true" />
-
-<div class="form-page">
-    <div class="form-card">
-        <div class="form-card-header">
-            <div class="icon">✏️</div>
-            <div>
-                <h2>تعديل المنتج</h2>
-                <p>@Model.Name</p>
-            </div>
-        </div>
-        <div class="form-body">
-
-            <div class="edit-notice">
-                ⚠️ تعديل السعر لن يؤثر على الجلسات المسجّلة مسبقاً
-            </div>
-
-            <form asp-action="Edit" method="post">
-                <div asp-validation-summary="ModelOnly" class="validation-summary text-danger"></div>
-                <input type="hidden" asp-for="ProductId" />
-
-                <div class="field-group">
-                    <label class="field-label" asp-for="Name">
-                        اسم المنتج <span class="required">*</span>
-                    </label>
-                    <input asp-for="Name" class="field-input" />
-                    <span asp-validation-for="Name" class="field-error"></span>
-                </div>
-
-                <div class="field-group">
-                    <label class="field-label" asp-for="Price">
-                        السعر (جنيه) <span class="required">*</span>
-                    </label>
-                    <input asp-for="Price" class="field-input" type="number" step="0.01" min="0" />
-                    <span asp-validation-for="Price" class="field-error"></span>
-                </div>
-
-                <div class="field-group">
-                    <label class="field-label" asp-for="Quantity">
-                        الكمية المتاحة <span class="required">*</span>
-                    </label>
-                    <input asp-for="Quantity" class="field-input" type="number" min="0" />
-                    <span asp-validation-for="Quantity" class="field-error"></span>
-                </div>
-
-                <div class="field-group">
-                    <div class="toggle-group">
-                        <input asp-for="IsActive" type="checkbox" id="IsActive" />
-                        <label for="IsActive">المنتج متاح للبيع</label>
-                    </div>
-                </div>
-
-                <div class="form-actions">
-                    <a asp-action="Index" class="btn-back">← رجوع</a>
-                    <button type="submit" class="btn-save">💾 حفظ التعديلات</button>
-                </div>
-            </form>
-        </div>
+<div class="glass-form-container" dir="rtl">
+    <div class="form-header">
+        <h2>تعديل المنتج</h2>
+        <p>تحديث بيانات: <strong>@Model.Name</strong></p>
     </div>
+
+    <div class="alert-glass mb-4" style="border-right-color: var(--sapphire);">
+        <strong>ملاحظة هامة:</strong> تعديل السعر سيطبق على المبيعات الجديدة فقط، ولن يؤثر على الجلسات التي تم تسجيلها مسبقاً بهذا المنتج.
+    </div>
+
+    <form asp-action="Edit" asp-route-id="@Model.ProductId" method="post">
+        <div asp-validation-summary="ModelOnly" class="text-danger mb-3 fw-bold"></div>
+
+        <!-- تم الاكتفاء بمعرف المنتج فقط وإزالة حقل تاريخ الإنشاء لمنع خطأ قاعدة البيانات -->
+        <input type="hidden" asp-for="ProductId" />
+
+        <div>
+            <label class="premium-label" asp-for="Name">اسم المنتج <span class="text-danger">*</span></label>
+            <input asp-for="Name" class="premium-input" />
+            <span asp-validation-for="Name" class="text-danger small mt-1 d-block fw-bold mb-3"></span>
+        </div>
+
+        <div class="row">
+            <div class="col-md-6">
+                <label class="premium-label" asp-for="Price">السعر (ج.م) <span class="text-danger">*</span></label>
+                <input asp-for="Price" class="premium-input" type="number" step="0.01" min="0" />
+                <span asp-validation-for="Price" class="text-danger small mt-1 d-block fw-bold mb-3"></span>
+            </div>
+            <div class="col-md-6">
+                <label class="premium-label" asp-for="Quantity">الكمية المتاحة (المخزون) <span class="text-danger">*</span></label>
+                <input asp-for="Quantity" class="premium-input" type="number" min="0" />
+                <span asp-validation-for="Quantity" class="text-danger small mt-1 d-block fw-bold mb-3"></span>
+            </div>
+        </div>
+
+        <div class="d-flex align-items-center gap-3 mb-4 mt-2">
+            <input asp-for="IsActive" type="checkbox" id="IsActive" style="transform: scale(1.5); accent-color: var(--sapphire);" />
+            <label for="IsActive" class="premium-label mb-0" style="cursor: pointer;">تفعيل المنتج للبيع</label>
+        </div>
+
+        <div class="form-actions">
+            <button type="submit" class="btn-aurelian-primary">حفظ التعديلات</button>
+            <a asp-action="Index" class="btn-aurelian-outline">العودة للقائمة</a>
+        </div>
+    </form>
 </div>
 
 @section Scripts {

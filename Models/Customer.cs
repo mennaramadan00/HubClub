@@ -16,13 +16,13 @@ namespace HubClub.Models
         public string Name { get; set; } = string.Empty;
 
         [Required(ErrorMessage = "رقم الهاتف مطلوب")]
-        [StringLength(20, ErrorMessage = "رقم الهاتف لا يتجاوز 11 رقم")]
+        [StringLength(11, ErrorMessage = "رقم الهاتف لا يتجاوز 11 رقم")]
         [RegularExpression(@"^[0-9]+$", ErrorMessage = "رقم الهاتف يجب أن يحتوي على أرقام فقط")]
         [Display(Name = "رقم الهاتف")]
         
         public string Phone { get; set; } = string.Empty;
 
-        [DatabaseGenerated(DatabaseGeneratedOption.Computed)]
+        //[DatabaseGenerated(DatabaseGeneratedOption.Computed)]
         public DateTime CreatedAt { get; set; } = DateTime.Now;
 
         [Display(Name = "حالة الحساب")]

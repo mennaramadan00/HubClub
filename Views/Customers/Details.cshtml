@@ -3,36 +3,31 @@
     ViewData["Title"] = "بيانات العميل";
 }
 
-<link rel="stylesheet" href="~/css/products.css" asp-append-version="true" />
+<div class="glass-form-container" dir="rtl" style="max-width: 600px;">
+    <div class="form-header text-center pb-4">
+        <h2 style="font-size: 2rem;">@Model.Name</h2>
+        <span class="badge-glass mt-2" style="font-size: 1rem; padding: 0.5rem 1rem;">
+            @(Model.IsActive ? "حساب نشط" : "حساب مؤرشف")
+        </span>
+    </div>
 
-<div class="detail-page">
-    <div class="detail-card">
-        <div class="detail-hero">
-            <div class="product-icon">👤</div>
-            <h2>@Model.Name</h2>
-            <div class="price-display">
-                <span style="font-size: 1.2rem; color: var(--white);">📞 @Model.Phone</span>
-            </div>
-            <div>
-                <span class="status-pill @(Model.IsActive ? "active" : "inactive")">
-                    @(Model.IsActive ? "✓ حساب نشط" : "✗ حساب مؤرشف")
-                </span>
-            </div>
+    <div class="mt-4">
+        <div class="wf-data-row">
+            <span class="wf-data-label">رقم الهاتف</span>
+            <span class="wf-data-val" style="font-size: 1.2rem;">@Model.Phone</span>
         </div>
+        <div class="wf-data-row">
+            <span class="wf-data-label">تاريخ التسجيل</span>
+            <span class="wf-data-val">@Model.CreatedAt.ToString("dd/MM/yyyy hh:mm tt")</span>
+        </div>
+    </div>
 
-        <div class="detail-body">
-            <div class="info-row">
-                <span class="info-key">📅 تاريخ التسجيل</span>
-                <span class="info-val">@Model.CreatedAt.ToString("dd/MM/yyyy hh:mm tt")</span>
-            </div>
-        </div>
+    <div class="form-actions mt-5">
+        <a asp-action="Edit" asp-route-id="@Model.CustomerId" class="btn-aurelian-primary">تعديل البيانات</a>
+        <a asp-action="Delete" asp-route-id="@Model.CustomerId" class="btn-aurelian-outline" style="color: #ef4444; border-color: #ef4444;">حذف العميل</a>
+    </div>
 
-        <div class="detail-actions">
-            <a asp-action="Edit" asp-route-id="@Model.CustomerId" class="btn-edit">✏️ تعديل</a>
-            <a asp-action="Delete" asp-route-id="@Model.CustomerId" class="btn-delete">🗑 حذف</a>
-        </div>
-        <div style="text-align: center; margin-bottom: 1rem;">
-            <a asp-action="Index" class="btn-back" style="border: none; background: transparent;">← العودة للقائمة</a>
-        </div>
+    <div class="text-center mt-4">
+        <a asp-action="Index" style="color: var(--sapphire); font-weight: 700; text-decoration: none;">العودة للقائمة</a>
     </div>
 </div>

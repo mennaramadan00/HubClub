@@ -115,36 +115,32 @@ namespace HubClub.Controllers
         // This preserves historical session data that references this product
         [HttpPost, ActionName("Delete")]
         [ValidateAntiForgeryToken]
+        
         public async Task<IActionResult> DeleteConfirmed(int id)
         {
             var product = await _context.Products.FindAsync(id);
+            if (product == null) return NotFound();
 
-            if (product != null)
+            // فحص: هل المنتج ده اتباع في أي فاتورة قبل كده؟
+            bool isUsedInSessions = await _context.SessionProducts.AnyAsync(sp => sp.ProductId == id);
+
+            if (isUsedInSessions)
             {
-                // Soft delete: check if product has been used in any session
-                bool usedInSessions = await _context.SessionProducts
-                    .AnyAsync(sp => sp.ProductId == id);
-
-                if (usedInSessions)
-                {
-                    // Just mark as inactive to preserve history
-                    product.IsActive = false;
-                    _context.Update(product);
-                    TempData["Warning"] = "تم إخفاء المنتج لأنه مستخدم في جلسات سابقة";
-                }
-                else
-                {
-                    // Safe to hard delete if never used
-                    _context.Products.Remove(product);
-                    TempData["Success"] = "تم حذف المنتج بنجاح";
-                }
-
-                await _context.SaveChangesAsync();
+                // إيقاف المنتج بدل حذفه
+                product.IsActive = false;
+                _context.Products.Update(product);
+                TempData["Warning"] = "تم إيقاف المنتج بدلاً من حذفه نهائياً لارتباطه بفواتير سابقة.";
+            }
+            else
+            {
+                // حذفه نهائياً لو لم يتم بيعه أبداً
+                _context.Products.Remove(product);
+                TempData["Success"] = "تم حذف المنتج بنجاح.";
             }
 
+            await _context.SaveChangesAsync();
             return RedirectToAction(nameof(Index));
         }
-
         private bool ProductExists(int id)
         {
             return _context.Products.Any(e => e.ProductId == id);

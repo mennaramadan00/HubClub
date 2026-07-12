@@ -3,52 +3,39 @@
     ViewData["Title"] = "إضافة شريحة تسعير";
 }
 
-<link rel="stylesheet" href="~/css/products.css" asp-append-version="true" />
+<div class="glass-form-container" dir="rtl">
+    <div class="form-header">
+        <h2>إضافة شريحة جديدة</h2>
+        <p>تحديد تسعير مخصص لعدد معين من الساعات</p>
+    </div>
 
-<div class="form-page">
-    <div class="form-card">
-        <div class="form-card-header">
-            <div class="icon">➕</div>
-            <div>
-                <h2>إضافة شريحة جديدة</h2>
-                <p>تحديد سعر لعدد معين من الساعات</p>
+    <form asp-action="Create" method="post">
+        <div asp-validation-summary="ModelOnly" class="text-danger mb-3 fw-bold"></div>
+
+        <div class="row">
+            <div class="col-md-6">
+                <label class="premium-label" asp-for="MinNumberOfHours">من (ساعة) <span class="text-danger">*</span></label>
+                <input asp-for="MinNumberOfHours" class="premium-input" type="number" step="0.5" min="0" placeholder="الحد الأدنى..." />
+                <span asp-validation-for="MinNumberOfHours" class="text-danger small mt-1 d-block fw-bold mb-3"></span>
+            </div>
+            <div class="col-md-6">
+                <label class="premium-label" asp-for="MaxNumberOfHours">إلى (ساعة) <span class="text-danger">*</span></label>
+                <input asp-for="MaxNumberOfHours" class="premium-input" type="number" step="0.5" min="0.5" placeholder="الحد الأقصى..." />
+                <span asp-validation-for="MaxNumberOfHours" class="text-danger small mt-1 d-block fw-bold mb-3"></span>
             </div>
         </div>
-        <div class="form-body">
-            <form asp-action="Create" method="post">
-                <div asp-validation-summary="ModelOnly" class="validation-summary text-danger"></div>
 
-                <div class="field-group">
-                    <label class="field-label" asp-for="MinNumberOfHours">
-                        من (ساعة) <span class="required">*</span>
-                    </label>
-                    <input asp-for="MinNumberOfHours" class="field-input" type="number" step="0.5" min="0" placeholder="مثال: 0" />
-                    <span asp-validation-for="MinNumberOfHours" class="field-error"></span>
-                </div>
-
-                <div class="field-group">
-                    <label class="field-label" asp-for="MaxNumberOfHours">
-                        إلى (ساعة) <span class="required">*</span>
-                    </label>
-                    <input asp-for="MaxNumberOfHours" class="field-input" type="number" step="0.5" min="0.5" placeholder="مثال: 2" />
-                    <span asp-validation-for="MaxNumberOfHours" class="field-error"></span>
-                </div>
-
-                <div class="field-group">
-                    <label class="field-label" asp-for="Price">
-                        السعر (جنيه) <span class="required">*</span>
-                    </label>
-                    <input asp-for="Price" class="field-input" type="number" step="0.01" min="1" placeholder="مثال: 20" />
-                    <span asp-validation-for="Price" class="field-error"></span>
-                </div>
-
-                <div class="form-actions">
-                    <a asp-action="Index" class="btn-back">← رجوع</a>
-                    <button type="submit" class="btn-save">💾 حفظ الشريحة</button>
-                </div>
-            </form>
+        <div>
+            <label class="premium-label" asp-for="Price">سعر الشريحة (ج.م) <span class="text-danger">*</span></label>
+            <input asp-for="Price" class="premium-input" type="number" step="0.01" min="1" placeholder="مثال: 20" />
+            <span asp-validation-for="Price" class="text-danger small mt-1 d-block fw-bold mb-4"></span>
         </div>
-    </div>
+
+        <div class="form-actions">
+            <button type="submit" class="btn-aurelian-primary">حفظ الشريحة</button>
+            <a asp-action="Index" class="btn-aurelian-outline">العودة للقائمة</a>
+        </div>
+    </form>
 </div>
 
 @section Scripts {

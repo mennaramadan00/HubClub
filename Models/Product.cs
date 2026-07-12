@@ -29,8 +29,10 @@ namespace HubClub.Models
         [Display(Name = "متاح")]
         public bool IsActive { get; set; } = true;
 
-        [DatabaseGenerated(DatabaseGeneratedOption.Computed)]
+        //[DatabaseGenerated(DatabaseGeneratedOption.Computed)]
         public DateTime CreatedAt { get; set; } = DateTime.Now;
+        [Timestamp]
+        public DateTime RowVersion { get; set; }
 
         // Navigation properties
         public ICollection<SessionProduct> SessionProducts { get; set; } = new List<SessionProduct>();

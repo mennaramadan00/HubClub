@@ -4,9 +4,11 @@ using HubClub.Data;
 using HubClub.Models;
 using HubClub.ViewModels;
 using System;
+using System.Collections.Generic;
 using System.Linq;
 using System.Threading.Tasks;
 using HubClub.Helpers;
+
 namespace HubClub.Controllers
 {
     public class HomeController : Controller
@@ -18,57 +20,85 @@ namespace HubClub.Controllers
             _context = context;
         }
 
-        public async Task<IActionResult> Index()
+        // ─────────────────────────────────────────
+        // Private Helper: ده اللي بيعمل كل الشغل التقيل وبيجيب الداتا
+        // ─────────────────────────────────────────
+        private async Task<HomeIndexViewModel> BuildHomeViewModelAsync()
         {
             var now = DateTime.Now;
-            var currentBusinessDate = BusinessHelper.GetBusinessDate(now);
+            var todayBusinessDate = BusinessHelper.GetBusinessDate(now);
 
-            // جلب الجلسات مع مراعاة الـ Soft Delete (بافتراض وجود خاصية IsDeleted)
-            // إذا كانت الخاصية لديك اسمها IsActive، استبدلي !s.IsDeleted بـ s.IsActive
-            var query = _context.Sessions
+            // 🚀 إضافة AsNoTracking لتسريع الأداء (كما نصح ChatGPT)
+            var sessions = await _context.Sessions
+                .AsNoTracking()
                 .Include(s => s.Customer)
-                .Include(s => s.SessionProducts).ThenInclude(sp => sp.Product)
-                .AsQueryable();
-
-            // فحص وجود خاصية IsDeleted للـ Session والـ Customer
-            // .Where(s => !s.IsDeleted && !s.Customer.IsDeleted) // فكي التعليق هنا لو بتستخدمي IsDeleted
-
-            var todaySessions = await query
-                .Where(s => s.BusinessDate == currentBusinessDate || !s.IsClosed)
+                .Include(s => s.SessionProducts)
+                    .ThenInclude(sp => sp.Product)
+                .Where(s => !s.IsClosed || s.BusinessDate == todayBusinessDate)
                 .ToListAsync();
 
-            var closedSessions = todaySessions.Where(s => s.IsClosed && s.BusinessDate == currentBusinessDate).ToList();
-
-            var viewModel = new HomeIndexViewModel
+            var vm = new HomeIndexViewModel
             {
-                BusinessDate = currentBusinessDate,
-                ActiveCustomersCount = todaySessions.Count(s => !s.IsClosed),
-                TodayTotalTimeCash = closedSessions.Sum(s => s.TotalTimePrice),
-                TodayTotalProductCash = closedSessions.Sum(s => s.TotalProductPrice),
-                TodayTotalCash = closedSessions.Sum(s => s.GrandTotal)
+                BusinessDate = todayBusinessDate,
+                ActiveSessions = new List<SessionCardViewModel>(),
+                ClosedSessions = new List<SessionCardViewModel>()
             };
 
-            foreach (var session in todaySessions)
+            foreach (var s in sessions)
             {
                 var card = new SessionCardViewModel
                 {
-                    SessionId = session.SessionId,
-                    CustomerName = session.Customer?.Name ?? "عميل غير معروف",
-                    StartTime = session.StartTime,
-                    EndTime = session.EndTime,
-                    PaymentType = session.PaymentType,
-                    GrandTotal = session.GrandTotal,
-                    ProductNames = session.SessionProducts.Select(sp => $"{sp.Product?.Name} (x{sp.Quantity})").ToList()
+                    SessionId = s.SessionId,
+                    CustomerName = s.Customer?.Name ?? "Unknown",
+                    CustomerPhone = s.Customer?.Phone,
+                    StartTime = s.StartTime,
+                    EndTime = s.EndTime,
+                    IsClosed = s.IsClosed,
+                    PaymentType = s.PaymentType,
+                    TotalTimePrice = s.TotalTimePrice,
+                    TotalProductPrice = s.TotalProductPrice,
+                    GrandTotal = s.GrandTotal,
+                    // ⚠️ إضافة الحماية ضد المنتجات المحذوفة (Null Safety)
+                    ProductNames = s.SessionProducts
+                        .Select(sp => $"{sp.Product?.Name ?? "منتج محذوف"} (x{sp.Quantity})")
+                        .ToList()
                 };
 
-                if (session.IsClosed) viewModel.ClosedSessions.Add(card);
-                else viewModel.ActiveSessions.Add(card);
+                if (!s.IsClosed)
+                {
+                    // أي جلسة مفتوحة بتترمي في الـ Active فوراً
+                    vm.ActiveSessions.Add(card);
+                }
+                else if (s.BusinessDate == todayBusinessDate)
+                {
+                    // الجلسات المقفولة بنحطها في التحليلات لو هي بتاعة نفس اليوم المحاسبي
+                    vm.ClosedSessions.Add(card);
+                    vm.TodayTotalTimeCash += s.TotalTimePrice;
+                    vm.TodayTotalProductCash += s.TotalProductPrice;
+                    vm.TodayTotalCash += s.GrandTotal;
+                }
             }
 
-            viewModel.ActiveSessions = viewModel.ActiveSessions.OrderBy(s => s.StartTime).ToList();
-            viewModel.ClosedSessions = viewModel.ClosedSessions.OrderByDescending(s => s.EndTime).ToList();
+            vm.ActiveCustomersCount = vm.ActiveSessions.Count;
+            vm.ActiveSessions = vm.ActiveSessions.OrderByDescending(s => s.StartTime).ToList();
+            vm.ClosedSessions = vm.ClosedSessions.OrderByDescending(s => s.EndTime).ToList();
 
-            return View(viewModel);
+            return vm;
+        }
+
+        // ─────────────────────────────────────────
+        // Actions
+        // ─────────────────────────────────────────
+        public async Task<IActionResult> Index()
+        {
+            var vm = await BuildHomeViewModelAsync();
+            return View(vm);
+        }
+
+        public async Task<IActionResult> DailyAnalysis()
+        {
+            var vm = await BuildHomeViewModelAsync();
+            return View("DailyAnalysis", vm);
         }
     }
 }
