@@ -4,6 +4,25 @@
     ViewData["Title"] = "إدارة الجلسات";
 }
 
+<!-- شريط البحث الفاخر -->
+<div class="mb-4" style="background: rgba(255, 255, 255, 0.6); padding: 1rem; border-radius: 12px; border: 1px solid var(--glass-edge-blue);">
+    <form method="get" asp-action="Index" class="d-flex gap-2 align-items-center m-0">
+        <input type="text" name="searchString" value="@ViewData["CurrentFilter"]"
+               class="premium-input m-0 flex-grow-1"
+               placeholder="ابحث عن جلسة باسم العميل أو رقم الهاتف..." />
+
+        <button type="submit" class="btn-aurelian-primary" style="white-space: nowrap; padding: 0.6rem 1.5rem;">
+            بحث
+        </button>
+
+        <!-- زر الإلغاء يظهر فقط إذا كان هناك بحث نشط -->
+        @if (ViewData["CurrentFilter"] != null && !string.IsNullOrEmpty(ViewData["CurrentFilter"].ToString()))
+        {
+            <a asp-action="Index" class="btn-aurelian-outline" style="white-space: nowrap; padding: 0.6rem 1.5rem;">إلغاء البحث</a>
+        }
+    </form>
+</div>
+
 <div class="d-flex justify-content-between align-items-center mb-4">
     <h3 style="font-weight: 800; color: var(--sapphire); margin-bottom: 0;">
         جميع الجلسات المفتوحة (@Model.ActiveCustomersCount)
@@ -18,9 +37,8 @@
 @if (!Model.ActiveSessions.Any())
 {
     <div class="glass-form-container text-center py-5 mt-4">
-        <h3 style="color: var(--sapphire); font-weight: 800;">لا توجد جلسات مفتوحة حالياً</h3>
-        <p style="color: var(--text-slate);">يمكنك بدء جلسة جديدة لاستقبال العملاء.</p>
-        <!-- الزر الإضافي هنا للفت الانتباه عندما تكون الشاشة فارغة تماماً -->
+        <h3 style="color: var(--sapphire); font-weight: 800;">لا توجد جلسات مطابقة حالياً</h3>
+        <p style="color: var(--text-slate);">لم يتم العثور على نتائج، أو لا توجد جلسات مفتوحة.</p>
         <a asp-controller="Session" asp-action="Open" class="btn-aurelian-primary mt-3">بدء جلسة جديدة</a>
     </div>
 }

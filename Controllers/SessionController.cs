@@ -553,7 +553,6 @@ namespace HubClub.Controllers
                         session.TotalTimePrice = 0;
                     }
 
-                    // 🟢 التعديل الأهم: إجبار الـ Context على تحديث الباقة
                     _context.UserPackages.Update(session.UserPackage);
                 }
                 else if (session.PaymentType != PaymentType.Package)
@@ -563,8 +562,13 @@ namespace HubClub.Controllers
                     session.PriceSettingId = tier?.PricingSettingId; // تسجيل الشريحة للجلسة العادية
                 }
 
+                // حساب إجمالي المنتجات للتقارير
                 session.TotalProductPrice = session.SessionProducts.Sum(sp => sp.TotalPrice);
-                session.GrandTotal = session.TotalTimePrice + session.TotalProductPrice;
+
+                // 🟢 التعديل السحري هنا:
+                // بدلاً من الجمع التلقائي (session.TotalTimePrice + session.TotalProductPrice)
+                // سنأخذ القيمة التي قمتِ بتعديلها بيدك في الشاشة مباشرة:
+                session.GrandTotal = vm.GrandTotal;
 
                 await _context.SaveChangesAsync();
                 await transaction.CommitAsync();

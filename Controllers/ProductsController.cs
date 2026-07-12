@@ -75,7 +75,8 @@ namespace HubClub.Controllers
         // POST: Products/Edit/5
         [HttpPost]
         [ValidateAntiForgeryToken]
-        public async Task<IActionResult> Edit(int id, [Bind("ProductId,Name,Price,Quantity,IsActive,CreatedAt")] Product product)
+        // قمنا بإزالة CreatedAt من الـ Bind لأننا لا نستقبلها من الشاشة
+        public async Task<IActionResult> Edit(int id, [Bind("ProductId,Name,Price,Quantity,IsActive")] Product product)
         {
             if (id != product.ProductId) return NotFound();
 
@@ -83,8 +84,25 @@ namespace HubClub.Controllers
             {
                 try
                 {
-                    _context.Update(product);
+                    // 1. نجلب المنتج الأصلي بجميع بياناته (بما فيها تاريخ الإنشاء الأصلي) من قاعدة البيانات
+                    var existingProduct = await _context.Products.FindAsync(id);
+
+                    if (existingProduct == null)
+                    {
+                        return NotFound();
+                    }
+
+                    // 2. نحدث الحقول التي جاءت من الشاشة فقط
+                    existingProduct.Name = product.Name;
+                    existingProduct.Price = product.Price;
+                    existingProduct.Quantity = product.Quantity;
+                    existingProduct.IsActive = product.IsActive;
+
+                    // تاريخ الإنشاء (CreatedAt) سيبقى كما هو ولن يسبب أي خطأ
+
+                    _context.Update(existingProduct);
                     await _context.SaveChangesAsync();
+
                     TempData["Success"] = "تم تعديل المنتج بنجاح";
                 }
                 catch (DbUpdateConcurrencyException)

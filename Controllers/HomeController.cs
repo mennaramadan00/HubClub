@@ -89,12 +89,42 @@ namespace HubClub.Controllers
         // ─────────────────────────────────────────
         // Actions
         // ─────────────────────────────────────────
-        public async Task<IActionResult> Index()
+        public async Task<IActionResult> Index(string searchString)
         {
+            // 1. نجلب كل البيانات الأساسية والإجماليات باستخدام دالتك الأصلية بكل أمان
             var vm = await BuildHomeViewModelAsync();
+
+            // 2. نحتفظ بكلمة البحث لكي تظل مكتوبة في مربع النص على الشاشة
+            ViewData["CurrentFilter"] = searchString;
+
+            // 3. إذا قام المستخدم بكتابة شيء في البحث، نقوم بفلترة الجلسات
+            if (!string.IsNullOrEmpty(searchString))
+            {
+                // فلترة الجلسات المفتوحة (حسب الاسم أو رقم الهاتف)
+                if (vm.ActiveSessions != null)
+                {
+                    vm.ActiveSessions = vm.ActiveSessions
+                        .Where(s => (s.CustomerName != null && s.CustomerName.Contains(searchString)) ||
+                                    (s.CustomerPhone != null && s.CustomerPhone.Contains(searchString)))
+                        .ToList();
+
+                    // تحديث رقم (العداد) الخاص بالجلسات المفتوحة ليتطابق مع نتيجة البحث
+                    vm.ActiveCustomersCount = vm.ActiveSessions.Count;
+                }
+
+                // إذا كنتِ تريدين فلترة الجلسات المغلقة (التي في أسفل الشاشة) أيضاً بنفس كلمة البحث:
+                if (vm.ClosedSessions != null)
+                {
+                    vm.ClosedSessions = vm.ClosedSessions
+                        .Where(s => (s.CustomerName != null && s.CustomerName.Contains(searchString)) ||
+                                    (s.CustomerPhone != null && s.CustomerPhone.Contains(searchString)))
+                        .ToList();
+                }
+            }
+
+            // 4. نرسل البيانات (المفلترة) إلى الشاشة
             return View(vm);
         }
-
         public async Task<IActionResult> DailyAnalysis()
         {
             var vm = await BuildHomeViewModelAsync();

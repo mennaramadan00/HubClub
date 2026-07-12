@@ -89,11 +89,12 @@
                     <span class="wf-data-val" id="productsTotal">@Model.TotalProductPrice.ToString("N2")</span>
                 </div>
 
-                <div class="wf-data-row mt-4" style="background: var(--sapphire); border-color: var(--sapphire);">
-                    <span class="wf-data-label" style="color: rgba(255,255,255,0.85);">الإجمالي النهائي المطلوب</span>
-                    <span class="wf-data-val" id="grandTotal" style="font-size: 1.3rem; color: #ffffff;">
-                        @((Model.IsPackageSession ? Model.TotalProductPrice : Model.CalculatedTimePrice + Model.TotalProductPrice).ToString("F2", System.Globalization.CultureInfo.InvariantCulture))
-                    </span>
+                <!-- 🟢 التعديل هنا: تحويل الإجمالي إلى مربع نص (Input) قابل للتعديل -->
+                <div class="wf-data-row mt-4" style="background: var(--sapphire); border-color: var(--sapphire); align-items: center;">
+                    <span class="wf-data-label" style="color: rgba(255,255,255,0.85);">الإجمالي النهائي</span>
+                    <input type="number" step="0.01" id="grandTotal" name="GrandTotal"
+                           value="@((Model.IsPackageSession ? Model.TotalProductPrice : Model.CalculatedTimePrice + Model.TotalProductPrice).ToString("F2", System.Globalization.CultureInfo.InvariantCulture))"
+                           style="width: 100px; text-align: center; font-size: 1.3rem; font-weight: bold; color: #ffffff; background: rgba(255,255,255,0.1); border: 1px solid rgba(255,255,255,0.3); border-radius: 6px; padding: 4px;" />
                 </div>
 
                 <div class="d-flex gap-2 mt-4">
@@ -112,7 +113,7 @@
     const prices = {
         @for (int i = 0; i < Model.AvailableProducts.Count; i++)
         {
-                    @:@i: @Model.AvailableProducts[i].Price.ToString("F2", System.Globalization.CultureInfo.InvariantCulture),
+                        @:@i: @Model.AvailableProducts[i].Price.ToString("F2", System.Globalization.CultureInfo.InvariantCulture),
         }
     };
 
@@ -120,8 +121,8 @@
     const oldPrices = {
         @for (int j = 0; j < Model.AlreadyAddedProducts.Count; j++)
         {
-                var price = Model.AlreadyAddedProducts[j].Quantity > 0 ? (Model.AlreadyAddedProducts[j].LineTotal / Model.AlreadyAddedProducts[j].Quantity) : 0;
-                @:@j: @price.ToString("F2", System.Globalization.CultureInfo.InvariantCulture),
+                    var price = Model.AlreadyAddedProducts[j].Quantity > 0 ? (Model.AlreadyAddedProducts[j].LineTotal / Model.AlreadyAddedProducts[j].Quantity) : 0;
+                    @:@j: @price.ToString("F2", System.Globalization.CultureInfo.InvariantCulture),
         }
     };
 
@@ -167,6 +168,8 @@
         const grand = timeCost + finalProductTotal;
 
         document.getElementById('productsTotal').textContent = finalProductTotal.toFixed(2);
-        document.getElementById('grandTotal').textContent    = grand.toFixed(2);
+
+        // 🟢 التعديل هنا: تحديث قيمة (value) الـ input بدلاً من (textContent) لأنه لم يعد نصاً عادياً
+        document.getElementById('grandTotal').value = grand.toFixed(2);
     }
 </script>
