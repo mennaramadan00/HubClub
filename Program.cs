@@ -15,7 +15,7 @@ namespace HubClub
             // Add MySQL DbContext
             var connectionString = builder.Configuration.GetConnectionString("DefaultConnection");
             builder.Services.AddDbContext<AppDbContext>(options =>
-                options.UseMySql(connectionString, ServerVersion.AutoDetect(connectionString))
+                options.UseMySql(connectionString, new MySqlServerVersion(new Version(8, 0, 0)))
             );
 
             var app = builder.Build();
@@ -45,17 +45,17 @@ namespace HubClub
                 try
                 {
                     var context = services.GetRequiredService<AppDbContext>();
-                    context.Database.Migrate(); // Ì‰›– ﬂ· «·‹ Migrations
+                    context.Database.Migrate(); // »Ìÿ»ﬁ ﬂ· «·‹ pending migrations° Ê»Ì⁄„· create ··‹ DB ·Ê „‘ „ÊÃÊœ…
                 }
                 catch (Exception ex)
                 {
-                    //  ”ÃÌ· «·Œÿ√ ≈‰ ÊÃœ
                     var logger = services.GetRequiredService<ILogger<Program>>();
-                    logger.LogError(ex, "ÕœÀ Œÿ√ √À‰«¡ ≈‰‘«¡ ﬁ«⁄œ… «·»Ì«‰« .");
+                    logger.LogError(ex, "ÕœÀ Œÿ√ √À‰«¡  ÿ»Ìﬁ «·‹ Migrations.");
+                    throw; // ›Ì «·‹ production ›÷¯·Ì  Êﬁ›Ì «· ÿ»Ìﬁ ·Ê «·‹ DB „‘ Ã«Â“… »œ· „« Ì‘ €· »‘ﬂ· ‰«ﬁ’
                 }
             }
 
-           
+
             app.Run();
         }
     }

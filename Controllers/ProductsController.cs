@@ -101,7 +101,8 @@ namespace HubClub.Controllers
                             ProductId = existingProduct.ProductId,
                             QuantityChanged = quantityDifference,
                             MovementType = "Stock In",
-                            Timestamp = DateTime.Now
+                            Timestamp = DateTime.Now,
+                            BusinessDate = DateOnly.FromDateTime(DateTime.Now)
                         });
                     }
                     else if (quantityDifference < 0)
@@ -112,7 +113,8 @@ namespace HubClub.Controllers
                             ProductId = existingProduct.ProductId,
                             QuantityChanged = quantityDifference,
                             MovementType = "Deficit",
-                            Timestamp = DateTime.Now
+                            Timestamp = DateTime.Now,
+                            BusinessDate = DateOnly.FromDateTime(DateTime.Now)
                         });
                     }
 

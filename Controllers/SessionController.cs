@@ -301,6 +301,7 @@ namespace HubClub.Controllers
                                 TotalPrice = product.Price * qtyToDeduct
                             };
                             _context.SessionProducts.Add(sp);
+                            session.SessionProducts.Add(sp); // FIX 2: تحديث الذاكرة لضمان حساب الإجمالي بشكل صحيح
                         }
 
                         product.Quantity -= qtyToDeduct;
@@ -311,7 +312,9 @@ namespace HubClub.Controllers
                             ProductId = product.ProductId,
                             QuantityChanged = -qtyToDeduct,
                             MovementType = "Mid-Session Sale",
-                            SessionId = session.SessionId
+                            SessionId = session.SessionId,
+                            BusinessDate = BusinessHelper.GetBusinessDate(DateTime.Now),
+                            Timestamp = DateTime.Now // FIX 3: إضافة الوقت الفعلي ليظهر في تقرير مدير النظام بناءً على يوم العمل
                         };
                         _context.StockMovements.Add(movement);
                     }
@@ -441,6 +444,7 @@ namespace HubClub.Controllers
         // ─────────────────────────────────────────
         [HttpPost]
         [ValidateAntiForgeryToken]
+   
         public async Task<IActionResult> ConfirmClose(SessionCloseViewModel vm)
         {
             var session = await _context.Sessions
@@ -495,24 +499,29 @@ namespace HubClub.Controllers
                                 ProductId = product.ProductId,
                                 QuantityChanged = existingLine.Quantity,
                                 MovementType = "Session Product Return",
-                                SessionId = session.SessionId
+                                SessionId = session.SessionId,
+                                BusinessDate = BusinessHelper.GetBusinessDate(DateTime.Now),
+                                Timestamp = DateTime.Now // FIX 3: للتقرير
                             });
 
                             _context.SessionProducts.Remove(existingLine);
+                            session.SessionProducts.Remove(existingLine); // FIX 2: إزالة المنتج من الذاكرة لخصمه من إجمالي الفاتورة
                         }
                         else if (qtyDiff != 0)
                         {
                             product.Quantity -= qtyDiff;
 
                             // FIX: record the adjustment as a stock movement so it shows up in DailyReport.
-                            // qtyDiff > 0  -> extra units sold at close   (negative QuantityChanged)
+                            // qtyDiff > 0  -> extra units sold at close    (negative QuantityChanged)
                             // qtyDiff < 0  -> units returned to inventory (positive QuantityChanged)
                             _context.StockMovements.Add(new StockMovement
                             {
                                 ProductId = product.ProductId,
                                 QuantityChanged = -qtyDiff,
                                 MovementType = qtyDiff > 0 ? "Mid-Session Sale" : "Session Product Return",
-                                SessionId = session.SessionId
+                                SessionId = session.SessionId,
+                                BusinessDate = BusinessHelper.GetBusinessDate(DateTime.Now),
+                                Timestamp = DateTime.Now // FIX 3: للتقرير
                             });
 
                             existingLine.Quantity = item.Quantity;
@@ -545,14 +554,16 @@ namespace HubClub.Controllers
                         }
                         else
                         {
-                            _context.SessionProducts.Add(new SessionProduct
+                            var newSp = new SessionProduct
                             {
                                 SessionId = session.SessionId,
                                 ProductId = item.ProductId,
                                 UnitPriceAtSale = product.Price,
                                 Quantity = item.SelectedQuantity,
                                 TotalPrice = product.Price * item.SelectedQuantity
-                            });
+                            };
+                            _context.SessionProducts.Add(newSp);
+                            session.SessionProducts.Add(newSp); // FIX 2: إضافة المنتج الجديد للذاكرة لاحتساب إجماليه
                         }
 
                         // FIX: this branch had no stock movement at all before - products added
@@ -562,7 +573,9 @@ namespace HubClub.Controllers
                             ProductId = product.ProductId,
                             QuantityChanged = -item.SelectedQuantity,
                             MovementType = "Mid-Session Sale",
-                            SessionId = session.SessionId
+                            SessionId = session.SessionId,
+                            BusinessDate = BusinessHelper.GetBusinessDate(DateTime.Now),
+                            Timestamp = DateTime.Now // FIX 3: للتقرير
                         });
 
                         product.Quantity -= item.SelectedQuantity;
@@ -627,7 +640,6 @@ namespace HubClub.Controllers
                 return RedirectToAction("CloseReview", new { id = vm.SessionId });
             }
         }
-
         public async Task<IActionResult> DailyReport(DateTime? date)
         {
             // اليوم اللي العميل هيختاره من الـ date picker (تاريخ عادي، مفيش وقت معاه)

@@ -1,6 +1,7 @@
 ﻿using System;
 using System.ComponentModel.DataAnnotations;
 using System.ComponentModel.DataAnnotations.Schema;
+using HubClub.Helpers;  
 
 namespace HubClub.Models
 {
@@ -19,5 +20,7 @@ namespace HubClub.Models
 
         // قمنا بتغيير الاسم هنا لـ Timestamp ليتوافق مع كود التقرير
         public DateTime Timestamp { get; set; } = DateTime.Now;
+        public DateOnly BusinessDate { get; set; } = BusinessHelper.GetBusinessDate(DateTime.Now);
+
     }
 }
