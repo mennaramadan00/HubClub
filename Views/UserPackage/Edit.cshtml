@@ -1,0 +1,76 @@
+﻿@model HubClub.Models.UserPackage
+@{
+    ViewData["Title"] = "تعديل بيانات الباقة";
+}
+
+<div class="glass-form-container" dir="rtl">
+    <div class="form-header">
+        <h2>تعديل بيانات الباقة</h2>
+        <p>تعديل التواريخ، الساعات، السعر، والحالة. (العميل ونوع الباقة للقراءة فقط).</p>
+    </div>
+
+    <form asp-action="Edit" method="post">
+        <div asp-validation-summary="ModelOnly" class="alert-glass mb-4 text-danger fw-bold"></div>
+
+        <input type="hidden" asp-for="UserPackageId" />
+        <input type="hidden" asp-for="IsDeleted" />
+        <input type="hidden" asp-for="RowVersion" />
+
+        <!-- حقول مخفية عشان نبعت البيانات زي ما هي للكنترولر -->
+        <input type="hidden" asp-for="CusId" />
+        <input type="hidden" asp-for="PackageId" />
+
+        <div class="row">
+            <div class="col-md-6 mb-3">
+                <label class="premium-label">العميل</label>
+                <input type="text" class="premium-input" value="@Model.Customer.Name" disabled style="background: rgba(0,0,0,0.05);" />
+            </div>
+            <div class="col-md-6 mb-3">
+                <label class="premium-label">نوع الباقة</label>
+                <input type="text" class="premium-input" value="@Model.Package.Name" disabled style="background: rgba(0,0,0,0.05);" />
+            </div>
+        </div>
+
+        <div class="row">
+            <div class="col-md-6 mb-3">
+                <label asp-for="StartDate" class="premium-label"></label>
+                <input asp-for="StartDate" class="premium-input" type="datetime-local" />
+                <span asp-validation-for="StartDate" class="text-danger small fw-bold"></span>
+            </div>
+            <div class="col-md-6 mb-3">
+                <label asp-for="ExpiryDate" class="premium-label"></label>
+                <input asp-for="ExpiryDate" class="premium-input" type="datetime-local" />
+                <span asp-validation-for="ExpiryDate" class="text-danger small fw-bold"></span>
+            </div>
+        </div>
+
+        <div class="row">
+            <div class="col-md-4 mb-3">
+                <label asp-for="RemainingHours" class="premium-label"></label>
+                <input asp-for="RemainingHours" class="premium-input" type="number" step="any" />
+                <span asp-validation-for="RemainingHours" class="text-danger small fw-bold"></span>
+            </div>
+            <div class="col-md-4 mb-3">
+                <label asp-for="Price" class="premium-label"></label>
+                <input asp-for="Price" class="premium-input" type="number" step="any" />
+                <span asp-validation-for="Price" class="text-danger small fw-bold"></span>
+            </div>
+            <div class="col-md-4 mb-3">
+                <label asp-for="Status" class="premium-label"></label>
+                <select asp-for="Status" asp-items="Html.GetEnumSelectList<HubClub.Models.Enums.UserPackageStatus>()" class="premium-input"></select>
+                <span asp-validation-for="Status" class="text-danger small fw-bold"></span>
+            </div>
+        </div>
+
+        <div class="form-actions">
+            <button type="submit" class="btn-aurelian-primary">حفظ التعديلات</button>
+            <a asp-action="Index" class="btn-aurelian-outline">إلغاء</a>
+        </div>
+    </form>
+</div>
+
+@section Scripts {
+    @{
+        await Html.RenderPartialAsync("_ValidationScriptsPartial");
+    }
+}

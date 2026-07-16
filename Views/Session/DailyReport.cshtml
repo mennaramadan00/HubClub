@@ -45,47 +45,54 @@
     </span>
 </div>
 
-<!-- ملخص الإيرادات -->
+<!-- ملخص الإيرادات 🟢 التعديل: 5 أعمدة متساوية -->
 <div class="row g-3 mb-4">
-    <div class="col-md-3">
-        <div class="card p-3 text-center h-100">
-            <div class="text-muted">إجمالي الإيراد</div>
-            <div class="fs-3 fw-bold text-success">@Model.TotalRevenue.ToString("N2") ج</div>
+    <div class="col">
+        <div class="card p-3 text-center h-100" style="border-bottom: 3px solid #198754;">
+            <div class="text-muted">إجمالي الدرج (كاش)</div>
+            <div class="fs-4 fw-bold text-success">@Model.TotalRevenue.ToString("N2") ج</div>
         </div>
     </div>
-    <div class="col-md-3">
+    <div class="col">
         <div class="card p-3 text-center h-100">
             <div class="text-muted">إيراد الوقت</div>
-            <div class="fs-4 fw-bold">@Model.TotalTimeRevenue.ToString("N2") ج</div>
+            <div class="fs-5 fw-bold">@Model.TotalTimeRevenue.ToString("N2") ج</div>
         </div>
     </div>
-    <div class="col-md-3">
+    <div class="col">
         <div class="card p-3 text-center h-100">
             <div class="text-muted">إيراد المنتجات</div>
-            <div class="fs-4 fw-bold">@Model.TotalProductRevenue.ToString("N2") ج</div>
+            <div class="fs-5 fw-bold">@Model.TotalProductRevenue.ToString("N2") ج</div>
         </div>
     </div>
-    <div class="col-md-3">
+    <!-- 🟢 الإضافة الجديدة -->
+    <div class="col">
+        <div class="card p-3 text-center h-100" style="border-bottom: 3px solid var(--bs-primary);">
+            <div class="text-muted">مبيعات الباقات</div>
+            <div class="fs-5 fw-bold text-primary">@Model.TotalPackageRevenue.ToString("N2") ج</div>
+        </div>
+    </div>
+    <div class="col">
         <div class="card p-3 text-center h-100">
             <div class="text-muted">عدد الجلسات المغلقة</div>
-            <div class="fs-4 fw-bold">@Model.ClosedSessionsCount</div>
+            <div class="fs-5 fw-bold">@Model.ClosedSessionsCount</div>
         </div>
     </div>
 </div>
 
 <!-- توزيع الإيراد حسب طريقة الدفع -->
-<h3>الإيراد حسب طريقة الدفع</h3>
+<h4>الإيراد حسب طريقة الدفع</h4>
 @if (!Model.PaymentBreakdown.Any())
 {
     <p class="text-muted">لا توجد جلسات مغلقة في هذا اليوم.</p>
 }
 else
 {
-    <table class="table table-striped mb-4">
+    <table class="table  mb-4">
         <thead>
             <tr>
                 <th>طريقة الدفع</th>
-                <th>عدد الجلسات</th>
+                <th>عدد العمليات</th>
                 <th>الإيراد</th>
             </tr>
         </thead>
@@ -103,14 +110,14 @@ else
 }
 
 <!-- جدول الجلسات -->
-<h3>تقرير الجلسات</h3>
+<h4>تقرير الجلسات</h4>
 @if (!Model.Sessions.Any())
 {
     <p class="text-muted">لا توجد جلسات في هذا اليوم.</p>
 }
 else
 {
-    <table class="table table-striped mb-4">
+    <table class="table  mb-4">
         <thead>
             <tr>
                 <th>العميل</th>
@@ -140,8 +147,8 @@ else
 }
 
 <!-- جدول المخزون -->
-<h3>تقرير حركة المخزون</h3>
-<table class="table table-striped">
+<h4>تقرير حركة المخزون</h4>
+<table class="table ">
     <thead>
         <tr>
             <th>المنتج</th>

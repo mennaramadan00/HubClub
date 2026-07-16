@@ -4,6 +4,7 @@ using HubClub.Data;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.EntityFrameworkCore.Infrastructure;
 using Microsoft.EntityFrameworkCore.Metadata;
+using Microsoft.EntityFrameworkCore.Migrations;
 using Microsoft.EntityFrameworkCore.Storage.ValueConversion;
 
 #nullable disable
@@ -11,9 +12,11 @@ using Microsoft.EntityFrameworkCore.Storage.ValueConversion;
 namespace HubClub.Migrations
 {
     [DbContext(typeof(AppDbContext))]
-    partial class AppDbContextModelSnapshot : ModelSnapshot
+    [Migration("20260714162456_ColumnToUserPackage")]
+    partial class ColumnToUserPackage
     {
-        protected override void BuildModel(ModelBuilder modelBuilder)
+        /// <inheritdoc />
+        protected override void BuildTargetModel(ModelBuilder modelBuilder)
         {
 #pragma warning disable 612, 618
             modelBuilder
@@ -63,6 +66,7 @@ namespace HubClub.Migrations
                         .HasColumnType("date");
 
                     b.Property<string>("ExcelBackupPath")
+                        .IsRequired()
                         .HasMaxLength(500)
                         .HasColumnType("varchar(500)");
 
@@ -72,9 +76,6 @@ namespace HubClub.Migrations
                     b.Property<decimal>("TotalCash")
                         .HasColumnType("decimal(10,2)");
 
-                    b.Property<decimal>("TotalPackageRevenue")
-                        .HasColumnType("decimal(10,2)");
-
                     b.Property<decimal>("TotalProductRevenue")
                         .HasColumnType("decimal(10,2)");
 
@@ -82,9 +83,6 @@ namespace HubClub.Migrations
                         .HasColumnType("decimal(10,2)");
 
                     b.HasKey("ClosingId");
-
-                    b.HasIndex("BusinessDate")
-                        .IsUnique();
 
                     b.ToTable("daily_closings");
                 });
@@ -325,16 +323,13 @@ namespace HubClub.Migrations
                     b.Property<decimal>("Price")
                         .HasColumnType("decimal(10,2)");
 
-                    b.Property<DateOnly>("PurchaseBusinessDate")
-                        .HasColumnType("date");
-
                     b.Property<decimal>("RemainingHours")
                         .HasColumnType("decimal(6,2)");
 
-                    b.Property<DateTime?>("RowVersion")
+                    b.Property<DateTime>("RowVersion")
                         .IsConcurrencyToken()
                         .ValueGeneratedOnAddOrUpdate()
-                        .HasColumnType("timestamp(6)");
+                        .HasColumnType("datetime(6)");
 
                     b.Property<DateTime>("StartDate")
                         .HasColumnType("datetime(6)");

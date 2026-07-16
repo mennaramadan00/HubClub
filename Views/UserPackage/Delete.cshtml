@@ -1,0 +1,26 @@
+﻿@model HubClub.Models.UserPackage
+@{
+    ViewData["Title"] = "حذف الباقة";
+}
+
+<div class="glass-form-container" dir="rtl">
+    <div class="form-header text-center">
+        <h2 style="color: #ef4444;">حذف باقة العميل</h2>
+        <p class="fw-bold">هل أنت متأكد من حذف هذه الباقة؟ سيتم إخفاؤها من النظام فقط (Soft Delete).</p>
+    </div>
+
+    <div class="alert-glass" style="border-right-color: #ef4444; color: #ef4444; margin-bottom: 2rem;">
+        <strong>تنبيه:</strong> سيتم حذف باقة العميل (<strong>@Model.Customer.Name</strong>) والتي يتبقى بها (<strong>@Model.RemainingHours.ToString("0.##")</strong>) ساعة.
+    </div>
+
+    <form asp-action="Delete" method="post">
+        <input type="hidden" asp-for="UserPackageId" />
+
+        <div class="form-actions justify-content-center">
+            <button type="submit" class="btn-aurelian-primary" style="background: linear-gradient(135deg, #ef4444 0%, #b91c1c 100%);">
+                نعم، قم بالحذف
+            </button>
+            <a asp-action="Index" class="btn-aurelian-outline">إلغاء الأمر</a>
+        </div>
+    </form>
+</div>

@@ -4,6 +4,7 @@ using HubClub.Data;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.EntityFrameworkCore.Infrastructure;
 using Microsoft.EntityFrameworkCore.Metadata;
+using Microsoft.EntityFrameworkCore.Migrations;
 using Microsoft.EntityFrameworkCore.Storage.ValueConversion;
 
 #nullable disable
@@ -11,9 +12,11 @@ using Microsoft.EntityFrameworkCore.Storage.ValueConversion;
 namespace HubClub.Migrations
 {
     [DbContext(typeof(AppDbContext))]
-    partial class AppDbContextModelSnapshot : ModelSnapshot
+    [Migration("20260716112337_addBusinessDayInUserPackage")]
+    partial class addBusinessDayInUserPackage
     {
-        protected override void BuildModel(ModelBuilder modelBuilder)
+        /// <inheritdoc />
+        protected override void BuildTargetModel(ModelBuilder modelBuilder)
         {
 #pragma warning disable 612, 618
             modelBuilder
@@ -63,6 +66,7 @@ namespace HubClub.Migrations
                         .HasColumnType("date");
 
                     b.Property<string>("ExcelBackupPath")
+                        .IsRequired()
                         .HasMaxLength(500)
                         .HasColumnType("varchar(500)");
 
@@ -72,9 +76,6 @@ namespace HubClub.Migrations
                     b.Property<decimal>("TotalCash")
                         .HasColumnType("decimal(10,2)");
 
-                    b.Property<decimal>("TotalPackageRevenue")
-                        .HasColumnType("decimal(10,2)");
-
                     b.Property<decimal>("TotalProductRevenue")
                         .HasColumnType("decimal(10,2)");
 
@@ -82,9 +83,6 @@ namespace HubClub.Migrations
                         .HasColumnType("decimal(10,2)");
 
                     b.HasKey("ClosingId");
-
-                    b.HasIndex("BusinessDate")
-                        .IsUnique();
 
                     b.ToTable("daily_closings");
                 });

@@ -6,6 +6,7 @@ using Microsoft.AspNetCore.Mvc;
 using Microsoft.EntityFrameworkCore;
 using HubClub.Data;
 using HubClub.Models;
+using HubClub.ViewModels;
 
 namespace HubClub.Controllers
 {

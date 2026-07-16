@@ -1,11 +1,11 @@
-﻿using System.ComponentModel.DataAnnotations;
+﻿using System;
+using System.Collections.Generic;
+using System.ComponentModel.DataAnnotations;
 using System.ComponentModel.DataAnnotations.Schema;
 using HubClub.Models.Enums;
 
 namespace HubClub.Models
 {
-   
-
     [Table("user_packages")]
     public class UserPackage
     {
@@ -13,7 +13,6 @@ namespace HubClub.Models
         [DatabaseGenerated(DatabaseGeneratedOption.Identity)]
         public int UserPackageId { get; set; }
 
-        // Foreign Keys
         [Required]
         [ForeignKey("Customer")]
         public int CusId { get; set; }
@@ -31,6 +30,9 @@ namespace HubClub.Models
         public DateTime ExpiryDate { get; set; }
 
         [Required]
+        public DateOnly PurchaseBusinessDate { get; set; }= HubClub.Helpers.BusinessHelper.GetBusinessDate(DateTime.Now);
+
+        [Required]
         [Column(TypeName = "decimal(6,2)")]
         [Range(0, 9999.99, ErrorMessage = "الساعات المتبقية لا يمكن أن تكون سالبة")]
         [Display(Name = "الساعات المتبقية")]
@@ -46,7 +48,9 @@ namespace HubClub.Models
         public decimal Price { get; set; }
 
         [Timestamp]
-        public DateTime RowVersion { get; set; }
+        public byte[]? RowVersion { get; set; }
+
+        public bool IsDeleted { get; set; } = false;
 
         // Navigation properties
         public Customer Customer { get; set; } = null!;

@@ -13,11 +13,12 @@ namespace HubClub.ViewModels
 
         // بيانات اليوم الأساسية
         public DateOnly BusinessDate { get; set; }
-        public int ActiveCustomersCount { get; set; } // الخاصية اللي كانت ناقصة
+        public int ActiveCustomersCount { get; set; } 
 
         // ملخص إيرادات اليوم
-        public decimal TodayTotalTimeCash { get; set; }    // الخاصية اللي كانت ناقصة
-        public decimal TodayTotalProductCash { get; set; } // الخاصية اللي كانت ناقصة
+        public decimal TodayTotalTimeCash { get; set; }   
+        public decimal TodayTotalProductCash { get; set; } 
+        public decimal TodayTotalPackageCash { get; set; }
         public decimal TodayTotalCash { get; set; }
     }
 

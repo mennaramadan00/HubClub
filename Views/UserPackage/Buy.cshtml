@@ -6,21 +6,19 @@
 <div class="glass-form-container" dir="rtl">
     <div class="form-header">
         <h2>شحن باقة لعميل</h2>
-        <p>شحن رصيد باقات للعملاء لاستخدامها في فتح الجلسات</p>
+        <p>شحن رصيد باقات للعملاء لاستخدامها في الجلسات</p>
     </div>
 
     <form asp-action="Buy" method="post">
-        <div asp-validation-summary="ModelOnly" class="text-danger mb-3 fw-bold" style="display: @(ViewData.ModelState.IsValid ? "none" : "block")"></div>
+        <div asp-validation-summary="ModelOnly" class="alert-glass text-danger mb-3 fw-bold" style="display: @(ViewData.ModelState.IsValid ? "none" : "block")"></div>
 
-        <!-- صندوق بيانات العميل -->
         <div class="p-4 mb-4" style="background: rgba(22, 41, 107, 0.03); border: 1px solid var(--glass-edge-blue); border-radius: var(--radius-medium);">
             <label class="premium-label mb-3" style="font-size: 1.1rem;">بيانات العميل</label>
 
-            <!-- أزرار الاختيار (Radio Buttons) -->
             <div class="d-flex gap-5 mb-4 justify-content-center border-bottom pb-3" style="border-color: var(--glass-edge-blue) !important;">
                 <label class="d-flex align-items-center gap-2" style="cursor: pointer;">
                     <input type="radio" asp-for="IsNewCustomer" value="false" onchange="toggleCustomer(false)" style="transform: scale(1.3); accent-color: var(--sapphire);" />
-                    <span class="fw-bold fs-5" style="color: var(--sapphire);">عميل مسجل في النظام</span>
+                    <span class="fw-bold fs-5" style="color: var(--sapphire);">عميل مسجل</span>
                 </label>
                 <label class="d-flex align-items-center gap-2" style="cursor: pointer;">
                     <input type="radio" asp-for="IsNewCustomer" value="true" onchange="toggleCustomer(true)" style="transform: scale(1.3); accent-color: var(--sapphire);" />
@@ -28,7 +26,6 @@
                 </label>
             </div>
 
-            <!-- العميل المسجل -->
             <div id="divExisting" class="mb-2">
                 <select asp-for="SelectedCustomerId" asp-items="Model.AllCustomers" id="SelectedCustomerId" class="premium-input select2-search">
                     <option value="">-- ابحث بالاسم أو رقم الهاتف --</option>
@@ -36,17 +33,15 @@
                 <span asp-validation-for="SelectedCustomerId" class="text-danger small mt-1 d-block fw-bold"></span>
             </div>
 
-            <!-- العميل الجديد -->
             <div id="divNew" style="display: none;">
-                <input type="text" asp-for="NewCustomerName" id="NewCustomerName" class="premium-input mb-3" placeholder="اسم العميل الجديد (الاسم الأول والأخير) *" />
+                <input type="text" asp-for="NewCustomerName" id="NewCustomerName" class="premium-input mb-3" placeholder="اسم العميل الجديد *" />
                 <span asp-validation-for="NewCustomerName" class="text-danger small mt-1 d-block fw-bold"></span>
 
-                <input type="text" asp-for="NewCustomerPhone" id="NewCustomerPhone" class="premium-input mb-2" placeholder="رقم الهاتف * (مطلوب)" />
+                <input type="text" asp-for="NewCustomerPhone" id="NewCustomerPhone" class="premium-input mb-2" placeholder="رقم الهاتف *" />
                 <span asp-validation-for="NewCustomerPhone" class="text-danger small mt-1 d-block fw-bold"></span>
             </div>
         </div>
 
-        <!-- اختيار الباقة -->
         <div>
             <label class="premium-label mb-2">اختر الباقة المطلوبة <span class="text-danger">*</span></label>
             <select asp-for="SelectedPackageId" asp-items="Model.AvailablePackages" class="premium-input">
@@ -56,12 +51,12 @@
         </div>
 
         <div class="alert-glass mt-4" style="border-right-color: var(--sapphire);">
-            <strong>تنويه:</strong> بمجرد الحفظ، سيتم تفعيل الباقة وتضاف الساعات لرصيد العميل فوراً لتصبح متاحة للاستخدام.
+            <strong>تنويه:</strong> سيتم تفعيل الباقة وإضافة الساعات فور الحفظ.
         </div>
 
         <div class="form-actions mt-4">
             <button type="submit" class="btn-aurelian-primary" style="flex: 2;">تأكيد وإتمام الشراء</button>
-            <a asp-controller="UserPackage" asp-action="Index" class="btn-aurelian-outline" style="flex: 1;">إلغاء الأمر</a>
+            <a asp-action="Index" class="btn-aurelian-outline" style="flex: 1;">إلغاء الأمر</a>
         </div>
     </form>
 </div>
@@ -69,66 +64,9 @@
 @section Scripts {
     <link href="https://cdn.jsdelivr.net/npm/select2@4.1.0-rc.0/dist/css/select2.min.css" rel="stylesheet" />
     <script src="https://cdn.jsdelivr.net/npm/select2@4.1.0-rc.0/dist/js/select2.min.js"></script>
-
-    <style>
-        /* تنسيق مكتبة Select2 لتطابق تصميم Sapphire Glass */
-        .select2-container--default .select2-selection--single {
-            height: auto !important;
-            padding: 0.8rem 1.2rem;
-            border: 2px solid rgba(22, 41, 107, 0.1) !important;
-            border-radius: var(--radius-sharp) !important;
-            background: rgba(255, 255, 255, 0.85) !important;
-            color: var(--text-ink) !important;
-            font-family: var(--font-ar) !important;
-            font-size: 1rem !important;
-            transition: all 0.3s ease;
-        }
-
-            .select2-container--default .select2-selection--single:focus,
-            .select2-container--default.select2-container--open .select2-selection--single {
-                outline: none;
-                border-color: var(--azure) !important;
-                box-shadow: 0 0 0 4px var(--azure-glow-soft) !important;
-                background: #ffffff !important;
-            }
-
-            .select2-container--default .select2-selection--single .select2-selection__arrow {
-                top: 50% !important;
-                transform: translateY(-50%);
-                left: 15px !important;
-                right: auto !important;
-            }
-
-            .select2-container--default .select2-selection--single .select2-selection__rendered {
-                color: var(--text-ink) !important;
-                line-height: normal !important;
-                padding-right: 0 !important;
-                padding-left: 20px !important;
-                font-weight: 600;
-            }
-
-        .select2-dropdown {
-            background: rgba(255, 255, 255, 0.95) !important;
-            backdrop-filter: blur(15px) !important;
-            border: 1px solid var(--azure) !important;
-            border-radius: var(--radius-sharp) !important;
-            box-shadow: var(--shadow-float) !important;
-        }
-
-        .select2-results__option {
-            font-family: var(--font-ar);
-            color: var(--sapphire);
-            padding: 0.8rem 1.2rem !important;
-            font-weight: 600;
-            border-bottom: 1px solid rgba(22, 41, 107, 0.05);
-        }
-
-        .select2-container--default .select2-results__option--highlighted[aria-selected] {
-            background-color: var(--azure-glow-soft) !important;
-            color: var(--sapphire) !important;
-        }
-    </style>
-
+    @{
+        await Html.RenderPartialAsync("_ValidationScriptsPartial");
+    }
     <script>
         $(document).ready(function() {
             $('.select2-search').select2({
@@ -136,7 +74,6 @@
                 width: '100%',
                 placeholder: "-- ابحث بالاسم أو رقم الهاتف --"
             });
-
             var isNew = $('input[name="IsNewCustomer"]:checked').val() === 'true' || $('input[name="IsNewCustomer"]:checked').val() === 'True';
             toggleCustomer(isNew);
         });

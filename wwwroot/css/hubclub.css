@@ -17,6 +17,15 @@
     --amber: #FFC400; /* bold yellow accent */
     --azure-glow: rgba(0, 128, 255, 0.30);
     --azure-glow-soft: rgba(0, 128, 255, 0.14);
+    /* ---- Sidebar: light yellow background ---- */
+    --nav-yellow: #FFF3C4;
+    --nav-yellow-soft: #FFFAE6;
+    --nav-yellow-border: #FFE694;
+    /* ---- Nav hover: light orange ---- */
+    --nav-orange: #FF9E4D;
+    --nav-orange-text: #C9631A;
+    --nav-orange-soft: rgba(255, 158, 77, 0.22);
+    --nav-orange-glow: rgba(255, 158, 77, 0.35);
     /* ---- Glass gradients (the upgrade) ---- */
     --glass-grad: linear-gradient(135deg, rgba(255,255,255,0.78) 0%, rgba(242,242,244,0.40) 55%, rgba(255,255,255,0.60) 100%);
     --glass-grad-strong: linear-gradient(135deg, rgba(255,255,255,0.94) 0%, rgba(244,244,246,0.70) 100%);
@@ -61,17 +70,16 @@ body {
         inset: -50%;
         width: 200%;
         height: 200%;
-        background: radial-gradient(circle at 12% 18%, rgba(0, 128, 255, 0.16), transparent 42%), radial-gradient(circle at 88% 12%, rgba(255, 196, 0, 0.14), transparent 48%), radial-gradient(circle at 80% 88%, rgba(255, 122, 26, 0.14), transparent 45%), radial-gradient(circle at 8% 92%, rgba(0, 0, 0, 0.05), transparent 42%), radial-gradient(circle at 50% 50%, rgba(255, 255, 255, 0.9), transparent 55%);
+        background: #FFFFFF;
         z-index: -2;
-        animation: auroraDrift 34s ease-in-out infinite alternate;
     }
 
     body::after {
-        /* soft diagonal gradient wash sitting above the aurora, under the glass */
+        /* plain white wash, no color tint — whole system stays white */
         content: '';
         position: fixed;
         inset: 0;
-        background: linear-gradient(160deg, rgba(255,255,255,0.35) 0%, rgba(242,242,244,0.15) 45%, rgba(0,128,255,0.05) 100%);
+        background: #FFFFFF;
         z-index: -1;
         pointer-events: none;
     }
@@ -102,7 +110,7 @@ body {
 /* 🧊 Sidebar — Frosted Gradient Glass, left-fixed */
 .app-sidebar {
     width: var(--sidebar-width);
-    background: var(--glass-grad);
+    background: linear-gradient(160deg, var(--nav-yellow) 0%, var(--nav-yellow-soft) 60%, var(--nav-yellow) 100%);
     backdrop-filter: blur(26px) saturate(150%);
     -webkit-backdrop-filter: blur(26px) saturate(150%);
     border-right: 1px solid transparent;
@@ -120,8 +128,8 @@ body {
 
 .sidebar-header {
     padding: 2rem 1.5rem;
-    border-bottom: 1px solid var(--glass-edge-blue);
-    background: linear-gradient(180deg, rgba(255,255,255,0.9) 0%, transparent 100%);
+    border-bottom: 1px solid var(--nav-yellow-border);
+    background: linear-gradient(180deg, rgba(255,255,255,0.6) 0%, transparent 100%);
     position: relative;
 }
 
@@ -182,8 +190,8 @@ body {
     }
 
     .nav-item-link:hover {
-        background: var(--glass-grad-strong);
-        color: var(--sapphire);
+        background: var(--nav-orange-soft);
+        color: var(--nav-orange-text);
         transform: translateX(4px);
     }
 

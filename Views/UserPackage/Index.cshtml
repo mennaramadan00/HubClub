@@ -1,67 +1,75 @@
-﻿@model IEnumerable<HubClub.ViewModels.UserPackageListViewModel>
+﻿@model IEnumerable<HubClub.Models.UserPackage>
 @{
-    ViewData["Title"] = "باقات المشتركين";
+    ViewData["Title"] = "الإدارة الشاملة للباقات";
 }
 
-<!-- الرأس العلوي وأزرار الإضافة -->
-<div class="d-flex justify-content-between align-items-center mb-4">
-    <div>
-        <h2 style="color: var(--sapphire); font-weight: 800; margin: 0;">أرصدة باقات العملاء</h2>
-        <p style="color: var(--text-slate); margin: 0;">متابعة أرصدة الساعات للمشتركين في النظام</p>
+<div dir="rtl">
+    <div class="d-flex justify-content-between align-items-center mb-4">
+        <div>
+            <h2 style="color: var(--sapphire); font-weight: 800; margin: 0;">الإدارة الشاملة للباقات</h2>
+            <p style="color: var(--text-slate); margin: 0;">عرض وتعديل أرصدة باقات المشتركين في النظام</p>
+        </div>
+        <a asp-action="Buy" class="btn-aurelian-primary">
+            شحن باقة جديدة
+        </a>
     </div>
-    <a asp-action="Buy" class="btn-aurelian-primary">
-        شحن رصيد جديد
-    </a>
+
+    @if (TempData["Success"] != null)
+    {
+        <div class="alert-glass mb-4" style="border-right-color: #10b981; color: #047857;">
+            <strong>نجاح:</strong> @TempData["Success"]
+        </div>
+    }
+    @if (TempData["Error"] != null)
+    {
+        <div class="alert-glass mb-4" style="border-right-color: #ef4444; color: #ef4444;">
+            <strong>خطأ:</strong> @TempData["Error"]
+        </div>
+    }
+
+    <div class="table-glass-wrap">
+        <table class="table-glass">
+            <thead>
+                <tr>
+                    <th>العميل</th>
+                    <th>نوع الباقة</th>
+                    <th>تاريخ البداية</th>
+                    <th>تاريخ الانتهاء</th>
+                    <th>الساعات المتبقية</th>
+                    <th>الحالة</th>
+                    <th>السعر</th>
+                    <th>إجراءات</th>
+                </tr>
+            </thead>
+            <tbody>
+                @if (!Model.Any())
+                {
+                    <tr>
+                        <td colspan="8" class="text-center fw-bold py-4">لا توجد باقات مسجلة حالياً.</td>
+                    </tr>
+                }
+                @foreach (var item in Model)
+                {
+                    <tr>
+                        <td class="fw-bold text-sapphire">@Html.DisplayFor(modelItem => item.Customer.Name)</td>
+                        <td>@Html.DisplayFor(modelItem => item.Package.Name)</td>
+                        <td>@item.StartDate.ToString("yyyy/MM/dd")</td>
+                        <td>@item.ExpiryDate.ToString("yyyy/MM/dd")</td>
+                        <td class="fw-bold text-primary">@item.RemainingHours.ToString("0.##")</td>
+                        <td>
+                            <span class="badge-glass" style="background: @(item.Status == HubClub.Models.Enums.UserPackageStatus.Active ? "var(--azure-glow-soft)" : "rgba(239, 68, 68, 0.1)"); color: @(item.Status == HubClub.Models.Enums.UserPackageStatus.Active ? "var(--sapphire)" : "#ef4444"); border-color: @(item.Status == HubClub.Models.Enums.UserPackageStatus.Active ? "var(--azure-glow)" : "rgba(239, 68, 68, 0.2)");">
+                                @Html.DisplayFor(modelItem => item.Status)
+                            </span>
+                        </td>
+                        <td>@item.Price.ToString("N2") ج</td>
+                        <td>
+                            <a asp-action="Edit" asp-route-id="@item.UserPackageId" style="color: var(--azure); margin-left: 10px; font-weight: bold; text-decoration: none;">تعديل</a>
+                            <a asp-action="Details" asp-route-id="@item.UserPackageId" style="color: var(--sapphire); margin-left: 10px; font-weight: bold; text-decoration: none;">تفاصيل</a>
+                            <a asp-action="Delete" asp-route-id="@item.UserPackageId" style="color: #ef4444; font-weight: bold; text-decoration: none;">حذف</a>
+                        </td>
+                    </tr>
+                }
+            </tbody>
+        </table>
+    </div>
 </div>
-
-<!-- ودجات الإحصائيات -->
-<div class="analysis-summary-grid mb-5">
-    <div class="summary-box">
-        <div class="sb-title">إجمالي الباقات المشحونة</div>
-        <div class="sb-val">@Model.Count()</div>
-    </div>
-    <div class="summary-box">
-        <div class="sb-title">باقات تحتوي على رصيد</div>
-        <div class="sb-val">@Model.Count(p => p.RemainingHours > 0)</div>
-    </div>
-</div>
-
-<!-- شبكة كروت الباقات الزجاجية -->
-@if (!Model.Any())
-{
-    <div class="glass-form-container text-center mt-5">
-        <h3 class="mt-3" style="color: var(--sapphire); font-weight: 800;">لا توجد باقات مفعلة للعملاء</h3>
-        <p style="color: var(--text-slate);">لم يتم شحن أي باقات للعملاء حتى الآن.</p>
-        <a asp-action="Buy" class="btn-aurelian-primary mt-3">شحن أول باقة</a>
-    </div>
-}
-else
-{
-    <div class="cards-grid-3">
-        @foreach (var item in Model)
-        {
-            <div class="wf-card">
-
-                <div class="wf-card-header d-flex justify-content-between align-items-center" style="border-bottom: 2px solid var(--glass-edge-blue);">
-                    <h4 style="color: var(--sapphire); font-weight: 800; margin: 0; font-size: 1.2rem;">@item.CustomerName</h4>
-                    <span class="badge-glass" style="background: @(item.RemainingHours > 0 ? "var(--azure-glow-soft)" : "rgba(239, 68, 68, 0.1)"); color: @(item.RemainingHours > 0 ? "var(--sapphire)" : "#ef4444"); border-color: @(item.RemainingHours > 0 ? "var(--azure-glow)" : "rgba(239, 68, 68, 0.2)");">
-                        @(item.RemainingHours > 0 ? "رصيد فعال" : "رصيد منتهي")
-                    </span>
-                </div>
-
-                <div class="wf-data-row mt-3 border-0 bg-transparent px-0">
-                    <span class="wf-data-label">رقم الهاتف</span>
-                    <span class="wf-data-val">@item.CustomerPhone</span>
-                </div>
-
-                <div class="wf-data-row mt-auto" style="background: @(item.RemainingHours > 0 ? "var(--sapphire)" : "#ef4444"); border-color: @(item.RemainingHours > 0 ? "var(--sapphire)" : "#ef4444"); margin-bottom: 0;">
-                    <span class="wf-data-label" style="color: rgba(255,255,255,0.85);">الرصيد المتبقي</span>
-                    <span class="wf-data-val" style="color: #ffffff; font-size: 1.4rem;">
-                        @item.RemainingHours <span style="font-size: 0.9rem; font-weight: 600;">ساعة</span>
-                    </span>
-                </div>
-
-            </div>
-        }
-    </div>
-}

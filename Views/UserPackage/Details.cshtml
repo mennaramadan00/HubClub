@@ -1,0 +1,47 @@
+﻿@model HubClub.Models.UserPackage
+@{
+    ViewData["Title"] = "تفاصيل الباقة";
+}
+
+<div class="glass-form-container" dir="rtl">
+    <div class="form-header">
+        <h2>تفاصيل باقة العميل</h2>
+        <p>عرض البيانات الكاملة لهذه الباقة.</p>
+    </div>
+
+    <div class="wf-card w-100" style="max-width: 100%;">
+        <div class="wf-data-row">
+            <span class="wf-data-label">اسم العميل</span>
+            <span class="wf-data-val">@Model.Customer.Name</span>
+        </div>
+        <div class="wf-data-row">
+            <span class="wf-data-label">الباقة المشتراة</span>
+            <span class="wf-data-val">@Model.Package.Name</span>
+        </div>
+        <div class="wf-data-row">
+            <span class="wf-data-label">تاريخ البداية</span>
+            <span class="wf-data-val">@Model.StartDate.ToString("yyyy/MM/dd hh:mm tt")</span>
+        </div>
+        <div class="wf-data-row">
+            <span class="wf-data-label">تاريخ الانتهاء</span>
+            <span class="wf-data-val">@Model.ExpiryDate.ToString("yyyy/MM/dd hh:mm tt")</span>
+        </div>
+        <div class="wf-data-row">
+            <span class="wf-data-label">حالة الباقة</span>
+            <span class="wf-data-val">@Html.DisplayFor(model => model.Status)</span>
+        </div>
+        <div class="wf-data-row">
+            <span class="wf-data-label">السعر المدفوع</span>
+            <span class="wf-data-val">@Model.Price.ToString("N2") ج.م</span>
+        </div>
+        <div class="wf-data-row" style="background: var(--sapphire); border-color: var(--sapphire);">
+            <span class="wf-data-label" style="color: rgba(255,255,255,0.85);">الساعات المتبقية</span>
+            <span class="wf-data-val text-white fs-4">@Model.RemainingHours.ToString("0.##")</span>
+        </div>
+    </div>
+
+    <div class="form-actions mt-4">
+        <a asp-action="Edit" asp-route-id="@Model?.UserPackageId" class="btn-aurelian-primary">تعديل بيانات الباقة</a>
+        <a asp-action="Index" class="btn-aurelian-outline">العودة للقائمة</a>
+    </div>
+</div>

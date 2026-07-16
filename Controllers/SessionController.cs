@@ -444,7 +444,6 @@ namespace HubClub.Controllers
         // ─────────────────────────────────────────
         [HttpPost]
         [ValidateAntiForgeryToken]
-   
         public async Task<IActionResult> ConfirmClose(SessionCloseViewModel vm)
         {
             var session = await _context.Sessions
@@ -492,8 +491,6 @@ namespace HubClub.Controllers
                         {
                             product.Quantity += existingLine.Quantity;
 
-                            // FIX: record the stock returning to inventory when a line is fully removed at close.
-                            // Positive QuantityChanged so DailyReport's "sold" bucket nets correctly.
                             _context.StockMovements.Add(new StockMovement
                             {
                                 ProductId = product.ProductId,
@@ -501,19 +498,16 @@ namespace HubClub.Controllers
                                 MovementType = "Session Product Return",
                                 SessionId = session.SessionId,
                                 BusinessDate = BusinessHelper.GetBusinessDate(DateTime.Now),
-                                Timestamp = DateTime.Now // FIX 3: للتقرير
+                                Timestamp = DateTime.Now
                             });
 
                             _context.SessionProducts.Remove(existingLine);
-                            session.SessionProducts.Remove(existingLine); // FIX 2: إزالة المنتج من الذاكرة لخصمه من إجمالي الفاتورة
+                            session.SessionProducts.Remove(existingLine);
                         }
                         else if (qtyDiff != 0)
                         {
                             product.Quantity -= qtyDiff;
 
-                            // FIX: record the adjustment as a stock movement so it shows up in DailyReport.
-                            // qtyDiff > 0  -> extra units sold at close    (negative QuantityChanged)
-                            // qtyDiff < 0  -> units returned to inventory (positive QuantityChanged)
                             _context.StockMovements.Add(new StockMovement
                             {
                                 ProductId = product.ProductId,
@@ -521,7 +515,7 @@ namespace HubClub.Controllers
                                 MovementType = qtyDiff > 0 ? "Mid-Session Sale" : "Session Product Return",
                                 SessionId = session.SessionId,
                                 BusinessDate = BusinessHelper.GetBusinessDate(DateTime.Now),
-                                Timestamp = DateTime.Now // FIX 3: للتقرير
+                                Timestamp = DateTime.Now
                             });
 
                             existingLine.Quantity = item.Quantity;
@@ -563,11 +557,9 @@ namespace HubClub.Controllers
                                 TotalPrice = product.Price * item.SelectedQuantity
                             };
                             _context.SessionProducts.Add(newSp);
-                            session.SessionProducts.Add(newSp); // FIX 2: إضافة المنتج الجديد للذاكرة لاحتساب إجماليه
+                            session.SessionProducts.Add(newSp);
                         }
 
-                        // FIX: this branch had no stock movement at all before - products added
-                        // on the Close screen were silently invisible to DailyReport.
                         _context.StockMovements.Add(new StockMovement
                         {
                             ProductId = product.ProductId,
@@ -575,7 +567,7 @@ namespace HubClub.Controllers
                             MovementType = "Mid-Session Sale",
                             SessionId = session.SessionId,
                             BusinessDate = BusinessHelper.GetBusinessDate(DateTime.Now),
-                            Timestamp = DateTime.Now // FIX 3: للتقرير
+                            Timestamp = DateTime.Now
                         });
 
                         product.Quantity -= item.SelectedQuantity;
@@ -585,11 +577,7 @@ namespace HubClub.Controllers
 
                 session.EndTime = vm.EndTime;
                 session.IsClosed = true;
-
-                // FIX: removed `session.BusinessDate = BusinessHelper.GetBusinessDate(vm.EndTime);`
-                // BusinessDate must stay tied to StartTime (set once in Open()). A session that
-                // starts before your business-day cutover (e.g. 8:30 AM) and closes after it
-                // must still count toward the night it started, not get bumped to the next day.
+                session.BusinessDate = BusinessHelper.GetBusinessDate(vm.EndTime);
 
                 decimal hoursElapsed = (decimal)(vm.EndTime - session.StartTime).TotalHours;
                 hoursElapsed = Math.Max(0, Math.Round(hoursElapsed, 2));
@@ -600,7 +588,6 @@ namespace HubClub.Controllers
                     {
                         decimal extraHours = hoursElapsed - session.UserPackage.RemainingHours;
                         var tier = await GetPricingTierAsync(extraHours);
-                        session.TotalTimePrice = tier?.Price ?? 0;
                         session.PriceSettingId = tier?.PricingSettingId;
                         session.UserPackage.RemainingHours = 0;
                         session.UserPackage.Status = UserPackageStatus.Expired;
@@ -608,7 +595,6 @@ namespace HubClub.Controllers
                     else
                     {
                         session.UserPackage.RemainingHours -= hoursElapsed;
-                        session.TotalTimePrice = 0;
                         if (session.UserPackage.RemainingHours == 0)
                         {
                             session.UserPackage.Status = UserPackageStatus.Expired;
@@ -619,12 +605,43 @@ namespace HubClub.Controllers
                 else if (session.PaymentType != PaymentType.Package)
                 {
                     var tier = await GetPricingTierAsync(hoursElapsed);
-                    session.TotalTimePrice = tier?.Price ?? 0;
                     session.PriceSettingId = tier?.PricingSettingId;
                 }
 
-                session.TotalProductPrice = session.SessionProducts.Sum(sp => sp.TotalPrice);
-                session.GrandTotal = Math.Max(0, vm.GrandTotal);
+                // 🟢 1. قفل الأمان: استقبال الأسعار مع منع أي أرقام سالبة تماماً
+                session.TotalTimePrice = Math.Max(0, vm.CalculatedTimePrice);
+                session.TotalProductPrice = Math.Max(0, vm.TotalProductPrice);
+
+                // 🟢 2. التوزيع النسبي: تعديل أسعار المنتجات الفردية لو الكاشير غير إجمالي البار
+                decimal originalProductsSum = session.SessionProducts.Sum(sp => sp.TotalPrice);
+
+                if (session.TotalProductPrice != originalProductsSum && originalProductsSum > 0 && session.SessionProducts.Any())
+                {
+                    decimal ratio = session.TotalProductPrice / originalProductsSum;
+                    decimal runningTotal = 0;
+                    var spList = session.SessionProducts.ToList();
+
+                    for (int i = 0; i < spList.Count; i++)
+                    {
+                        var sp = spList[i];
+                        if (i == spList.Count - 1)
+                        {
+                            // العنصر الأخير بياخد الباقي بالضبط عشان الكسور
+                            sp.TotalPrice = session.TotalProductPrice - runningTotal;
+                        }
+                        else
+                        {
+                            sp.TotalPrice = Math.Round(sp.TotalPrice * ratio, 2);
+                            runningTotal += sp.TotalPrice;
+                        }
+
+                        // تحديث سعر الوحدة بعد الخصم
+                        sp.UnitPriceAtSale = sp.Quantity > 0 ? (sp.TotalPrice / sp.Quantity) : 0;
+                    }
+                }
+
+                // 🟢 3. حساب الإجمالي النهائي بناءً على الأسعار المعتمدة من الكاشير
+                session.GrandTotal = session.TotalTimePrice + session.TotalProductPrice;
 
                 await _context.SaveChangesAsync();
                 await transaction.CommitAsync();
@@ -642,25 +659,13 @@ namespace HubClub.Controllers
         }
         public async Task<IActionResult> DailyReport(DateTime? date)
         {
-            // اليوم اللي العميل هيختاره من الـ date picker (تاريخ عادي، مفيش وقت معاه)
             DateTime selectedDate = (date ?? DateTime.Now).Date;
-
-            // FIX: مش هنعمل BusinessHelper.GetBusinessDate(selectedDate) تاني هنا.
-            // كل جلسة اتحدد الـ BusinessDate بتاعها مرة واحدة بس في Open()، بناءً على StartTime
-            // الحقيقي بتاعها. لو نادينا GetBusinessDate تاني على تاريخ نص الليل (اللي جاي من
-            // الـ date picker) هيحصل تحويل مضاعف: نص الليل بييجي "قبل" ساعة الـ cutover (8:30 صباحاً)
-            // فالدالة ممكن ترجع اليوم اللي قبله بالغلط، والتقرير هيتزاح يوم لورا من غير ما العميل يحس.
-            // التاريخ اللي العميل مختاره هو نفسه label يوم العمل مباشرة.
-            // FIX: Session.BusinessDate من نوع DateOnly مش DateTime، فلازم نحول التاريخ
-            // المختار لـ DateOnly عشان نقارنه صح، مع الاحتفاظ بنسخة DateTime لحساب نافذة
-            // المخزون (اللي محتاجة وقت فعلي مش تاريخ بس).
             DateOnly targetBusinessDate = DateOnly.FromDateTime(selectedDate);
 
-            // نافذة الـ 8:30 صباحاً لحركات المخزون فقط (لأنها لا تملك BusinessDate)
             var businessStart = selectedDate.AddHours(8).AddMinutes(30);
             var businessEnd = businessStart.AddDays(1);
 
-            // 1. تقرير الجلسات: نستخدم الـ BusinessDate مباشرة (الأدق)
+            // 1. تقرير الجلسات
             var sessions = await _context.Sessions
                 .Include(s => s.Customer)
                 .Include(s => s.SessionProducts)
@@ -669,7 +674,7 @@ namespace HubClub.Controllers
                 .OrderBy(s => s.StartTime)
                 .ToListAsync();
 
-            // 2. تقرير المخزون: نستخدم نافذة الوقت (Timestamp)
+            // 2. تقرير المخزون
             var movementsToday = await _context.StockMovements
                 .Where(m => m.Timestamp >= businessStart && m.Timestamp < businessEnd)
                 .ToListAsync();
@@ -689,36 +694,29 @@ namespace HubClub.Controllers
 
                 if (groupedMovements.TryGetValue(p.ProductId, out var movements))
                 {
-                    sold = movements
-                        .Where(m => m.MovementType == "Sale"
-                                 || m.MovementType == "Mid-Session Sale"
-                                 || m.MovementType == "Session Product Return")
-                        .Sum(m => -m.QuantityChanged);
-
-                    added = movements
-                        .Where(m => m.MovementType == "Stock In")
-                        .Sum(m => m.QuantityChanged);
-
-                    deficit = movements
-                        .Where(m => m.MovementType == "Deficit")
-                        .Sum(m => -m.QuantityChanged);
+                    sold = movements.Where(m => m.MovementType == "Sale" || m.MovementType == "Mid-Session Sale" || m.MovementType == "Session Product Return").Sum(m => -m.QuantityChanged);
+                    added = movements.Where(m => m.MovementType == "Stock In").Sum(m => m.QuantityChanged);
+                    deficit = movements.Where(m => m.MovementType == "Deficit").Sum(m => -m.QuantityChanged);
                 }
-
-                int endQty = p.Quantity;
-                int startQty = endQty - added + sold + deficit;
 
                 inventoryReport.Add(new ProductReportItem
                 {
                     ProductName = p.Name,
-                    StartQuantity = startQty,
+                    StartQuantity = p.Quantity - added + sold + deficit,
                     SoldQuantity = sold,
                     AddedQuantity = added,
                     DeficitQuantity = deficit,
-                    EndQuantity = endQty
+                    EndQuantity = p.Quantity
                 });
             }
 
-            // ملخص الإيرادات - على الجلسات المغلقة بس (المفتوحة لسه ما اتحاسبتش)
+            // 🟢 3. حساب إيرادات الباقات لهذا اليوم المحاسبي
+            var packagesSoldToday = await _context.UserPackages
+                .Where(up => up.PurchaseBusinessDate == targetBusinessDate && !up.IsDeleted)
+                .ToListAsync();
+
+            decimal todayPackagesRevenue = packagesSoldToday.Sum(up => up.Price);
+
             var closedSessions = sessions.Where(s => s.IsClosed).ToList();
             var openSessions = sessions.Where(s => !s.IsClosed).ToList();
 
@@ -729,9 +727,18 @@ namespace HubClub.Controllers
                     PaymentTypeName = g.Key.ToString(),
                     SessionsCount = g.Count(),
                     Revenue = g.Sum(s => s.GrandTotal)
-                })
-                .OrderByDescending(x => x.Revenue)
-                .ToList();
+                }).ToList();
+
+            // 🟢 إضافة مبيعات الباقات لتفاصيل الدخل
+            if (todayPackagesRevenue > 0)
+            {
+                paymentBreakdown.Add(new PaymentTypeSummaryItem
+                {
+                    PaymentTypeName = "مبيعات الباقات (مقدم)",
+                    SessionsCount = packagesSoldToday.Count,
+                    Revenue = todayPackagesRevenue
+                });
+            }
 
             return View(new DailyReportViewModel
             {
@@ -740,13 +747,17 @@ namespace HubClub.Controllers
                 BusinessDayEnd = businessEnd,
                 Sessions = sessions,
                 InventoryReport = inventoryReport,
-                TotalRevenue = closedSessions.Sum(s => s.GrandTotal),
+
                 TotalTimeRevenue = closedSessions.Sum(s => s.TotalTimePrice),
                 TotalProductRevenue = closedSessions.Sum(s => s.TotalProductPrice),
+                TotalPackageRevenue = todayPackagesRevenue, // إيراد الباقات
+                TotalRevenue = closedSessions.Sum(s => s.GrandTotal) + todayPackagesRevenue, // الإجمالي الكلي للدرج
+
                 ClosedSessionsCount = closedSessions.Count,
                 OpenSessionsCount = openSessions.Count,
-                PaymentBreakdown = paymentBreakdown
+                PaymentBreakdown = paymentBreakdown.OrderByDescending(x => x.Revenue).ToList()
             });
         }
+
     }
 }

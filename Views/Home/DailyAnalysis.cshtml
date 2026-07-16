@@ -3,7 +3,7 @@
     ViewData["Title"] = "التحليل المالي ليوم العمل";
 }
 
-<!-- 1. ملخص التحليل المالي بالأعلى -->
+@* <!-- 1. ملخص التحليل المالي بالأعلى -->
 <div class="analysis-summary-grid" style="margin-bottom: 3rem;">
     <div class="summary-box">
         <div class="sb-title">إيرادات البار ليوم العمل</div>
@@ -13,6 +13,11 @@
         <div class="sb-title">إيرادات الجلسات ليوم العمل</div>
         <div class="sb-val">@Model.TodayTotalTimeCash.ToString("N2") <span style="font-size: 1rem; font-weight: 600;">ج.م</span></div>
     </div>
+    <!-- 🟢 الإضافة الجديدة: مبيعات الباقات -->
+    <div class="summary-box" style="border-bottom: 3px solid var(--bs-primary);">
+        <div class="sb-title">مبيعات الباقات ليوم العمل</div>
+        <div class="sb-val text-primary">@Model.TodayTotalPackageCash.ToString("N2") <span style="font-size: 1rem; font-weight: 600;">ج.م</span></div>
+    </div>
     <!-- صندوق الإجمالي بلون ملكي متدرج -->
     <div class="summary-box" style="background: linear-gradient(135deg, var(--azure) 0%, #1E3A8A 100%); border: none;">
         <div class="sb-title" style="color: rgba(255,255,255,0.85);">إجمالي الإيرادات ليوم العمل</div>
@@ -21,7 +26,7 @@
             @Model.TodayTotalCash.ToString("N2") <span style="font-size: 1rem; font-weight: 600; color: rgba(255,255,255,0.85); -webkit-text-fill-color: rgba(255,255,255,0.85);">ج.م</span>
         </div>
     </div>
-</div>
+</div> *@
 
 <hr style="border-color: var(--glass-edge-blue); margin-bottom: 2rem;" />
 

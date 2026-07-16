@@ -20,29 +20,41 @@ namespace HubClub.Controllers
             _context = context;
         }
 
-        // ─────────────────────────────────────────
-        // 1. عرض جميع باقات العملاء (Index)
-        // ─────────────────────────────────────────
+        // =========================================================================
+        // 1. عرض جميع الباقات (Detailed Index) - لا يعرض المحذوف
+        // =========================================================================
         [HttpGet]
         public async Task<IActionResult> Index()
         {
-            var packages = await _context.UserPackages
-                .Include(up => up.Customer)
-                .Select(up => new UserPackageListViewModel
-                {
-                    Id = up.UserPackageId, // مطابقة مع الموديل الخاص بكِ
-                    CustomerName = up.Customer.Name,
-                    CustomerPhone = up.Customer.Phone,
-                    RemainingHours = up.RemainingHours
-                })
-                .ToListAsync();
+            var appDbContext = _context.UserPackages
+                .Include(u => u.Customer)
+                .Include(u => u.Package)
+                .Where(u => !u.IsDeleted); // 🟢 إخفاء الباقات المحذوفة (Soft Delete)
 
-            return View(packages);
+            return View(await appDbContext.ToListAsync());
         }
 
-        // ─────────────────────────────────────────
-        // 2. فتح شاشة شحن الباقة (GET)
-        // ─────────────────────────────────────────
+        // =========================================================================
+        // 2. عرض التفاصيل (Details)
+        // =========================================================================
+        [HttpGet]
+        public async Task<IActionResult> Details(int? id)
+        {
+            if (id == null) return NotFound();
+
+            var userPackage = await _context.UserPackages
+                .Include(u => u.Customer)
+                .Include(u => u.Package)
+                .FirstOrDefaultAsync(m => m.UserPackageId == id);
+
+            if (userPackage == null) return NotFound();
+
+            return View(userPackage);
+        }
+
+        // =========================================================================
+        // 3. شحن باقة جديدة (Buy) - منطق البيزنس المخصص
+        // =========================================================================
         [HttpGet]
         public async Task<IActionResult> Buy()
         {
@@ -53,9 +65,8 @@ namespace HubClub.Controllers
                     .Select(c => new SelectListItem { Value = c.CustomerId.ToString(), Text = $"{c.Name} - {c.Phone}" })
                     .ToListAsync(),
 
-                // استخدام PackageId و NumberOfHours حسب الموديل الخاص بكِ
                 AvailablePackages = await _context.Packages
-                    .Where(p => p.IsActive) // نعرض الباقات المتاحة فقط
+                    .Where(p => p.IsActive)
                     .Select(p => new SelectListItem
                     {
                         Value = p.PackageId.ToString(),
@@ -67,29 +78,21 @@ namespace HubClub.Controllers
             return View(vm);
         }
 
-        // ─────────────────────────────────────────
-        // 3. حفظ الباقة للعميل (POST)
-        // ─────────────────────────────────────────
         [HttpPost]
         [ValidateAntiForgeryToken]
         public async Task<IActionResult> Buy(BuyPackageViewModel vm)
         {
             int finalCustomerId = 0;
 
-            // 1. التعامل مع العميل
             if (vm.IsNewCustomer)
             {
-                if (string.IsNullOrWhiteSpace(vm.NewCustomerName))
-                    ModelState.AddModelError("NewCustomerName", "يجب إدخال اسم العميل.");
-
-                if (string.IsNullOrWhiteSpace(vm.NewCustomerPhone))
-                    ModelState.AddModelError("NewCustomerPhone", "رقم الموبايل إلزامي.");
+                if (string.IsNullOrWhiteSpace(vm.NewCustomerName)) ModelState.AddModelError("NewCustomerName", "يجب إدخال اسم العميل.");
+                if (string.IsNullOrWhiteSpace(vm.NewCustomerPhone)) ModelState.AddModelError("NewCustomerPhone", "رقم الموبايل إلزامي.");
                 else
                 {
                     bool phoneExists = await _context.Customers.AnyAsync(c => c.Phone == vm.NewCustomerPhone);
                     if (phoneExists) ModelState.AddModelError("NewCustomerPhone", "هذا الرقم مسجل لعميل آخر.");
                 }
-
                 if (!ModelState.IsValid) return await ReloadViewWithError(vm);
 
                 var newCus = new Customer { Name = vm.NewCustomerName, Phone = vm.NewCustomerPhone };
@@ -107,7 +110,6 @@ namespace HubClub.Controllers
                 finalCustomerId = vm.SelectedCustomerId.Value;
             }
 
-            // 2. جلب الباقة المختارة بـ PackageId
             var selectedPackage = await _context.Packages.FindAsync(vm.SelectedPackageId);
             if (selectedPackage == null)
             {
@@ -117,27 +119,27 @@ namespace HubClub.Controllers
 
             var now = DateTime.Now;
 
-            // 3. إنشاء باقة المستخدم بكل تفاصيلها حسب الموديل الخاص بكِ
             var userPackage = new UserPackage
             {
                 CusId = finalCustomerId,
                 PackageId = selectedPackage.PackageId,
                 StartDate = now,
-                // حساب تاريخ الانتهاء بجمع عدد الأيام (Period) مع تاريخ اليوم
                 ExpiryDate = now.AddDays(selectedPackage.Period),
                 RemainingHours = selectedPackage.NumberOfHours,
                 Price = selectedPackage.Price,
-                Status = UserPackageStatus.Active
+                Status = UserPackageStatus.Active,
+                IsDeleted = false,
+                // 🟢 الإضافة الأهم: تسجيل الباقة في يوم العمل الحالي المحاسبي
+                PurchaseBusinessDate = HubClub.Helpers.BusinessHelper.GetBusinessDate(now)
             };
 
             _context.UserPackages.Add(userPackage);
             await _context.SaveChangesAsync();
 
             TempData["Success"] = $"تم شحن باقة ({selectedPackage.Name}) للعميل بنجاح!";
-            return RedirectToAction("Index");
+            return RedirectToAction(nameof(Index));
         }
 
-        // دالة مساعدة لإعادة تحميل الصفحة وقت وجود خطأ
         private async Task<IActionResult> ReloadViewWithError(BuyPackageViewModel vm)
         {
             vm.AllCustomers = await _context.Customers
@@ -150,6 +152,142 @@ namespace HubClub.Controllers
                 .ToListAsync();
 
             return View(vm);
+        }
+
+       
+        // =========================================================================
+        // 4. التعديل الشامل (Full Edit) - الكود المدمج والمصحح
+        // =========================================================================
+        [HttpGet]
+        public async Task<IActionResult> Edit(int? id)
+        {
+            if (id == null) return NotFound();
+
+            // 🟢 استخدام Include لجلب بيانات العميل والباقة لتظهر في الـ View
+            var userPackage = await _context.UserPackages
+                .Include(u => u.Customer)
+                .Include(u => u.Package)
+                .FirstOrDefaultAsync(u => u.UserPackageId == id);
+
+            if (userPackage == null || userPackage.IsDeleted) return NotFound();
+
+            ViewData["CusId"] = new SelectList(_context.Customers, "CustomerId", "Name", userPackage.CusId);
+            ViewData["PackageId"] = new SelectList(_context.Packages, "PackageId", "Name", userPackage.PackageId);
+
+            return View(userPackage);
+        }
+        [HttpPost]
+        [ValidateAntiForgeryToken]
+        public async Task<IActionResult> Edit(int id, [Bind("UserPackageId,StartDate,ExpiryDate,RemainingHours,Status,Price,RowVersion,IsDeleted")] UserPackage userPackage)
+        {
+            if (id != userPackage.UserPackageId) return NotFound();
+
+            var originalPackage = await _context.UserPackages
+                .Include(up => up.Package)
+                .Include(up => up.Customer)
+                .FirstOrDefaultAsync(up => up.UserPackageId == id);
+
+            if (originalPackage == null) return NotFound();
+
+            if (userPackage.RemainingHours < 0)
+                ModelState.AddModelError("RemainingHours", "لا يمكن أن يكون عدد الساعات أقل من الصفر.");
+
+            // 🟢 التحقق من عدم تجاوز الساعات الأصلية للباقة
+            if (userPackage.RemainingHours > originalPackage.Package.NumberOfHours)
+                ModelState.AddModelError("RemainingHours", $"لا يمكن أن تتجاوز الساعات المتبقية حد الباقة الأساسي ({originalPackage.Package.NumberOfHours} ساعة).");
+
+            if (userPackage.Price < 0)
+                ModelState.AddModelError("Price", "سعر الباقة لا يمكن أن يكون بالسالب.");
+
+            if (userPackage.ExpiryDate < userPackage.StartDate)
+                ModelState.AddModelError("ExpiryDate", "تاريخ الانتهاء لا يمكن أن يكون قبل تاريخ البداية.");
+
+            int selectedPeriod = (userPackage.ExpiryDate.Date - userPackage.StartDate.Date).Days;
+            if (selectedPeriod != originalPackage.Package.Period)
+            {
+                ModelState.AddModelError("ExpiryDate", $"مدة الباقة المختارة يجب أن تكون {originalPackage.Package.Period} يوماً بالضبط حسب إعدادات الباقة.");
+            }
+
+            if (ModelState.IsValid)
+            {
+                try
+                {
+                    originalPackage.StartDate = userPackage.StartDate;
+                    originalPackage.ExpiryDate = userPackage.ExpiryDate;
+                    originalPackage.RemainingHours = userPackage.RemainingHours;
+                    originalPackage.Price = userPackage.Price;
+                    originalPackage.Status = userPackage.Status;
+
+                    if (originalPackage.RemainingHours == 0 || originalPackage.ExpiryDate < DateTime.Now)
+                    {
+                        originalPackage.Status = UserPackageStatus.Expired;
+                    }
+
+                    // 🟢 حل مشكلة عدم الحفظ: تمرير مصفوفة البايتات لتجنب أخطاء التزامن
+                    if (userPackage.RowVersion != null)
+                        _context.Entry(originalPackage).Property("RowVersion").OriginalValue = userPackage.RowVersion;
+
+                    _context.Update(originalPackage);
+                    await _context.SaveChangesAsync();
+
+                    TempData["Success"] = "تم تحديث بيانات الباقة بنجاح.";
+                    return RedirectToAction(nameof(Index));
+                }
+                catch (DbUpdateConcurrencyException)
+                {
+                    if (!UserPackageExists(originalPackage.UserPackageId)) return NotFound();
+                    else throw;
+                }
+            }
+
+            // إعادة التعبئة في حالة الخطأ
+            userPackage.Customer = originalPackage.Customer;
+            userPackage.Package = originalPackage.Package;
+            ViewData["CusId"] = new SelectList(_context.Customers, "CustomerId", "Name", originalPackage.CusId);
+            ViewData["PackageId"] = new SelectList(_context.Packages, "PackageId", "Name", originalPackage.PackageId);
+
+            return View(userPackage);
+        }
+        // =========================================================================
+        // 5. الحذف (Soft Delete)
+        // =========================================================================
+        [HttpGet]
+        public async Task<IActionResult> Delete(int? id)
+        {
+            if (id == null) return NotFound();
+
+            var userPackage = await _context.UserPackages
+                .Include(u => u.Customer)
+                .Include(u => u.Package)
+                .FirstOrDefaultAsync(m => m.UserPackageId == id);
+
+            if (userPackage == null || userPackage.IsDeleted) return NotFound();
+
+            return View(userPackage);
+        }
+
+        [HttpPost, ActionName("Delete")]
+        [ValidateAntiForgeryToken]
+        public async Task<IActionResult> DeleteConfirmed(int id)
+        {
+            var userPackage = await _context.UserPackages.FindAsync(id);
+
+            if (userPackage != null)
+            {
+                // 🟢 الحذف الوهمي: تغيير الحالة بدل مسح السجل من قاعدة البيانات
+                userPackage.IsDeleted = true;
+                _context.UserPackages.Update(userPackage);
+                await _context.SaveChangesAsync();
+
+                TempData["Success"] = "تم حذف الباقة بنجاح.";
+            }
+
+            return RedirectToAction(nameof(Index));
+        }
+
+        private bool UserPackageExists(int id)
+        {
+            return _context.UserPackages.Any(e => e.UserPackageId == id);
         }
     }
 }

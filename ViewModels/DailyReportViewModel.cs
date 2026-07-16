@@ -21,7 +21,10 @@ namespace HubClub.ViewModels
         public decimal TotalRevenue { get; set; }        // إجمالي كل حاجة (وقت + منتجات) للجلسات المغلقة فقط
         public decimal TotalTimeRevenue { get; set; }     // إيراد الوقت فقط
         public decimal TotalProductRevenue { get; set; }  // إيراد المنتجات فقط
-
+        public decimal TotalPackageRevenue
+        {
+            get; set;
+        }
         public int ClosedSessionsCount { get; set; }
         public int OpenSessionsCount { get; set; }        // جلسات لسه مفتوحة (عملاء موجودين دلوقتي)
 
