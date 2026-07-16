@@ -12,13 +12,26 @@
     <form asp-action="Edit" method="post">
         <div asp-validation-summary="ModelOnly" class="alert-glass mb-4 text-danger fw-bold"></div>
 
+        <!-- 🟢 1. البيانات الأساسية -->
         <input type="hidden" asp-for="UserPackageId" />
         <input type="hidden" asp-for="IsDeleted" />
         <input type="hidden" asp-for="RowVersion" />
-
-        <!-- حقول مخفية عشان نبعت البيانات زي ما هي للكنترولر -->
         <input type="hidden" asp-for="CusId" />
         <input type="hidden" asp-for="PackageId" />
+        <input type="hidden" asp-for="PurchaseBusinessDate" />
+
+        <!-- 🟢 2. بيانات العميل عشان الـ Model Validation يقبلها -->
+        <input type="hidden" asp-for="Customer.CustomerId" />
+        <input type="hidden" asp-for="Customer.Name" />
+        <input type="hidden" asp-for="Customer.Phone" />
+        <input type="hidden" asp-for="Customer.CreatedAt" />
+
+        <!-- 🟢 3. بيانات الباقة عشان الـ Model Validation يقبلها -->
+        <input type="hidden" asp-for="Package.PackageId" />
+        <input type="hidden" asp-for="Package.Name" />
+        <input type="hidden" asp-for="Package.Period" />
+        <input type="hidden" asp-for="Package.NumberOfHours" />
+        <input type="hidden" asp-for="Package.Price" />
 
         <div class="row">
             <div class="col-md-6 mb-3">

@@ -29,18 +29,60 @@ namespace HubClub.Controllers
 
             return View(customers);
         }
-
-        // GET: Customers/Details/5
+        [HttpGet]
         public async Task<IActionResult> Details(int? id)
         {
             if (id == null) return NotFound();
 
             var customer = await _context.Customers
-                .FirstOrDefaultAsync(m => m.CustomerId == id);
+                .Include(c => c.UserPackages.Where(up => !up.IsDeleted))
+                    .ThenInclude(up => up.Package)
+                .Include(c => c.Sessions)
+                    .ThenInclude(s => s.SessionProducts)
+                        .ThenInclude(sp => sp.Product)
+                .FirstOrDefaultAsync(c => c.CustomerId == id);
 
             if (customer == null) return NotFound();
 
-            return View(customer);
+            // 1. تحديد الباقة النشطة الحالية (الأقرب للانتهاء)
+            var activePackage = customer.UserPackages
+                .Where(up => up.Status == HubClub.Models.Enums.UserPackageStatus.Active
+                          && up.RemainingHours > 0
+                          && up.ExpiryDate >= DateTime.Now)
+                .OrderBy(up => up.ExpiryDate)
+                .FirstOrDefault();
+
+            // 2. تحضير سجل الجلسات
+            var sessionHistory = customer.Sessions
+                .OrderByDescending(s => s.StartTime)
+                .Select(s => new HubClub.ViewModels.SessionHistoryViewModel
+                {
+                    SessionId = s.SessionId,
+                    StartTime = s.StartTime,
+                    EndTime = s.EndTime,
+                    GrandTotal = s.GrandTotal,
+                    PaymentType = s.PaymentType,
+                    ProductsSummary = s.SessionProducts.Select(sp => $"{sp.Product.Name} ({sp.Quantity})").ToList()
+                }).ToList();
+
+            // 3. الحسابات
+            var closedSessions = customer.Sessions.Where(s => s.IsClosed).ToList();
+            decimal totalSessionsRevenue = closedSessions.Sum(s => s.GrandTotal);
+            decimal totalPackagesRevenue = customer.UserPackages.Sum(p => p.Price);
+
+            // 4. تعبئة الـ ViewModel بكل البيانات
+            var vm = new HubClub.ViewModels.CustomerProfileViewModel
+            {
+                Customer = customer,
+                ActivePackage = activePackage,
+                ActivePackageDetails = activePackage?.Package,
+                PackagesHistory = customer.UserPackages.OrderByDescending(p => p.StartDate).ToList(), // 🟢 تمرير تاريخ الباقات كامل
+                SessionHistory = sessionHistory,
+                TotalSpent = totalSessionsRevenue + totalPackagesRevenue,
+                TotalVisits = closedSessions.Count
+            };
+
+            return View(vm);
         }
 
         // GET: Customers/Create

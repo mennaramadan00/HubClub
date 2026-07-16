@@ -146,10 +146,11 @@ namespace HubClub.Controllers
                 {
                     var activePackage = await _context.UserPackages
                         .Where(p => p.CusId == finalCustomerId
-                                  && p.Status == UserPackageStatus.Active
-                                  && p.RemainingHours > 0
-                                  && p.ExpiryDate >= now)
-                        .OrderByDescending(p => p.RemainingHours)
+                                   && p.Status == UserPackageStatus.Active
+                                   && p.RemainingHours > 0
+                                   && p.ExpiryDate >= now)
+                        // 🟢 التعديل هنا: ترتيب تصاعدي حسب تاريخ الانتهاء لاختيار الباقة الأقرب للانتهاء أولاً
+                        .OrderBy(p => p.ExpiryDate)
                         .FirstOrDefaultAsync();
 
                     if (activePackage == null)
@@ -194,7 +195,6 @@ namespace HubClub.Controllers
                 return RedirectToAction("Index", "Home");
             }
         }
-
         // ─────────────────────────────────────────
         // GET: Session/AddProducts
         // ─────────────────────────────────────────

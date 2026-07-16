@@ -176,78 +176,97 @@ namespace HubClub.Controllers
 
             return View(userPackage);
         }
-        [HttpPost]
-        [ValidateAntiForgeryToken]
-        public async Task<IActionResult> Edit(int id, [Bind("UserPackageId,StartDate,ExpiryDate,RemainingHours,Status,Price,RowVersion,IsDeleted")] UserPackage userPackage)
+       [HttpPost]
+[ValidateAntiForgeryToken]
+// 🟢 شيلنا الـ Bind الطويل عشان نستقبل الكائن كامل من الـ View
+public async Task<IActionResult> Edit(int id, UserPackage userPackage)
+{
+    if (id != userPackage.UserPackageId) return NotFound();
+
+    var originalPackage = await _context.UserPackages
+        .Include(up => up.Package)
+        .Include(up => up.Customer)
+        .FirstOrDefaultAsync(up => up.UserPackageId == id);
+
+    if (originalPackage == null) return NotFound();
+
+    // قيود الحماية الأساسية
+    if (userPackage.RemainingHours < 0)
+        ModelState.AddModelError("RemainingHours", "لا يمكن أن يكون عدد الساعات أقل من الصفر.");
+
+    if (userPackage.RemainingHours > originalPackage.Package.NumberOfHours)
+        ModelState.AddModelError("RemainingHours", $"لا يمكن أن تتجاوز الساعات المتبقية حد الباقة الأساسي ({originalPackage.Package.NumberOfHours} ساعة).");
+
+    if (userPackage.Price < 0)
+        ModelState.AddModelError("Price", "سعر الباقة لا يمكن أن يكون بالسالب.");
+
+    if (userPackage.ExpiryDate < userPackage.StartDate)
+        ModelState.AddModelError("ExpiryDate", "تاريخ الانتهاء لا يمكن أن يكون قبل تاريخ البداية.");
+
+    int selectedPeriod = (userPackage.ExpiryDate.Date - userPackage.StartDate.Date).Days;
+    if (selectedPeriod != originalPackage.Package.Period)
+    {
+        ModelState.AddModelError("ExpiryDate", $"مدة الباقة المختارة يجب أن تكون {originalPackage.Package.Period} يوماً بالضبط حسب إعدادات الباقة.");
+    }
+
+    if (ModelState.IsValid)
+    {
+        try
         {
-            if (id != userPackage.UserPackageId) return NotFound();
-
-            var originalPackage = await _context.UserPackages
-                .Include(up => up.Package)
-                .Include(up => up.Customer)
-                .FirstOrDefaultAsync(up => up.UserPackageId == id);
-
-            if (originalPackage == null) return NotFound();
-
-            if (userPackage.RemainingHours < 0)
-                ModelState.AddModelError("RemainingHours", "لا يمكن أن يكون عدد الساعات أقل من الصفر.");
-
-            // 🟢 التحقق من عدم تجاوز الساعات الأصلية للباقة
-            if (userPackage.RemainingHours > originalPackage.Package.NumberOfHours)
-                ModelState.AddModelError("RemainingHours", $"لا يمكن أن تتجاوز الساعات المتبقية حد الباقة الأساسي ({originalPackage.Package.NumberOfHours} ساعة).");
-
-            if (userPackage.Price < 0)
-                ModelState.AddModelError("Price", "سعر الباقة لا يمكن أن يكون بالسالب.");
-
-            if (userPackage.ExpiryDate < userPackage.StartDate)
-                ModelState.AddModelError("ExpiryDate", "تاريخ الانتهاء لا يمكن أن يكون قبل تاريخ البداية.");
-
-            int selectedPeriod = (userPackage.ExpiryDate.Date - userPackage.StartDate.Date).Days;
-            if (selectedPeriod != originalPackage.Package.Period)
+            // 🟢 1. حساب فرق السعر وتحديث الإقفال القديم
+            decimal priceDifference = userPackage.Price - originalPackage.Price;
+            
+            if (priceDifference != 0)
             {
-                ModelState.AddModelError("ExpiryDate", $"مدة الباقة المختارة يجب أن تكون {originalPackage.Package.Period} يوماً بالضبط حسب إعدادات الباقة.");
-            }
-
-            if (ModelState.IsValid)
-            {
-                try
+                // بنجيب اليوم اللي اتباعت فيه الباقة
+                var oldClosing = await _context.DailyClosings
+                    .FirstOrDefaultAsync(dc => dc.BusinessDate == userPackage.PurchaseBusinessDate);
+                
+                // لو اليوم ده اتقفل، بنزود أو ننقص الفرق من إيراداته
+                if (oldClosing != null)
                 {
-                    originalPackage.StartDate = userPackage.StartDate;
-                    originalPackage.ExpiryDate = userPackage.ExpiryDate;
-                    originalPackage.RemainingHours = userPackage.RemainingHours;
-                    originalPackage.Price = userPackage.Price;
-                    originalPackage.Status = userPackage.Status;
-
-                    if (originalPackage.RemainingHours == 0 || originalPackage.ExpiryDate < DateTime.Now)
-                    {
-                        originalPackage.Status = UserPackageStatus.Expired;
-                    }
-
-                    // 🟢 حل مشكلة عدم الحفظ: تمرير مصفوفة البايتات لتجنب أخطاء التزامن
-                    if (userPackage.RowVersion != null)
-                        _context.Entry(originalPackage).Property("RowVersion").OriginalValue = userPackage.RowVersion;
-
-                    _context.Update(originalPackage);
-                    await _context.SaveChangesAsync();
-
-                    TempData["Success"] = "تم تحديث بيانات الباقة بنجاح.";
-                    return RedirectToAction(nameof(Index));
-                }
-                catch (DbUpdateConcurrencyException)
-                {
-                    if (!UserPackageExists(originalPackage.UserPackageId)) return NotFound();
-                    else throw;
+                    oldClosing.TotalPackageRevenue += priceDifference;
+                    oldClosing.TotalCash += priceDifference;
+                    _context.DailyClosings.Update(oldClosing);
                 }
             }
 
-            // إعادة التعبئة في حالة الخطأ
-            userPackage.Customer = originalPackage.Customer;
-            userPackage.Package = originalPackage.Package;
-            ViewData["CusId"] = new SelectList(_context.Customers, "CustomerId", "Name", originalPackage.CusId);
-            ViewData["PackageId"] = new SelectList(_context.Packages, "PackageId", "Name", originalPackage.PackageId);
+            // 🟢 2. تحديث قيم الباقة
+            originalPackage.StartDate = userPackage.StartDate;
+            originalPackage.ExpiryDate = userPackage.ExpiryDate;
+            originalPackage.RemainingHours = userPackage.RemainingHours;
+            originalPackage.Price = userPackage.Price;
+            originalPackage.Status = userPackage.Status;
 
-            return View(userPackage);
+            if (originalPackage.RemainingHours == 0 || originalPackage.ExpiryDate < DateTime.Now)
+            {
+                originalPackage.Status = UserPackageStatus.Expired;
+            }
+
+            if (userPackage.RowVersion != null)
+                _context.Entry(originalPackage).Property("RowVersion").OriginalValue = userPackage.RowVersion;
+
+            _context.Update(originalPackage);
+            await _context.SaveChangesAsync();
+
+            TempData["Success"] = "تم تحديث الباقة وتعديل الإيرادات بنجاح.";
+            return RedirectToAction(nameof(Index));
         }
+        catch (DbUpdateConcurrencyException)
+        {
+            if (!UserPackageExists(originalPackage.UserPackageId)) return NotFound();
+            else throw;
+        }
+    }
+
+    // إعادة التعبئة في حالة وجود خطأ في الإدخال
+    userPackage.Customer = originalPackage.Customer;
+    userPackage.Package = originalPackage.Package;
+    ViewData["CusId"] = new SelectList(_context.Customers, "CustomerId", "Name", originalPackage.CusId);
+    ViewData["PackageId"] = new SelectList(_context.Packages, "PackageId", "Name", originalPackage.PackageId);
+
+    return View(userPackage);
+}
         // =========================================================================
         // 5. الحذف (Soft Delete)
         // =========================================================================

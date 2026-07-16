@@ -25,13 +25,14 @@
             <nav class="sidebar-nav">
                 <!-- تم إرجاع أسماء الـ Controllers الأصلية (بصيغة الجمع) هنا حتى تعمل الروابط -->
                 <a class="nav-item-link @navActive("Home", "Index")" asp-controller="Home" asp-action="Index">إدارة الجلسات</a>
-                <a class="nav-item-link @navActive("Home", "DailyAnalysis")" asp-controller="Home" asp-action="DailyAnalysis">التحليل المالي اليومي</a>
+                <a class="nav-item-link @navActive("Home", "DailyAnalysis")" asp-controller="Home" asp-action="DailyAnalysis">الجلسات المغلقة</a>
                 <a class="nav-item-link @navActive("Products", null)" asp-controller="Products" asp-action="Index">المنتجات والبار</a>
                 <a class="nav-item-link @navActive("PricingSettings", null)" asp-controller="PricingSettings" asp-action="Index">إعدادات التسعير</a>
                 <a class="nav-item-link @navActive("Packages", null)" asp-controller="Packages" asp-action="Index">إدارة الباقات</a>
                 <a class="nav-item-link @navActive("UserPackage", null)" asp-controller="UserPackage" asp-action="Index">باقات المشتركين</a>
                 <a class="nav-item-link @navActive("Customers", null)" asp-controller="Customers" asp-action="Index">قاعدة العملاء</a>
-                <a class="nav-item-link @navActive("Session", "DailyReport")" asp-controller="Session" asp-action="DailyReport">تقرير الإقفال اليومي</a>
+                <a class="nav-item-link @navActive("Session", "DailyReport")" asp-controller="Session" asp-action="DailyReport">التقارير </a>
+                <a class="nav-item-link @navActive("Analysis", "Index")" asp-controller="Analysis" asp-action="Index">التحليل المالي</a>
             </nav>
         </aside>
 

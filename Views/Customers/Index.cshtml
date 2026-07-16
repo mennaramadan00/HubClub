@@ -3,81 +3,135 @@
     ViewData["Title"] = "إدارة العملاء";
 }
 
-<!-- الرأس العلوي وأزرار الإضافة -->
-<div class="d-flex justify-content-between align-items-center mb-4">
-    <div>
-        <h2 style="color: var(--sapphire); font-weight: 800; margin: 0;">قاعدة العملاء</h2>
-        <p style="color: var(--text-slate); margin: 0;">سجل بيانات العملاء والبحث السريع</p>
+<div dir="rtl">
+
+    <!-- الرأس العلوي وأزرار الإضافة -->
+    <div class="d-flex justify-content-between align-items-center mb-4">
+        <div>
+            <h2 style="color: var(--sapphire); font-weight: 800; margin: 0;">قاعدة العملاء</h2>
+            <p style="color: var(--text-slate); margin: 0;">سجل بيانات العملاء والبحث السريع</p>
+        </div>
+        <a asp-action="Create" class="btn-aurelian-primary">
+            إضافة عميل جديد
+        </a>
     </div>
-    <a asp-action="Create" class="btn-aurelian-primary">
-        إضافة عميل جديد
-    </a>
+
+    <!-- ودجات الإحصائيات -->
+    <div class="analysis-summary-grid mb-5">
+        <div class="customer-summary-glass mb-4">
+            <span>إجمالي العملاء</span>
+            <strong>@Model.Count()</strong>
+        </div>
+
+        @*
+        <div class="summary-box">
+            <div class="sb-title">حسابات نشطة</div>
+            <div class="sb-val">@Model.Count(c => c.IsActive)</div>
+        </div>
+        *@
+    </div>
+
+    <!-- شريط البحث -->
+    <div class="mb-4">
+        <input type="text"
+               id="searchInput"
+               class="premium-input"
+               placeholder="ابحث بالاسم أو رقم الهاتف..."
+               style="max-width:500px;" />
+    </div>
+
+    @if (!Model.Any())
+    {
+        <div class="glass-form-container text-center mt-5">
+            <h3 class="mt-3" style="color: var(--sapphire); font-weight: 800;">
+                لا يوجد عملاء في قاعدة البيانات
+            </h3>
+
+            <p style="color: var(--text-slate);">
+                ابدأ بتسجيل أول عميل في النظام لتتمكن من فتح جلسات له.
+            </p>
+
+            <a asp-action="Create" class="btn-aurelian-primary mt-3">
+                تسجيل عميل
+            </a>
+        </div>
+    }
+    else
+    {
+        <div class="table-glass-wrap">
+            <table class="table-glass">
+                <thead>
+                    <tr>
+                        <th>الاسم</th>
+                        <th>رقم الهاتف</th>
+                        <th>الحالة</th>
+                        <th>الإجراءات</th>
+                    </tr>
+                </thead>
+
+                <tbody>
+                    @foreach (var item in Model)
+                    {
+                        <tr class="customer-row"
+                            data-search="@item.Name.ToLower() @item.Phone">
+
+                            <td class="fw-bold text-sapphire">
+                                @item.Name
+                            </td>
+
+                            <td>
+                                @item.Phone
+                            </td>
+
+                            <td>
+                                <span class="badge-glass"
+                                      style="background:@(item.IsActive ? "var(--azure-glow-soft)" : "rgba(239,68,68,.10)");
+                                                     color:@(item.IsActive ? "var(--sapphire)" : "#ef4444");
+                                                     border-color:@(item.IsActive ? "var(--azure-glow)" : "rgba(239,68,68,.20)");">
+                                    @(item.IsActive ? "نشط" : "مؤرشف")
+                                </span>
+                            </td>
+
+                            <td>
+                                <a asp-action="Edit"
+                                   asp-route-id="@item.CustomerId"
+                                   style="color: var(--azure); margin-left:10px; font-weight:bold; text-decoration:none;">
+                                    تعديل
+                                </a>
+
+                                <a asp-action="Details"
+                                   asp-route-id="@item.CustomerId"
+                                   style="color: var(--sapphire); margin-left:10px; font-weight:bold; text-decoration:none;">
+                                    تفاصيل
+                                </a>
+
+                                <a asp-action="Delete"
+                                   asp-route-id="@item.CustomerId"
+                                   style="color:#ef4444; font-weight:bold; text-decoration:none;">
+                                    حذف
+                                </a>
+                            </td>
+
+                        </tr>
+                    }
+                </tbody>
+            </table>
+        </div>
+    }
+
 </div>
-
-<!-- ودجات الإحصائيات الفخمة -->
-<div class="analysis-summary-grid mb-5">
-    <div class="summary-box">
-        <div class="sb-title">إجمالي العملاء</div>
-        <div class="sb-val">@Model.Count()</div>
-    </div>
-    @* <div class="summary-box">
-        <div class="sb-title">حسابات نشطة</div>
-        <div class="sb-val">@Model.Count(c => c.IsActive)</div>
-    </div> *@
-</div>
-
-<!-- شريط البحث -->
-<div class="mb-4">
-    <input type="text" id="searchInput" class="premium-input" placeholder="ابحث بالاسم أو رقم الهاتف..." style="max-width: 500px;" />
-</div>
-
-<!-- شبكة كروت العملاء الزجاجية -->
-@if (!Model.Any())
-{
-    <div class="glass-form-container text-center mt-5">
-        <h3 class="mt-3" style="color: var(--sapphire); font-weight: 800;">لا يوجد عملاء في قاعدة البيانات</h3>
-        <p style="color: var(--text-slate);">ابدأ بتسجيل أول عميل في النظام لتتمكن من فتح جلسات له.</p>
-        <a asp-action="Create" class="btn-aurelian-primary mt-3">تسجيل عميل</a>
-    </div>
-}
-else
-{
-    <div class="cards-grid-3">
-        @foreach (var item in Model)
-        {
-            <div class="wf-card customer-card" data-search="@item.Name.ToLower() @item.Phone">
-
-                <div class="wf-card-header d-flex justify-content-between align-items-center">
-                    <h4 style="color: var(--sapphire); font-weight: 800; margin: 0;">@item.Name</h4>
-                    <span class="badge-glass">
-                        @(item.IsActive ? "نشط" : "مؤرشف")
-                    </span>
-                </div>
-
-                <div class="wf-data-row">
-                    <span class="wf-data-label">رقم الهاتف</span>
-                    <span class="wf-data-val">@item.Phone</span>
-                </div>
-
-                <!-- أزرار الأكشن بستايل مدمج وأنيق بدون إيموجيز -->
-                <div class="form-actions mt-auto pt-3">
-                    <a asp-action="Details" asp-route-id="@item.CustomerId" class="btn-aurelian-outline" style="padding: 0.5rem 1rem;">تفاصيل</a>
-                    <a asp-action="Edit" asp-route-id="@item.CustomerId" class="btn-aurelian-outline" style="padding: 0.5rem 1rem;">تعديل</a>
-                    <a asp-action="Delete" asp-route-id="@item.CustomerId" class="btn-aurelian-outline" style="padding: 0.5rem 1rem; color: #ef4444; border-color: #ef4444;">حذف</a>
-                </div>
-
-            </div>
-        }
-    </div>
-}
 
 @section Scripts {
     <script>
         document.getElementById('searchInput')?.addEventListener('input', function () {
+
             const q = this.value.toLowerCase();
-            document.querySelectorAll('.customer-card').forEach(card => {
-                card.style.display = card.dataset.search.includes(q) ? '' : 'none';
+
+            document.querySelectorAll('.customer-row').forEach(row => {
+                row.style.display =
+                    row.dataset.search.includes(q) ? '' : 'none';
             });
+
         });
     </script>
 }

@@ -1,33 +1,176 @@
-﻿@model HubClub.Models.Customer
+﻿@model HubClub.ViewModels.CustomerProfileViewModel
 @{
-    ViewData["Title"] = "بيانات العميل";
+    ViewData["Title"] = "الملف الشخصي للعميل";
 }
 
-<div class="glass-form-container" dir="rtl" style="max-width: 600px;">
-    <div class="form-header text-center pb-4">
-        <h2 style="font-size: 2rem;">@Model.Name</h2>
-        <span class="badge-glass mt-2" style="font-size: 1rem; padding: 0.5rem 1rem;">
-            @(Model.IsActive ? "حساب نشط" : "حساب مؤرشف")
-        </span>
+<div class="glass-form-container mx-auto" dir="rtl" style="max-width: 1000px; padding: 2.5rem;">
+    <!-- الهيدر -->
+    <div class="row align-items-center mb-4 pb-4 border-bottom" style="border-color: var(--glass-edge-blue) !important;">
+        <div class="col-md-6">
+            <h2 style="font-size: 2.2rem; color: var(--sapphire); font-weight: 800; margin-bottom: 0.5rem;">
+                @Model.Customer.Name
+            </h2>
+            <div class="d-flex align-items-center gap-3 mt-2">
+                <span class="badge-glass" style="font-size: 0.95rem; padding: 0.4rem 1rem;">
+                    @(Model.Customer.IsActive ? "حساب نشط" : "حساب مؤرشف")
+                </span>
+                <span class="text-muted fw-bold">📞 @Model.Customer.Phone</span>
+            </div>
+            <div class="mt-2 text-muted small">
+                عضو منذ: @Model.Customer.CreatedAt.ToString("dd/MM/yyyy")
+            </div>
+        </div>
+        <div class="col-md-6 text-md-end mt-3 mt-md-0 d-flex gap-2 justify-content-md-end">
+            <a asp-action="Edit" asp-route-id="@Model.Customer.CustomerId" class="btn-aurelian-primary">تعديل البيانات</a>
+        </div>
     </div>
 
-    <div class="mt-4">
-        <div class="wf-data-row">
-            <span class="wf-data-label">رقم الهاتف</span>
-            <span class="wf-data-val" style="font-size: 1.2rem;">@Model.Phone</span>
+    <!-- كروت الإحصائيات والباقة النشطة -->
+    <div class="analysis-summary-grid mb-5">
+        <div class="summary-box">
+            <div class="sb-title">إجمالي المدفوعات</div>
+            <div class="sb-val text-success">@Model.TotalSpent.ToString("N2") <span style="font-size:1rem;">ج</span></div>
         </div>
-        <div class="wf-data-row">
-            <span class="wf-data-label">تاريخ التسجيل</span>
-            <span class="wf-data-val">@Model.CreatedAt.ToString("dd/MM/yyyy hh:mm tt")</span>
+        <div class="summary-box">
+            <div class="sb-title">إجمالي الزيارات</div>
+            <div class="sb-val text-primary">@Model.TotalVisits <span style="font-size:1rem;">زيارة</span></div>
+        </div>
+
+        <!-- كارت الباقة النشطة -->
+        <div class="summary-box" style="background: @(Model.ActivePackage != null ? "linear-gradient(135deg, var(--azure) 0%, var(--sapphire) 100%)" : "rgba(0,0,0,0.05)"); border: none;">
+            <div class="sb-title" style="color: @(Model.ActivePackage != null ? "rgba(255,255,255,0.85)" : "var(--text-slate)");">الباقة الحالية</div>
+            @if (Model.ActivePackage != null && Model.ActivePackageDetails != null)
+            {
+                <div class="sb-val" style="color: #ffffff; font-size: 1.5rem;">
+                    @Model.ActivePackageDetails.Name
+                </div>
+                <div style="color: rgba(255,255,255,0.9); font-size: 0.9rem; margin-top: 5px;">
+                    المتبقي: <strong style="color: #FFD700;">@Model.ActivePackage.RemainingHours ساعة</strong>
+                    <br />
+                    صلاحية حتى: @Model.ActivePackage.ExpiryDate.ToString("dd/MM/yyyy")
+                </div>
+            }
+            else
+            {
+                <div class="sb-val" style="color: var(--text-slate); font-size: 1.2rem; margin-top: 10px;">
+                    لا توجد باقة نشطة
+                </div>
+            }
         </div>
     </div>
 
-    <div class="form-actions mt-5">
-        <a asp-action="Edit" asp-route-id="@Model.CustomerId" class="btn-aurelian-primary">تعديل البيانات</a>
-        <a asp-action="Delete" asp-route-id="@Model.CustomerId" class="btn-aurelian-outline" style="color: #ef4444; border-color: #ef4444;">حذف العميل</a>
-    </div>
+    <!-- سجل الباقات التاريخي -->
+    <h3 style="font-weight: 800; color: var(--sapphire); margin-bottom: 1.5rem;">سجل الباقات</h3>
+    @if (!Model.PackagesHistory.Any())
+    {
+        <p class="text-muted fw-bold mb-5">لم يقم العميل بشراء أي باقات.</p>
+    }
+    else
+    {
+        <div class="table-responsive mb-5">
+            <table class="table table-striped align-middle">
+                <thead>
+                    <tr>
+                        <th>الباقة</th>
+                        <th>الشراء</th>
+                        <th>الانتهاء</th>
+                        <th>الساعات</th>
+                        <th>السعر</th>
+                        <th>الحالة</th>
+                    </tr>
+                </thead>
+                <tbody>
+                    @foreach (var pkg in Model.PackagesHistory)
+                    {
+                        <tr>
+                            <td class="fw-bold">@pkg.Package.Name</td>
+                            <td>@pkg.StartDate.ToString("dd/MM/yyyy")</td>
+                            <td>@pkg.ExpiryDate.ToString("dd/MM/yyyy")</td>
+                            <td>
+                                <span class="badge @(pkg.RemainingHours > 0 ? "bg-primary" : "bg-danger")">
+                                    @pkg.RemainingHours
+                                </span>
+                            </td>
+                            <td>@pkg.Price.ToString("N2") ج</td>
+                            <td>
+                                @if (pkg.Status == HubClub.Models.Enums.UserPackageStatus.Active)
+                                {
+                                    <span class="badge bg-success">نشطة</span>
+                                }
+                                else
+                                {
+                                    <span class="badge bg-secondary">منتهية</span>
+                                }
+                            </td>
+                        </tr>
+                    }
+                </tbody>
+            </table>
+        </div>
+    }
+
+    <!-- سجل الجلسات التاريخي -->
+    <h3 style="font-weight: 800; color: var(--sapphire); margin-bottom: 1.5rem;">سجل الزيارات</h3>
+    @if (!Model.SessionHistory.Any())
+    {
+        <p class="text-muted fw-bold mb-5">لا يوجد سجل زيارات لهذا العميل.</p>
+    }
+    else
+    {
+        <div class="table-responsive mb-4">
+            <table class="table table-striped align-middle">
+                <thead>
+                    <tr>
+                        <th>الجلسة</th>
+                        <th>التاريخ</th>
+                        <th>وقت الدخول</th>
+                        <th>وقت الخروج</th>
+                        <th>طريقة الدفع</th>
+                        <th>المنتجات المطلوبة</th>
+                        <th>الإجمالي</th>
+                    </tr>
+                </thead>
+                <tbody>
+                    @foreach (var session in Model.SessionHistory)
+                    {
+                        <tr>
+                            <td class="text-muted fw-bold">#@session.SessionId</td>
+                            <td>@session.StartTime.ToString("yyyy/MM/dd")</td>
+                            <td>@session.StartTime.ToString("hh:mm tt")</td>
+                            <td>
+                                @if (session.EndTime.HasValue)
+                                {
+                                    @session.EndTime.Value.ToString("hh:mm tt")
+                                }
+                                else
+                                {
+                                    <span class="badge bg-warning text-dark">مفتوحة الآن</span>
+                                }
+                            </td>
+                            <td>
+                                <span class="badge bg-info text-dark">@session.PaymentType</span>
+                            </td>
+                            <td>
+                                @if (session.ProductsSummary.Any())
+                                {
+                                    <div style="font-size: 0.85rem;">
+                                        @string.Join(" + ", session.ProductsSummary)
+                                    </div>
+                                }
+                                else
+                                {
+                                    <span class="text-muted">-</span>
+                                }
+                            </td>
+                            <td class="fw-bold text-success">@session.GrandTotal.ToString("N2") ج</td>
+                        </tr>
+                    }
+                </tbody>
+            </table>
+        </div>
+    }
 
     <div class="text-center mt-4">
-        <a asp-action="Index" style="color: var(--sapphire); font-weight: 700; text-decoration: none;">العودة للقائمة</a>
+        <a asp-action="Index" style="color: var(--sapphire); font-weight: 700; text-decoration: none;">&laquo; العودة لقاعدة العملاء</a>
     </div>
 </div>
