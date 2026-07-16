@@ -10,7 +10,6 @@
     <input type="hidden" asp-for="StartTime" />
     <input type="hidden" asp-for="EndTime" />
     <input type="hidden" asp-for="HoursElapsed" />
-    <!-- تم إزالة الـ hidden input الخاص بـ CalculatedTimePrice لأننا سنعرضه كـ Input قابل للتعديل -->
 
     <div class="row">
         <!-- قسم إضافة منتجات جديدة -->
@@ -49,7 +48,7 @@
                 <div class="wf-data-row"><span class="wf-data-label">العميل</span> <span class="wf-data-val">@Model.CustomerName</span></div>
                 <div class="wf-data-row"><span class="wf-data-label">مدة الجلسة</span> <span class="wf-data-val">@Model.HoursElapsed.ToString("0.##") ساعة</span></div>
 
-                <!-- قائمة الطلبات القديمة (أصبحت قابلة للتعديل الآن) -->
+                <!-- قائمة الطلبات القديمة -->
                 @if (Model.AlreadyAddedProducts.Any())
                 {
                     <div class="mt-3 mb-2 px-2" style="font-size: 0.9rem; color: var(--sapphire); font-weight: 800;">الطلبات المسجلة مسبقاً (يمكنك تعديلها):</div>
@@ -79,22 +78,25 @@
                     </div>
                 }
 
-                <!-- 🟢 التعديل: جعل تكلفة الوقت قابلة للتعديل يدوياً -->
+                <!-- تكلفة الوقت -->
                 <div class="wf-data-row mt-3">
                     <span class="wf-data-label">تكلفة الوقت</span>
-                    <input type="number" step="0.01" id="timeTotal" asp-for="CalculatedTimePrice" class="form-control text-center font-weight-bold" oninput="manualRecalc()" style="width: 100px; color: var(--sapphire); padding: 4px;" />
+                    <input type="number" step="0.01" id="CalculatedTimePrice" name="CalculatedTimePrice" value="@Model.CalculatedTimePrice.ToString("F2", System.Globalization.CultureInfo.InvariantCulture)" class="form-control text-center font-weight-bold" oninput="manualRecalc()" style="width: 100px; color: var(--sapphire); padding: 4px;" />
                 </div>
 
-                <!-- 🟢 التعديل: جعل إجمالي البار قابل للتعديل يدوياً -->
+                <!-- إجمالي البار -->
                 <div class="wf-data-row">
                     <span class="wf-data-label">إجمالي البار</span>
-                    <input type="number" step="0.01" id="productsTotal" asp-for="TotalProductPrice" class="form-control text-center font-weight-bold" oninput="manualRecalc()" style="width: 100px; color: var(--sapphire); padding: 4px;" />
+                    <input type="number" step="0.01" id="TotalProductPrice" name="TotalProductPrice" value="@Model.TotalProductPrice.ToString("F2", System.Globalization.CultureInfo.InvariantCulture)" class="form-control text-center font-weight-bold" oninput="manualRecalc()" style="width: 100px; color: var(--sapphire); padding: 4px;" />
                 </div>
 
-                <!-- الإجمالي النهائي (يتم حسابه آلياً من الخانتين السابقتين وهو مغلق للتعديل المباشر لمنع الأخطاء) -->
+                <!-- الإجمالي النهائي -->
                 <div class="wf-data-row mt-4" style="background: var(--sapphire); border-color: var(--sapphire); align-items: center;">
                     <span class="wf-data-label" style="color: rgba(255,255,255,0.85);">الإجمالي النهائي</span>
-                    <input type="number" step="0.01" id="grandTotal" asp-for="GrandTotal" readonly
+                    @{
+                        var initialGrandTotal = Model.CalculatedTimePrice + Model.TotalProductPrice;
+                    }
+                    <input type="number" step="0.01" id="GrandTotal" name="GrandTotal" value="@initialGrandTotal.ToString("F2", System.Globalization.CultureInfo.InvariantCulture)" readonly
                            style="width: 100px; text-align: center; font-size: 1.3rem; font-weight: bold; color: #ffffff; background: rgba(255,255,255,0.1); border: 1px solid rgba(255,255,255,0.3); border-radius: 6px; padding: 4px;" />
                 </div>
 
@@ -110,11 +112,16 @@
 </form>
 
 <script>
+    // 🟢 استدعاء التحديث فوراً عند تحميل الصفحة لضمان المزامنة
+    document.addEventListener("DOMContentLoaded", function () {
+        manualRecalc();
+    });
+
     // أسعار المنتجات الجديدة
     const prices = {
         @for (int i = 0; i < Model.AvailableProducts.Count; i++)
         {
-                @:@i: @Model.AvailableProducts[i].Price.ToString("F2", System.Globalization.CultureInfo.InvariantCulture),
+                    @:@i: @Model.AvailableProducts[i].Price.ToString("F2", System.Globalization.CultureInfo.InvariantCulture),
         }
     };
 
@@ -122,8 +129,8 @@
     const oldPrices = {
         @for (int j = 0; j < Model.AlreadyAddedProducts.Count; j++)
         {
-                var price = Model.AlreadyAddedProducts[j].Quantity > 0 ? (Model.AlreadyAddedProducts[j].LineTotal / Model.AlreadyAddedProducts[j].Quantity) : 0;
-                @:@j: @price.ToString("F2", System.Globalization.CultureInfo.InvariantCulture),
+                    var price = Model.AlreadyAddedProducts[j].Quantity > 0 ? (Model.AlreadyAddedProducts[j].LineTotal / Model.AlreadyAddedProducts[j].Quantity) : 0;
+                    @:@j: @price.ToString("F2", System.Globalization.CultureInfo.InvariantCulture),
         }
     };
 
@@ -149,16 +156,16 @@
         recalc();
     }
 
-    // 🟢 دالة الحساب اليدوي: تعمل فوراً عند تغيير العميل لأسعار البار أو الوقت بيده
+    // دالة الحساب اليدوي (تقرأ القيم باستخدام الـ IDs الصريحة الجديدة)
     function manualRecalc() {
-        const tCost = parseFloat(document.getElementById('timeTotal').value) || 0;
-        const pCost = parseFloat(document.getElementById('productsTotal').value) || 0;
+        const tCost = parseFloat(document.getElementById('CalculatedTimePrice').value) || 0;
+        const pCost = parseFloat(document.getElementById('TotalProductPrice').value) || 0;
 
         // جمع القيمتين وحفظهم في الإجمالي النهائي
-        document.getElementById('grandTotal').value = (tCost + pCost).toFixed(2);
+        document.getElementById('GrandTotal').value = (tCost + pCost).toFixed(2);
     }
 
-    // إعادة الحساب الشاملة للبار (تحدث فقط عند تزويد/تنقيص المنتجات بالزراير)
+    // إعادة الحساب الشاملة للبار
     function recalc() {
         let newProductTotal = 0;
         Object.keys(prices).forEach(i => {
@@ -174,8 +181,8 @@
 
         const finalProductTotal = oldProductTotal + newProductTotal;
 
-        // تحديث مربع نص إجمالي البار بالسعر الآلي المحسوب
-        document.getElementById('productsTotal').value = finalProductTotal.toFixed(2);
+        // تحديث مربع نص إجمالي البار
+        document.getElementById('TotalProductPrice').value = finalProductTotal.toFixed(2);
 
         // استدعاء دالة الجمع لضبط الإجمالي النهائي
         manualRecalc();
