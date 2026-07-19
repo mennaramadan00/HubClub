@@ -1,0 +1,44 @@
+﻿@model HubClub.Models.Note
+@{
+    ViewData["Title"] = "تفاصيل الملاحظة";
+}
+
+<div dir="rtl" class="glass-form-container" style="max-width: 650px;">
+    <div class="form-header">
+        <h2>تفاصيل الملاحظة</h2>
+    </div>
+
+    <div class="wf-card" style="width: 100%; max-width: 100%; margin-bottom: 2rem;">
+
+        <div class="wf-data-row">
+            <span class="wf-data-label">العنوان</span>
+            <span class="wf-data-val">@Model.Title</span>
+        </div>
+
+        <div class="wf-data-row mt-2">
+            <span class="wf-data-label">تاريخ الإضافة</span>
+            <span class="wf-data-val" dir="ltr">@Model.CreatedAt.ToString("yyyy/MM/dd hh:mm tt")</span>
+        </div>
+
+        <!-- 🟢 حقل المحتوى: تم تصميمه كمربع نصوص مستقل مع إجبار النص على الالتفاف -->
+        <div class="mt-3 p-3" style="background: rgba(255, 255, 255, 0.6); border-radius: 12px; border: 1px solid var(--glass-edge-blue);">
+            <div style="color: var(--text-slate); font-weight: 700; font-size: 0.9rem; margin-bottom: 0.8rem; border-bottom: 1px solid var(--glass-edge-blue); padding-bottom: 0.5rem;">
+                محتوى الملاحظة
+            </div>
+
+            <!--
+                white-space: pre-wrap => للحفاظ على المسافات والنزول لسطر جديد
+                overflow-wrap: break-word => لكسر الكلمات المتصلة اللي ملهاش مسافات
+            -->
+            <div style="color: var(--text-ink); line-height: 1.8; font-weight: 600; font-size: 1rem; white-space: pre-wrap; overflow-wrap: break-word; word-wrap: break-word; word-break: break-word;">
+                @Model.Content
+            </div>
+        </div>
+
+    </div>
+
+    <div class="d-flex gap-3 mt-4">
+        <a asp-action="Edit" asp-route-id="@Model?.NoteId" class="btn-aurelian-primary flex-grow-1 text-center">تعديل الملاحظة</a>
+        <a asp-action="Index" class="btn-aurelian-outline flex-grow-1 text-center">عودة للقائمة</a>
+    </div>
+</div>

@@ -1,0 +1,65 @@
+﻿@model IEnumerable<HubClub.Models.Note>
+@{
+    ViewData["Title"] = "الملاحظات السريعة";
+}
+
+<div dir="rtl">
+    <div class="d-flex justify-content-between align-items-center mb-4">
+        <div>
+            <h2 style="color: var(--sapphire); font-weight: 800; margin: 0;">الملاحظات السريعة</h2>
+            <p style="color: var(--text-slate); margin: 0;">إدارة وعرض جميع الملاحظات والتذكيرات المسجلة في النظام</p>
+        </div>
+        <a asp-action="Create" class="btn-aurelian-primary">
+            إضافة ملاحظة جديدة
+        </a>
+    </div>
+
+    @if (TempData["Success"] != null)
+    {
+        <div class="alert-glass mb-4" style="border-right-color: #10b981; color: #047857;">
+            <strong>نجاح:</strong> @TempData["Success"]
+        </div>
+    }
+
+    <div class="table-glass-wrap">
+        <table class="table-glass">
+            <thead>
+                <tr>
+                    <th style="width: 25%;">العنوان</th>
+                    <th style="width: 40%;">محتوى الملاحظة</th>
+                    <th>تاريخ الإضافة</th>
+                    <th class="text-center">إجراءات</th>
+                </tr>
+            </thead>
+            <tbody>
+                @if (!Model.Any())
+                {
+                    <tr>
+                        <td colspan="4" class="text-center fw-bold py-4 text-muted">لا توجد ملاحظات مسجلة حالياً.</td>
+                    </tr>
+                }
+                @foreach (var item in Model)
+                {
+                    <tr>
+                        <td class="fw-bold text-sapphire">@Html.DisplayFor(modelItem => item.Title)</td>
+
+                        <!-- قص المحتوى لو كان طويل جداً عشان شكل الجدول ميبُظش -->
+                        <td style="max-width: 300px; white-space: nowrap; overflow: hidden; text-overflow: ellipsis;">
+                            @Html.DisplayFor(modelItem => item.Content)
+                        </td>
+
+                        <td dir="ltr" class="text-end fw-bold" style="color: var(--text-slate);">
+                            @item.CreatedAt.ToString("yyyy/MM/dd hh:mm tt")
+                        </td>
+
+                        <td class="text-center">
+                            <a asp-action="Edit" asp-route-id="@item.NoteId" style="color: var(--azure); margin-left: 10px; font-weight: bold; text-decoration: none;">تعديل</a>
+                            <a asp-action="Details" asp-route-id="@item.NoteId" style="color: var(--sapphire); margin-left: 10px; font-weight: bold; text-decoration: none;">تفاصيل</a>
+                            <a asp-action="Delete" asp-route-id="@item.NoteId" style="color: #ef4444; font-weight: bold; text-decoration: none;">حذف</a>
+                        </td>
+                    </tr>
+                }
+            </tbody>
+        </table>
+    </div>
+</div>

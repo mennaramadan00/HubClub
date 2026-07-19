@@ -1,0 +1,38 @@
+﻿@model HubClub.Models.Note
+@{
+    ViewData["Title"] = "إضافة ملاحظة جديدة";
+}
+
+<div dir="rtl" class="glass-form-container">
+    <div class="form-header">
+        <h2>إضافة ملاحظة جديدة</h2>
+        <p>قم بتسجيل ملاحظتك أو تذكيرك هنا.</p>
+    </div>
+
+    <form asp-action="Create">
+        <div asp-validation-summary="ModelOnly" class="text-danger mb-3 fw-bold"></div>
+
+        <div class="form-group">
+            <label asp-for="Title" class="premium-label">عنوان الملاحظة (اختياري)</label>
+            <input asp-for="Title" class="premium-input" placeholder="سيتم تعيين تاريخ اليوم كعنوان افتراضي إذا تركته فارغاً" />
+            <span asp-validation-for="Title" class="text-danger fw-bold" style="font-size: 0.85rem; display: block; margin-top: -1rem; margin-bottom: 1rem;"></span>
+        </div>
+
+        <div class="form-group">
+            <label asp-for="Content" class="premium-label">محتوى الملاحظة</label>
+            <textarea asp-for="Content" class="premium-input" rows="5" placeholder="اكتب تفاصيل الملاحظة هنا..."></textarea>
+            <span asp-validation-for="Content" class="text-danger fw-bold" style="font-size: 0.85rem; display: block; margin-top: -1rem; margin-bottom: 1rem;"></span>
+        </div>
+
+        <div class="form-actions">
+            <button type="submit" class="btn-aurelian-primary">حفظ الملاحظة</button>
+            <a asp-action="Index" class="btn-aurelian-outline">عودة للقائمة</a>
+        </div>
+    </form>
+</div>
+
+@section Scripts {
+    @{
+        await Html.RenderPartialAsync("_ValidationScriptsPartial");
+    }
+}

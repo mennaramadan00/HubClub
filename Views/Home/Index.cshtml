@@ -28,12 +28,19 @@
         جميع الجلسات المفتوحة (@Model.ActiveCustomersCount)
     </h3>
 
-    <!-- زر فتح جلسة جديدة الثابت في أعلى الشاشة -->
-    <a asp-controller="Session" asp-action="Open" class="btn-aurelian-primary">
-        بدء جلسة جديدة
-    </a>
-</div>
+    <!-- مجموعة الأزرار مجمعة مع بعضها عشان التنسيق ميبُظش -->
+    <div class="d-flex gap-3 align-items-center">
+        <!-- زر إضافة ملاحظة سريع -->
+        <a asp-controller="Notes" asp-action="Index" class="btn-aurelian-outline">
+            الملاحظات
+        </a>
 
+        <!-- زر فتح جلسة جديدة الثابت في أعلى الشاشة -->
+        <a asp-controller="Session" asp-action="Open" class="btn-aurelian-primary">
+            بدء جلسة جديدة
+        </a>
+    </div>
+</div>
 @if (!Model.ActiveSessions.Any())
 {
     <div class="glass-form-container text-center py-5 mt-4">

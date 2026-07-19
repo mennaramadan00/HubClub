@@ -19,5 +19,6 @@ namespace HubClub.Data
         public DbSet<PricingSetting> PricingSettings { get; set; }
         public DbSet<StockMovement> StockMovements { get; set; }
         public DbSet<DailyClosing> DailyClosings { get; set; }
+        public DbSet<Note> Notes { get; set; }
     }
 }
