@@ -3,7 +3,6 @@
     ViewData["Title"] = "التحليل المالي ليوم العمل";
 }
 
-<!-- 1. ملخص التحليل المالي بالأعلى -->
 <div class="analysis-summary-grid" style="margin-bottom: 3rem;">
     <div class="summary-box">
         <div class="sb-title">إيرادات البار ليوم العمل</div>
@@ -13,15 +12,8 @@
         <div class="sb-title">إيرادات الجلسات ليوم العمل</div>
         <div class="sb-val">@Model.TodayTotalTimeCash.ToString("N2") <span style="font-size: 1rem; font-weight: 600;">ج.م</span></div>
     </div>
-    @* <!-- 🟢 الإضافة الجديدة: مبيعات الباقات -->
-    <div class="summary-box" style="border-bottom: 3px solid var(--bs-primary);">
-        <div class="sb-title">مبيعات الباقات ليوم العمل</div>
-        <div class="sb-val text-primary">@Model.TodayTotalPackageCash.ToString("N2") <span style="font-size: 1rem; font-weight: 600;">ج.م</span></div>
-    </div> *@
-    <!-- صندوق الإجمالي بلون ملكي متدرج -->
     <div class="summary-box" style="background: linear-gradient(135deg, var(--azure) 0%, #1E3A8A 100%); border: none;">
         <div class="sb-title" style="color: rgba(255,255,255,0.85);">إجمالي الإيرادات ليوم العمل</div>
-        <!-- تم إضافة webkit-text-fill-color لإلغاء تأثير الشفافية على النص في هذا الصندوق تحديداً -->
         <div class="sb-val" style="color: #ffffff; -webkit-text-fill-color: #ffffff;">
             @Model.TodayTotalCash.ToString("N2") <span style="font-size: 1rem; font-weight: 600; color: rgba(255,255,255,0.85); -webkit-text-fill-color: rgba(255,255,255,0.85);">ج.م</span>
         </div>
@@ -30,61 +22,64 @@
 
 <hr style="border-color: var(--glass-edge-blue); margin-bottom: 2rem;" />
 
-<!-- عنوان قسم الجلسات -->
 <div class="d-flex justify-content-between align-items-center mb-4">
     <h3 style="font-weight: 800; color: var(--sapphire); margin-bottom: 0;">
         تفاصيل الجلسات المغلقة (@Model.ClosedSessions.Count)
     </h3>
 </div>
 
-<!-- 2. شبكة الكروت (3 في الصفوف مع سكرول طبيعي) -->
-<div class="cards-grid-3">
-    @foreach (var session in Model.ClosedSessions)
-    {
-        <div class="wf-card">
-            <div class="wf-data-row">
-                <span class="wf-data-label">الاسم</span>
-                <span class="wf-data-val">@session.CustomerName</span>
-            </div>
-            <div class="wf-data-row">
-                <span class="wf-data-label">رقم الهاتف</span>
-                <span class="wf-data-val">@session.CustomerPhone</span>
-            </div>
-            <div class="wf-data-row">
-                <span class="wf-data-label">وقت البداية</span>
-                <span class="wf-data-val" dir="ltr">@session.StartTime.ToString("hh:mm tt")</span>
-            </div>
-            <div class="wf-data-row">
-                <span class="wf-data-label">وقت النهاية</span>
-                <span class="wf-data-val" dir="ltr">@(session.EndTime?.ToString("hh:mm tt"))</span>
-            </div>
+<div class="table-glass-wrap">
+    <table class="table-glass">
+        <thead>
+            <tr>
+                <th>العميل</th>
+                <th>رقم الهاتف</th>
+                <th>وقت البداية</th>
+                <th>وقت النهاية</th>
+                <th style="width: 35%;">المنتجات المطلوبة</th>
+                <th>إجمالي الإيراد</th>
+            </tr>
+        </thead>
+        <tbody>
+            @if (!Model.ClosedSessions.Any())
+            {
+                <tr>
+                    <td colspan="6" class="text-center fw-bold py-4 text-muted">لا توجد جلسات مغلقة اليوم.</td>
+                </tr>
+            }
+            @foreach (var session in Model.ClosedSessions)
+            {
+                <tr>
+                    <td class="fw-bold text-sapphire">@session.CustomerName</td>
+                    <td style="font-weight: 600;">@session.CustomerPhone</td>
+                    <td dir="ltr" class="text-end">@session.StartTime.ToString("hh:mm tt")</td>
+                    <td dir="ltr" class="text-end">@(session.EndTime?.ToString("hh:mm tt"))</td>
 
-            <!-- المنتجات المطلوبة (مع عزل النصوص لمنع التداخل) -->
-            <div class="wf-data-row mt-2" style="flex-direction: column; gap: 0.5rem; background: rgba(255, 255, 255, 0.85);">
-                <span class="wf-data-label text-center border-bottom pb-1" style="border-color: var(--glass-edge-blue) !important;">المنتجات المطلوبة</span>
-                <div class="text-center" style="font-size: 0.85rem; color: var(--sapphire); font-weight: 700;">
-                    @if (session.ProductNames != null && session.ProductNames.Any())
-                    {
-                        foreach (var product in session.ProductNames)
+                    <td>
+                        @if (session.ProductNames != null && session.ProductNames.Any())
                         {
-                            <!-- استخدام <bdi> لعزل اتجاه النص، وتصميمها كعلامات (Tags) صغيرة -->
-                            <span style="display: inline-block; margin: 2px; background: var(--azure-glow-soft); padding: 4px 8px; border-radius: 6px; border: 1px solid var(--azure-glow);">
-                                <bdi>@product</bdi>
-                            </span>
+                            <div style="display: flex; flex-wrap: wrap; gap: 4px;">
+                                @foreach (var product in session.ProductNames)
+                                {
+                                    <span style="background: var(--azure-glow-soft); padding: 4px 8px; border-radius: 6px; border: 1px solid var(--azure-glow); font-size: 0.85rem; color: var(--sapphire); font-weight: 700;">
+                                        <bdi>@product</bdi>
+                                    </span>
+                                }
+                            </div>
                         }
-                    }
-                    else
-                    {
-                        <span style="color: var(--text-slate);">-</span>
-                    }
-                </div>
-            </div>
+                        else
+                        {
+                            <span style="color: var(--text-slate); font-weight: 600;">-</span>
+                        }
+                    </td>
 
-            <!-- إجمالي الإيراد بخلفية زرقاء داكنة تبرز الرقم -->
-            <div class="wf-data-row mt-auto mb-0" style="background: var(--sapphire); border-color: var(--sapphire);">
-                <span class="wf-data-label" style="color: rgba(255,255,255,0.85);">إجمالي إيراد الجلسة</span>
-                <span class="wf-data-val" style="color: #ffffff;">@session.GrandTotal.ToString("N2") ج.م</span>
-            </div>
-        </div>
-    }
+                    <td>
+                        <span class="badge-glass" style="background: var(--sapphire); color: #ffffff; border: none; font-size: 0.9rem; padding: 6px 12px;">
+                            @session.GrandTotal.ToString("N2") ج.م
+                        </span>
+                    </td>
+                </tr>
+            }
+        </tbody>
+    </table>
 </div>

@@ -421,6 +421,7 @@ namespace HubClub.Controllers
                 TotalProductPrice = session.SessionProducts.Sum(sp => sp.TotalPrice),
                 AlreadyAddedProducts = session.SessionProducts.Select(sp => new SessionProductLineViewModel
                 {
+                    ProductId = sp.ProductId,
                     ProductName = sp.Product.Name,
                     Quantity = sp.Quantity,
                     UnitPrice = sp.UnitPriceAtSale,
