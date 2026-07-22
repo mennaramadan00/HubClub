@@ -38,7 +38,7 @@ namespace HubClub.ViewModels
         public decimal TotalTimePrice { get; set; }
         public decimal TotalProductPrice { get; set; }
         public decimal GrandTotal { get; set; }
-
+        public decimal TodayTotalPackageCash { get; set; }
         public List<string> ProductNames { get; set; } = new List<string>();
     }
 }

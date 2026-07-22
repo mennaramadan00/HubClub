@@ -40,13 +40,27 @@
             </div>
         </div>
 
-        <!-- ملخص الجلسة وتعديل الطلبات القديمة -->
+        <!-- ملخص الجلسة وتعديل الطلبات القديمة والجديدة -->
         <div class="col-md-4">
             <div class="wf-card" style="width: 100%; max-width: 100%;">
                 <h4 style="font-weight: 800; color: var(--sapphire); margin-bottom: 1rem; border-bottom: 2px solid var(--glass-edge-blue); padding-bottom: 0.8rem;">فاتورة الجلسة</h4>
 
                 <div class="wf-data-row"><span class="wf-data-label">العميل</span> <span class="wf-data-val">@Model.CustomerName</span></div>
-                <div class="wf-data-row"><span class="wf-data-label">مدة الجلسة</span> <span class="wf-data-val">@Model.HoursElapsed.ToString("0.##") ساعة</span></div>
+                <div class="wf-data-row">
+                    <span class="wf-data-label">مدة الجلسة</span>
+                    <span class="wf-data-val">
+                        @{
+                            int h = (int)Math.Floor(Model.HoursElapsed);
+                            int m = (int)Math.Round((Model.HoursElapsed - h) * 60);
+                            string timeDisplay = "";
+
+                            if (h > 0 && m > 0) timeDisplay = $"{h} ساعة و {m} دقيقة";
+                            else if (h > 0) timeDisplay = $"{h} ساعة";
+                            else timeDisplay = $"{m} دقيقة";
+                        }
+                        @timeDisplay
+                    </span>
+                </div>
 
                 <!-- قائمة الطلبات القديمة -->
                 @if (Model.AlreadyAddedProducts.Any())
@@ -57,6 +71,12 @@
                         @for (int j = 0; j < Model.AlreadyAddedProducts.Count; j++)
                         {
                             var oldItem = Model.AlreadyAddedProducts[j];
+
+                            // 🟢 حساب أقصى كمية مسموح بها للمنتج القديم
+                            var correspondingProduct = Model.AvailableProducts.FirstOrDefault(p => p.ProductId == oldItem.ProductId);
+                            int extraStock = correspondingProduct != null ? correspondingProduct.AvailableStock : 0;
+                            int maxAllowed = oldItem.Quantity + extraStock;
+
                             <div class="d-flex justify-content-between align-items-center mb-2 pb-2 border-bottom" style="border-color: rgba(22, 41, 107, 0.05) !important;">
                                 <!-- حقل مخفي لإرسال الـ ID للـ Backend -->
                                 <input type="hidden" name="AlreadyAddedProducts[@j].ProductId" value="@oldItem.ProductId" />
@@ -66,17 +86,25 @@
                                     <strong style="color: var(--text-slate); font-size: 0.8rem;" id="old-line-total-@j">@oldItem.LineTotal.ToString("F2", System.Globalization.CultureInfo.InvariantCulture) ج.م</strong>
                                 </div>
 
-                                <!-- زراير التحكم في الكمية للمنتجات القديمة -->
+                                <!-- زراير التحكم في الكمية للمنتجات القديمة (مع تمرير maxAllowed) -->
                                 <div class="ps-action-bar" style="background: transparent; border: 1px solid var(--glass-edge-blue); border-radius: 6px;">
-                                    <button type="button" class="ps-btn" style="padding: 0.1rem 0.5rem; font-size: 1rem;" onclick="changeOldQty(@j, -1)">-</button>
+                                    <button type="button" class="ps-btn" style="padding: 0.1rem 0.5rem; font-size: 1rem;" onclick="changeOldQty(@j, -1, @maxAllowed)">-</button>
                                     <input type="number" id="old-qty-@j" name="AlreadyAddedProducts[@j].Quantity" value="@oldItem.Quantity" readonly style="width: 30px; text-align: center; border: none; background: transparent; font-weight: bold; color: var(--sapphire);" />
-                                    <button type="button" class="ps-btn" style="padding: 0.1rem 0.5rem; font-size: 1rem;" onclick="changeOldQty(@j, 1)">+</button>
+                                    <button type="button" class="ps-btn" style="padding: 0.1rem 0.5rem; font-size: 1rem;" onclick="changeOldQty(@j, 1, @maxAllowed)">+</button>
                                 </div>
                             </div>
                         }
 
                     </div>
                 }
+
+                <!-- حاوية المنتجات المضافة لحظياً -->
+                <div id="new-products-container" style="display: none;">
+                    <div class="mt-3 mb-2 px-2" style="font-size: 0.9rem; color: var(--azure); font-weight: 800;">طلبات مضافة للتو:</div>
+                    <div id="new-products-list" style="background: rgba(0, 128, 255, 0.05); padding: 0.5rem; border-radius: 4px; border: 1px dashed var(--azure-soft); margin-bottom: 1rem;">
+                        <!-- سيتم رسم المنتجات هنا عبر الـ JavaScript -->
+                    </div>
+                </div>
 
                 <!-- تكلفة الوقت -->
                 <div class="wf-data-row mt-3">
@@ -112,20 +140,18 @@
 </form>
 
 <script>
-    // 🟢 استدعاء التحديث فوراً عند تحميل الصفحة لضمان المزامنة
     document.addEventListener("DOMContentLoaded", function () {
         manualRecalc();
     });
 
-    // أسعار المنتجات الجديدة
-    const prices = {
+    const newProductsData = {
         @for (int i = 0; i < Model.AvailableProducts.Count; i++)
         {
-                    @:@i: @Model.AvailableProducts[i].Price.ToString("F2", System.Globalization.CultureInfo.InvariantCulture),
+                    var p = Model.AvailableProducts[i];
+                    @:@i: { name: "@Html.Raw(p.Name.Replace("\"", "\\\""))", price: @p.Price.ToString("F2", System.Globalization.CultureInfo.InvariantCulture) },
         }
     };
 
-    // أسعار المنتجات القديمة
     const oldPrices = {
         @for (int j = 0; j < Model.AlreadyAddedProducts.Count; j++)
         {
@@ -134,20 +160,34 @@
         }
     };
 
-    // تعديل كمية المنتجات الجديدة
+    // 🟢 تعديل دالة المنتجات الجديدة لتشمل رسالة التحذير
     function changeQty(index, delta, maxStock) {
         const input = document.getElementById('qty-' + index);
         const current = parseInt(input.value) || 0;
-        const newVal = Math.max(0, Math.min(current + delta, maxStock));
+        const newVal = current + delta;
+
+        if (newVal > maxStock) {
+            alert("عفواً، هذه هي أقصى كمية متوفرة في المخزن لهذا المنتج!");
+            return;
+        }
+        if (newVal < 0) return;
+
         input.value = newVal;
         recalc();
     }
 
-    // تعديل كمية المنتجات القديمة
-    function changeOldQty(index, delta) {
+    // 🟢 تعديل دالة المنتجات القديمة لتشمل رسالة التحذير واستقبال maxAllowed
+    function changeOldQty(index, delta, maxAllowed) {
         const input = document.getElementById('old-qty-' + index);
         const current = parseInt(input.value) || 0;
-        const newVal = Math.max(0, current + delta); // يسمح بالنزول حتى صفر (لإلغاء المنتج)
+        const newVal = current + delta;
+
+        if (newVal > maxAllowed) {
+            alert("عفواً، لا يوجد رصيد إضافي في المخزن لزيادة هذا الطلب!");
+            return;
+        }
+        if (newVal < 0) return;
+
         input.value = newVal;
 
         const lineTotal = newVal * oldPrices[index];
@@ -156,22 +196,45 @@
         recalc();
     }
 
-    // دالة الحساب اليدوي (تقرأ القيم باستخدام الـ IDs الصريحة الجديدة)
     function manualRecalc() {
         const tCost = parseFloat(document.getElementById('CalculatedTimePrice').value) || 0;
         const pCost = parseFloat(document.getElementById('TotalProductPrice').value) || 0;
-
-        // جمع القيمتين وحفظهم في الإجمالي النهائي
         document.getElementById('GrandTotal').value = (tCost + pCost).toFixed(2);
     }
 
-    // إعادة الحساب الشاملة للبار
     function recalc() {
         let newProductTotal = 0;
-        Object.keys(prices).forEach(i => {
+        let newProductsHTML = '';
+        const newProductsContainer = document.getElementById('new-products-container');
+        const newProductsList = document.getElementById('new-products-list');
+
+        Object.keys(newProductsData).forEach(i => {
             const qty = parseInt(document.getElementById('qty-' + i)?.value) || 0;
-            newProductTotal += qty * prices[i];
+            if (qty > 0) {
+                const lineTotal = qty * newProductsData[i].price;
+                newProductTotal += lineTotal;
+
+                newProductsHTML += `
+                    <div class="d-flex justify-content-between align-items-center mb-1">
+                        <div class="d-flex flex-column">
+                            <span style="font-size: 0.9rem; font-weight: 800; color: var(--azure);">${newProductsData[i].name} <span class="badge bg-primary rounded-pill text-white" style="font-size:0.7rem; margin-right:5px;">جديد</span></span>
+                            <strong style="color: var(--text-slate); font-size: 0.8rem;">${lineTotal.toFixed(2)} ج.م</strong>
+                        </div>
+                        <div style="font-weight: 800; color: var(--sapphire); background: #ffffff; padding: 2px 10px; border-radius: 6px; border: 1px solid var(--azure-glow);">
+                            x${qty}
+                        </div>
+                    </div>
+                `;
+            }
         });
+
+        if (newProductsHTML !== '') {
+            newProductsList.innerHTML = newProductsHTML;
+            newProductsContainer.style.display = 'block';
+        } else {
+            newProductsList.innerHTML = '';
+            newProductsContainer.style.display = 'none';
+        }
 
         let oldProductTotal = 0;
         Object.keys(oldPrices).forEach(j => {
@@ -181,10 +244,8 @@
 
         const finalProductTotal = oldProductTotal + newProductTotal;
 
-        // تحديث مربع نص إجمالي البار
         document.getElementById('TotalProductPrice').value = finalProductTotal.toFixed(2);
 
-        // استدعاء دالة الجمع لضبط الإجمالي النهائي
         manualRecalc();
     }
 </script>

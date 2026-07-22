@@ -82,7 +82,18 @@ namespace HubClub.Controllers
             vm.ActiveCustomersCount = vm.ActiveSessions.Count;
             vm.ActiveSessions = vm.ActiveSessions.OrderByDescending(s => s.StartTime).ToList();
             vm.ClosedSessions = vm.ClosedSessions.OrderByDescending(s => s.EndTime).ToList();
+            // 1. حساب إيرادات الباقات لليوم المحاسبي الحالي
+            var packagesSoldToday = await _context.UserPackages
+                .Where(up => up.PurchaseBusinessDate == todayBusinessDate && !up.IsDeleted)
+                .ToListAsync();
 
+            decimal todayPackagesRevenue = packagesSoldToday.Sum(up => up.Price);
+
+            // 2. إعطاء القيمة للمتغير الجديد
+            vm.TodayTotalPackageCash = todayPackagesRevenue;
+
+            // 3. ⚠️ أهم خطوة: عدلي سطر حساب "الإجمالي الكلي" اللي عندك عشان يجمع الباقات كمان، ليصبح كالتالي:
+            vm.TodayTotalCash = vm.TodayTotalTimeCash + vm.TodayTotalProductCash + vm.TodayTotalPackageCash;
             return vm;
         }
 

@@ -12,6 +12,13 @@
         <div class="sb-title">إيرادات الجلسات ليوم العمل</div>
         <div class="sb-val">@Model.TodayTotalTimeCash.ToString("N2") <span style="font-size: 1rem; font-weight: 600;">ج.م</span></div>
     </div>
+    <div class="summary-box">
+        <div class="sb-title">مبيعات الباقات ليوم العمل</div>
+        <div class="sb-val" style="background: linear-gradient(120deg, var(--violet-hint) 0%, var(--nav-orange-text) 100%); -webkit-background-clip: text; color: transparent;">
+            @Model.TodayTotalPackageCash.ToString("N2")
+            <span style="font-size: 1rem; font-weight: 600; color: var(--text-slate); -webkit-text-fill-color: var(--text-slate);">ج.م</span>
+        </div>
+    </div>
     <div class="summary-box" style="background: linear-gradient(135deg, var(--azure) 0%, #1E3A8A 100%); border: none;">
         <div class="sb-title" style="color: rgba(255,255,255,0.85);">إجمالي الإيرادات ليوم العمل</div>
         <div class="sb-val" style="color: #ffffff; -webkit-text-fill-color: #ffffff;">
@@ -36,7 +43,8 @@
                 <th>رقم الهاتف</th>
                 <th>وقت البداية</th>
                 <th>وقت النهاية</th>
-                <th style="width: 35%;">المنتجات المطلوبة</th>
+                <th class="text-center">مدة الجلسة</th>
+                <th style="width: 30%;">المنتجات المطلوبة</th>
                 <th>إجمالي الإيراد</th>
             </tr>
         </thead>
@@ -44,7 +52,7 @@
             @if (!Model.ClosedSessions.Any())
             {
                 <tr>
-                    <td colspan="6" class="text-center fw-bold py-4 text-muted">لا توجد جلسات مغلقة اليوم.</td>
+                    <td colspan="7" class="text-center fw-bold py-4 text-muted">لا توجد جلسات مغلقة اليوم.</td>
                 </tr>
             }
             @foreach (var session in Model.ClosedSessions)
@@ -54,6 +62,26 @@
                     <td style="font-weight: 600;">@session.CustomerPhone</td>
                     <td dir="ltr" class="text-end">@session.StartTime.ToString("hh:mm tt")</td>
                     <td dir="ltr" class="text-end">@(session.EndTime?.ToString("hh:mm tt"))</td>
+
+                    <td class="text-center" style="font-weight: 700; color: var(--text-slate);">
+                        @if (session.EndTime.HasValue)
+                        {
+                            var duration = session.EndTime.Value - session.StartTime;
+                            int h = (int)duration.TotalHours;
+                            int m = duration.Minutes;
+                            string timeDisplay = "";
+
+                            if (h > 0 && m > 0) timeDisplay = $"{h} ساعة و {m} دقيقة";
+                            else if (h > 0) timeDisplay = $"{h} ساعة";
+                            else timeDisplay = $"{m} دقيقة";
+
+                            @timeDisplay
+                        }
+                        else
+                        {
+                            <span>-</span>
+                        }
+                    </td>
 
                     <td>
                         @if (session.ProductNames != null && session.ProductNames.Any())
