@@ -57,10 +57,11 @@ namespace HubClub.Models
         [Display(Name = "اليوم المحاسبي")]
         public DateOnly BusinessDate { get; set; }
 
+        public decimal? PackageHoursUsed { get; set; }
         //[Display(Name = "التاريخ")]
         //public DateTime Date { get; set; } = DateTime.Now;
 
-        
+
         [Timestamp]
         public DateTime RowVersion { get; set; }
 

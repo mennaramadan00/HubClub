@@ -35,6 +35,7 @@
     </h3>
 </div>
 
+
 <div class="table-glass-wrap">
     <table class="table-glass">
         <thead>
@@ -44,15 +45,16 @@
                 <th>وقت البداية</th>
                 <th>وقت النهاية</th>
                 <th class="text-center">مدة الجلسة</th>
-                <th style="width: 30%;">المنتجات المطلوبة</th>
+                <th style="width: 25%;">المنتجات المطلوبة</th>
                 <th>إجمالي الإيراد</th>
+                <th class="text-center">إجراءات</th>
             </tr>
         </thead>
         <tbody>
             @if (!Model.ClosedSessions.Any())
             {
                 <tr>
-                    <td colspan="7" class="text-center fw-bold py-4 text-muted">لا توجد جلسات مغلقة اليوم.</td>
+                    <td colspan="8" class="text-center fw-bold py-4 text-muted">لا توجد جلسات مغلقة اليوم.</td>
                 </tr>
             }
             @foreach (var session in Model.ClosedSessions)
@@ -105,6 +107,18 @@
                         <span class="badge-glass" style="background: var(--sapphire); color: #ffffff; border: none; font-size: 0.9rem; padding: 6px 12px;">
                             @session.GrandTotal.ToString("N2") ج.م
                         </span>
+                    </td>
+
+                    <td class="text-center">
+                        <form asp-controller="Session" asp-action="ReopenSession" asp-route-id="@session.SessionId" method="post" class="m-0 p-0">
+                            @Html.AntiForgeryToken()
+                            <button type="submit" class="btn btn-sm" style="background: rgba(255, 196, 0, 0.15); color: #C9631A; border: 1px solid #FFC400; font-weight: 700; border-radius: 6px; padding: 4px 10px; transition: all 0.2s ease;"
+                                    onclick="return confirm('هل أنت متأكد من إعادة فتح هذه الجلسة؟ سيتم استكمال حساب الوقت لها.')"
+                                    onmouseover="this.style.background='rgba(255, 196, 0, 0.3)'"
+                                    onmouseout="this.style.background='rgba(255, 196, 0, 0.15)'">
+                                تراجع وفتح
+                            </button>
+                        </form>
                     </td>
                 </tr>
             }

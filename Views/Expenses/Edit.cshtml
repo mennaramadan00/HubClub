@@ -1,0 +1,42 @@
+﻿@model HubClub.Models.Expense
+
+@{
+    ViewData["Title"] = "تعديل مصروف";
+}
+
+<div class="glass-form-container">
+    <div class="form-header">
+        <h2>تعديل بيانات مصروف</h2>
+    </div>
+
+    <form asp-action="Edit">
+        <div asp-validation-summary="ModelOnly" class="text-danger mb-3"></div>
+        <input type="hidden" asp-for="ExpenseId" />
+        <!-- يجب إرسال التواريخ المخفية حتى لا يتم تصفيرها أثناء التعديل -->
+        <input type="hidden" asp-for="Date" />
+        <input type="hidden" asp-for="BusinessDate" />
+
+        <div class="form-group">
+            <label asp-for="ExpenseCategoryId" class="premium-label"></label>
+            <select asp-for="ExpenseCategoryId" class="premium-input" asp-items="ViewBag.ExpenseCategoryId"></select>
+            <span asp-validation-for="ExpenseCategoryId" class="text-danger"></span>
+        </div>
+
+        <div class="form-group">
+            <label asp-for="Amount" class="premium-label"></label>
+            <input asp-for="Amount" class="premium-input" type="number" step="0.5" />
+            <span asp-validation-for="Amount" class="text-danger"></span>
+        </div>
+
+        <div class="form-group">
+            <label asp-for="Notes" class="premium-label"></label>
+            <textarea asp-for="Notes" class="premium-input" rows="3"></textarea>
+            <span asp-validation-for="Notes" class="text-danger"></span>
+        </div>
+
+        <div class="form-actions">
+            <button type="submit" class="btn-aurelian-primary">حفظ التعديلات</button>
+            <a asp-action="Index" class="btn-aurelian-outline">إلغاء</a>
+        </div>
+    </form>
+</div>

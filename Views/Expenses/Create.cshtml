@@ -1,0 +1,50 @@
+﻿@model HubClub.Models.Expense
+
+@{
+    ViewData["Title"] = "تسجيل مصروف جديد";
+}
+
+<div class="glass-form-container">
+    <div class="form-header">
+        <h2>تسجيل مصروف جديد</h2>
+        <p>قم باختيار البند، ثم أدخل المبلغ المدفوع وملاحظاتك.</p>
+    </div>
+
+    <form asp-action="Create">
+        <div asp-validation-summary="ModelOnly" class="text-danger mb-3"></div>
+
+        <div class="form-group">
+            <label asp-for="ExpenseCategoryId" class="premium-label"></label>
+            <!-- القائمة المنسدلة لاختيار نوع المصروف -->
+            <select asp-for="ExpenseCategoryId" class="premium-input" asp-items="ViewBag.ExpenseCategoryId">
+                <option value="">-- اختر نوع المصروف --</option>
+            </select>
+            <span asp-validation-for="ExpenseCategoryId" class="text-danger"></span>
+        </div>
+
+        <div class="form-group">
+            <label asp-for="Amount" class="premium-label"></label>
+            <input asp-for="Amount" class="premium-input" type="number" step="0.5" placeholder="أدخل المبلغ (مثال: 150)" />
+            <span asp-validation-for="Amount" class="text-danger"></span>
+        </div>
+
+        <div class="form-group">
+            <label asp-for="Notes" class="premium-label"></label>
+            <textarea asp-for="Notes" class="premium-input" rows="3" placeholder="اكتب تفاصيل المصروف هنا (اختياري)..."></textarea>
+            <span asp-validation-for="Notes" class="text-danger"></span>
+        </div>
+
+        <div class="form-actions">
+            <button type="submit" class="btn-aurelian-primary">
+                <i class="fas fa-check-circle me-2"></i> تأكيد 
+            </button>
+            <a asp-action="Index" class="btn-aurelian-outline">العودة للسجل</a>
+        </div>
+    </form>
+</div>
+
+@section Scripts {
+    @{
+        await Html.RenderPartialAsync("_ValidationScriptsPartial");
+    }
+}

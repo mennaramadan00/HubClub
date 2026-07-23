@@ -1,0 +1,41 @@
+﻿@model HubClub.Models.Expense
+
+@{
+    ViewData["Title"] = "حذف مصروف";
+}
+
+<div class="glass-form-container">
+    <div class="form-header">
+        <h2 style="color: #dc3545;">تأكيد حذف المصروف</h2>
+        <p>تحذير: سيتم حذف هذا المصروف من السجلات المالية وقد يؤثر على حسابات الخزينة.</p>
+    </div>
+
+    <div class="wf-card" style="min-width: 100%; box-shadow: none; border-color: rgba(220,53,69,0.2);">
+        <div class="wf-data-row">
+            <span class="wf-data-label">نوع البند</span>
+            <span class="wf-data-val">@Model.ExpenseCategory.Name</span>
+        </div>
+        <div class="wf-data-row">
+            <span class="wf-data-label">المبلغ المدفوع</span>
+            <span class="wf-data-val" style="color: #dc3545; font-size: 1.2rem;">@Model.Amount ج.م</span>
+        </div>
+        <div class="wf-data-row">
+            <span class="wf-data-label">تاريخ ووقت الصرف</span>
+            <span class="wf-data-val">@Model.Date.ToString("yyyy-MM-dd hh:mm tt")</span>
+        </div>
+        <div class="wf-data-row">
+            <span class="wf-data-label">ملاحظات</span>
+            <span class="wf-data-val">@(string.IsNullOrEmpty(Model.Notes) ? "لا يوجد" : Model.Notes)</span>
+        </div>
+    </div>
+
+    <form asp-action="Delete" class="mt-4">
+        <input type="hidden" asp-for="ExpenseId" />
+        <div class="form-actions">
+            <button type="submit" class="btn-aurelian-primary" style="background: linear-gradient(135deg, #ff4d4d 0%, #cc0000 100%);">
+                <i class="fas fa-trash-alt me-2"></i> تأكيد الحذف
+            </button>
+            <a asp-action="Index" class="btn-aurelian-outline">العودة بأمان</a>
+        </div>
+    </form>
+</div>

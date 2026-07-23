@@ -1,0 +1,63 @@
+﻿@model HubClub.Models.ExpenseCategory
+
+@{
+    ViewData["Title"] = "تفاصيل البند";
+}
+
+<div class="glass-form-container" style="max-width: 900px;">
+    <div class="form-header d-flex justify-content-between align-items-center flex-wrap gap-3">
+        <div>
+            <h2>تفاصيل بند: @Model.Name</h2>
+            <p>@Model.Description</p>
+        </div>
+        <div class="d-flex gap-2">
+            <a asp-action="Edit" asp-route-id="@Model?.ExpenseCategoryId" class="btn-aurelian-primary">تعديل البند</a>
+            <a asp-action="Index" class="btn-aurelian-outline">العودة</a>
+        </div>
+    </div>
+
+    <h4 class="mt-4 mb-3" style="color: var(--sapphire); font-weight: 800;">
+        <i class="fas fa-money-bill-wave me-2"></i> المصروفات المسجلة تحت هذا البند
+    </h4>
+
+    @if (Model.Expenses != null && Model.Expenses.Any())
+    {
+        <div class="table-glass-wrap mt-3">
+            <table class="table-glass">
+                <thead>
+                    <tr>
+                        <th>التاريخ والوقت</th>
+                        <th>الوردية (يوم العمل)</th>
+                        <th>المبلغ</th>
+                        <th>ملاحظات</th>
+                    </tr>
+                </thead>
+                <tbody>
+                    @foreach (var expense in Model.Expenses)
+                    {
+                        <tr>
+                            <td><span class="badge-glass">@expense.Date.ToString("yyyy-MM-dd hh:mm tt")</span></td>
+                            <td style="font-weight: 600;">@expense.BusinessDate.ToString("yyyy-MM-dd")</td>
+                            <td style="font-weight: 800; color: #dc3545; font-size: 1.1rem;">@expense.Amount ج.م</td>
+                            <td>@expense.Notes</td>
+                        </tr>
+                    }
+                </tbody>
+                <tfoot>
+                    <tr style="background: var(--nav-yellow-soft);">
+                        <td colspan="2" style="text-align: left; font-weight: 800; color: var(--sapphire);">إجمالي المصروفات:</td>
+                        <td colspan="2" style="font-weight: 900; color: #dc3545; font-size: 1.2rem;">
+                            @Model.Expenses.Sum(e => e.Amount) ج.م
+                        </td>
+                    </tr>
+                </tfoot>
+            </table>
+        </div>
+    }
+    else
+    {
+        <div class="alert-glass mt-3">
+            <i class="fas fa-info-circle me-2"></i> لا يوجد أي مصروفات مسجلة تحت هذا البند حتى الآن.
+        </div>
+    }
+</div>

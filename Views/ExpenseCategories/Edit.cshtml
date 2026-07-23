@@ -1,0 +1,42 @@
+﻿@model HubClub.Models.ExpenseCategory
+
+@{
+    ViewData["Title"] = "تعديل بند مصروفات";
+}
+
+<div class="glass-form-container">
+    <div class="form-header">
+        <h2>تعديل بند المصروفات</h2>
+        <p>تعديل بيانات البند: <span style="color: var(--sapphire);">@Model.Name</span></p>
+    </div>
+
+    <form asp-action="Edit">
+        <div asp-validation-summary="ModelOnly" class="text-danger mb-3"></div>
+        <input type="hidden" asp-for="ExpenseCategoryId" />
+
+        <div class="form-group">
+            <label asp-for="Name" class="premium-label"></label>
+            <input asp-for="Name" class="premium-input" />
+            <span asp-validation-for="Name" class="text-danger"></span>
+        </div>
+
+        <div class="form-group">
+            <label asp-for="Description" class="premium-label"></label>
+            <input asp-for="Description" class="premium-input" />
+            <span asp-validation-for="Description" class="text-danger"></span>
+        </div>
+
+        <div class="form-actions">
+            <button type="submit" class="btn-aurelian-primary">
+                <i class="fas fa-check me-2"></i> حفظ التعديلات
+            </button>
+            <a asp-action="Index" class="btn-aurelian-outline">العودة للقائمة</a>
+        </div>
+    </form>
+</div>
+
+@section Scripts {
+    @{
+        await Html.RenderPartialAsync("_ValidationScriptsPartial");
+    }
+}

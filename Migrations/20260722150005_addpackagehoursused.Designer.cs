@@ -4,6 +4,7 @@ using HubClub.Data;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.EntityFrameworkCore.Infrastructure;
 using Microsoft.EntityFrameworkCore.Metadata;
+using Microsoft.EntityFrameworkCore.Migrations;
 using Microsoft.EntityFrameworkCore.Storage.ValueConversion;
 
 #nullable disable
@@ -11,9 +12,11 @@ using Microsoft.EntityFrameworkCore.Storage.ValueConversion;
 namespace HubClub.Migrations
 {
     [DbContext(typeof(AppDbContext))]
-    partial class AppDbContextModelSnapshot : ModelSnapshot
+    [Migration("20260722150005_addpackagehoursused")]
+    partial class addpackagehoursused
     {
-        protected override void BuildModel(ModelBuilder modelBuilder)
+        /// <inheritdoc />
+        protected override void BuildTargetModel(ModelBuilder modelBuilder)
         {
 #pragma warning disable 612, 618
             modelBuilder
@@ -87,60 +90,6 @@ namespace HubClub.Migrations
                         .IsUnique();
 
                     b.ToTable("daily_closings");
-                });
-
-            modelBuilder.Entity("HubClub.Models.Expense", b =>
-                {
-                    b.Property<int>("ExpenseId")
-                        .ValueGeneratedOnAdd()
-                        .HasColumnType("int");
-
-                    MySqlPropertyBuilderExtensions.UseMySqlIdentityColumn(b.Property<int>("ExpenseId"));
-
-                    b.Property<decimal>("Amount")
-                        .HasColumnType("decimal(18,2)");
-
-                    b.Property<DateTime>("BusinessDate")
-                        .HasColumnType("date");
-
-                    b.Property<DateTime>("Date")
-                        .HasColumnType("datetime(6)");
-
-                    b.Property<int>("ExpenseCategoryId")
-                        .HasColumnType("int");
-
-                    b.Property<string>("Notes")
-                        .IsRequired()
-                        .HasMaxLength(500)
-                        .HasColumnType("varchar(500)");
-
-                    b.HasKey("ExpenseId");
-
-                    b.HasIndex("ExpenseCategoryId");
-
-                    b.ToTable("Expenses");
-                });
-
-            modelBuilder.Entity("HubClub.Models.ExpenseCategory", b =>
-                {
-                    b.Property<int>("ExpenseCategoryId")
-                        .ValueGeneratedOnAdd()
-                        .HasColumnType("int");
-
-                    MySqlPropertyBuilderExtensions.UseMySqlIdentityColumn(b.Property<int>("ExpenseCategoryId"));
-
-                    b.Property<string>("Description")
-                        .HasMaxLength(255)
-                        .HasColumnType("varchar(255)");
-
-                    b.Property<string>("Name")
-                        .IsRequired()
-                        .HasMaxLength(100)
-                        .HasColumnType("varchar(100)");
-
-                    b.HasKey("ExpenseCategoryId");
-
-                    b.ToTable("ExpenseCategories");
                 });
 
             modelBuilder.Entity("HubClub.Models.Note", b =>
@@ -432,17 +381,6 @@ namespace HubClub.Migrations
                     b.ToTable("user_packages");
                 });
 
-            modelBuilder.Entity("HubClub.Models.Expense", b =>
-                {
-                    b.HasOne("HubClub.Models.ExpenseCategory", "ExpenseCategory")
-                        .WithMany("Expenses")
-                        .HasForeignKey("ExpenseCategoryId")
-                        .OnDelete(DeleteBehavior.Cascade)
-                        .IsRequired();
-
-                    b.Navigation("ExpenseCategory");
-                });
-
             modelBuilder.Entity("HubClub.Models.Session", b =>
                 {
                     b.HasOne("HubClub.Models.Customer", "Customer")
@@ -520,11 +458,6 @@ namespace HubClub.Migrations
                     b.Navigation("Sessions");
 
                     b.Navigation("UserPackages");
-                });
-
-            modelBuilder.Entity("HubClub.Models.ExpenseCategory", b =>
-                {
-                    b.Navigation("Expenses");
                 });
 
             modelBuilder.Entity("HubClub.Models.Package", b =>

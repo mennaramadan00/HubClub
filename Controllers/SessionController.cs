@@ -590,13 +590,15 @@ namespace HubClub.Controllers
                         decimal extraHours = hoursElapsed - session.UserPackage.RemainingHours;
                         var tier = await GetPricingTierAsync(extraHours);
                         session.PriceSettingId = tier?.PricingSettingId;
+                        session.PackageHoursUsed = session.UserPackage.RemainingHours;
                         session.UserPackage.RemainingHours = 0;
                         session.UserPackage.Status = UserPackageStatus.Expired;
                     }
                     else
                     {
+                        session.PackageHoursUsed = hoursElapsed;
                         session.UserPackage.RemainingHours -= hoursElapsed;
-                        if (session.UserPackage.RemainingHours == 0)
+                        if (session.UserPackage.RemainingHours <= 0)
                         {
                             session.UserPackage.Status = UserPackageStatus.Expired;
                         }
@@ -657,6 +659,65 @@ namespace HubClub.Controllers
                 TempData["Error"] = "حدث خطأ أثناء المعالجة.";
                 return RedirectToAction("CloseReview", new { id = vm.SessionId });
             }
+        }
+        // ─────────────────────────────────────────
+        // 🟢 NEW POST: Session/ReopenSession (صمام الأمان لحماية الداتابيز من الإغلاق الخاطئ)
+        // ─────────────────────────────────────────
+        [HttpPost]
+        [ValidateAntiForgeryToken]
+        public async Task<IActionResult> ReopenSession(int id)
+        {
+            var session = await _context.Sessions
+                .Include(s => s.UserPackage)
+                .FirstOrDefaultAsync(s => s.SessionId == id);
+
+            if (session == null || !session.IsClosed)
+            {
+                TempData["Error"] = "الجلسة غير موجودة أو مفتوحة بالفعل.";
+                return RedirectToAction("Index", "Home");
+            }
+
+            using var transaction = await _context.Database.BeginTransactionAsync();
+            try
+            {
+                // 1. إرجاع رصيد الساعات للباقة بأمان تام باستخدام الحقل الجديد
+                if (session.PaymentType == PaymentType.Package && session.UserPackage != null)
+                {
+                    // إرجاع الساعات التي تم تسجيلها وقت الإغلاق بدقة
+                    session.UserPackage.RemainingHours += session.PackageHoursUsed ?? 0;
+
+                    // إعادة إحياء الباقة إذا كان تاريخها ما زال سارياً
+                    if (session.UserPackage.RemainingHours > 0 && session.UserPackage.ExpiryDate >= DateTime.Now)
+                    {
+                        session.UserPackage.Status = UserPackageStatus.Active;
+                    }
+
+                    _context.UserPackages.Update(session.UserPackage);
+                }
+
+                // 2. مسح بيانات الإغلاق لتعود الجلسة للعمل كالمعتاد
+                session.IsClosed = false;
+                session.EndTime = null;
+                session.TotalTimePrice = 0;
+                session.PriceSettingId = null;
+
+                // 3. تصفير حقل الساعات المستخدمة لتبدأ الجلسة نظيفة مرة أخرى
+                session.PackageHoursUsed = null;
+
+                _context.Sessions.Update(session);
+                await _context.SaveChangesAsync();
+                await transaction.CommitAsync();
+
+                TempData["Success"] = "تم التراجع وإعادة فتح الجلسة بنجاح، عداد الوقت عاد للعمل!";
+            }
+            catch (Exception ex)
+            {
+                await transaction.RollbackAsync();
+                _logger.LogError(ex, "خطأ أثناء محاولة إعادة فتح الجلسة");
+                TempData["Error"] = "حدث خطأ غير متوقع أثناء المعالجة.";
+            }
+
+            return RedirectToAction("Index", "Home");
         }
         public async Task<IActionResult> DailyReport(DateTime? date)
         {
@@ -759,6 +820,7 @@ namespace HubClub.Controllers
                 PaymentBreakdown = paymentBreakdown.OrderByDescending(x => x.Revenue).ToList()
             });
         }
+       
 
     }
 }

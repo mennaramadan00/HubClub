@@ -1,0 +1,51 @@
+﻿@model IEnumerable<HubClub.Models.Expense>
+
+@{
+    ViewData["Title"] = "سجل المصروفات";
+}
+
+<div class="d-flex justify-content-between align-items-center mb-4 mt-3">
+    <h1 class="topbar-title">سجل المصروفات المالية</h1>
+    <a asp-action="Create" class="btn-aurelian-primary">
+        <i class="fas fa-hand-holding-usd me-2"></i> تسجيل مصروف جديد
+    </a>
+</div>
+
+<div class="table-glass-wrap">
+    <table class="table-glass">
+        <thead>
+            <tr>
+                <th>البند</th>
+                <th>المبلغ</th>
+                <th>يوم الوردية</th>
+                <th>التاريخ والوقت</th>
+                <th>ملاحظات</th>
+                <th style="text-align: center;">الإجراءات</th>
+            </tr>
+        </thead>
+        <tbody>
+            @foreach (var item in Model)
+            {
+                <tr>
+                    <td style="font-weight: 800; color: var(--sapphire);">
+                        @Html.DisplayFor(modelItem => item.ExpenseCategory.Name)
+                    </td>
+                    <td style="font-weight: 900; color: #dc3545; font-size: 1.1rem;">
+                        @Html.DisplayFor(modelItem => item.Amount) ج.م
+                    </td>
+                    <td style="font-weight: 600;">@item.BusinessDate.ToString("yyyy-MM-dd")</td>
+                    <td style="color: var(--text-slate); font-size: 0.9rem;">@item.Date.ToString("hh:mm tt")</td>
+                    <td style="color: var(--text-slate);">@Html.DisplayFor(modelItem => item.Notes)</td>
+                    <td style="text-align: center;">
+                        <a asp-action="Edit" asp-route-id="@item.ExpenseId" class="badge-glass text-decoration-none mx-1" style="background: var(--nav-yellow-soft); border-color: var(--nav-yellow-border); color: #C9631A;">
+                            تعديل
+                        </a>
+                        <a asp-action="Delete" asp-route-id="@item.ExpenseId" class="badge-glass text-decoration-none mx-1" style="background: rgba(220,53,69,0.05); border-color: rgba(220,53,69,0.2); color: #dc3545;">
+                            حذف
+                        </a>
+                    </td>
+                </tr>
+            }
+        </tbody>
+    </table>
+</div>
