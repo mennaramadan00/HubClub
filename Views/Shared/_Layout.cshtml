@@ -22,32 +22,29 @@
                     <span>Hub Club</span>
                 </a>
             </div>
-            <nav class="sidebar-nav">
-                <!-- تم إرجاع أسماء الـ Controllers الأصلية (بصيغة الجمع) هنا حتى تعمل الروابط -->
-                <a class="nav-item-link @navActive("Home", "Index")" asp-controller="Home" asp-action="Index">إدارة الجلسات</a>
-                <a class="nav-item-link @navActive("Home", "DailyAnalysis")" asp-controller="Home" asp-action="DailyAnalysis">الجلسات المغلقة</a>
-                <a class="nav-item-link @navActive("Products", null)" asp-controller="Products" asp-action="Index">المنتجات والبار</a>
-                <a class="nav-item-link @navActive("PricingSettings", null)" asp-controller="PricingSettings" asp-action="Index">إعدادات التسعير</a>
-                <a class="nav-item-link @navActive("Packages", null)" asp-controller="Packages" asp-action="Index">إدارة الباقات</a>
-                <a class="nav-item-link @navActive("UserPackage", null)" asp-controller="UserPackage" asp-action="Index">باقات المشتركين</a>
-                <a class="nav-item-link @navActive("Customers", null)" asp-controller="Customers" asp-action="Index">قاعدة العملاء</a>
-                <a class="nav-item-link @navActive("Session", "DailyReport")" asp-controller="Session" asp-action="DailyReport">التقارير </a>
-                <a class="nav-item-link @navActive("Analysis", "Index")" asp-controller="Analysis" asp-action="Index">التحليل المالي</a>
-            </nav>
+
+            <!-- 🟢 التعديل السحري: وضع الروابط داخل "غلاف" مخصص لشريط التمرير -->
+            <div class="sidebar-scroll-wrapper" style="flex: 1; overflow-y: auto; overflow-x: hidden; height: 0; padding-left: 5px;">
+                <nav class="sidebar-nav" style="padding-top: 10px; padding-bottom: 30px;">
+                    <a class="nav-item-link @navActive("Home", "Index")" asp-controller="Home" asp-action="Index">إدارة الجلسات</a>
+                    <a class="nav-item-link @navActive("Home", "DailyAnalysis")" asp-controller="Home" asp-action="DailyAnalysis">الجلسات المغلقة</a>
+                    <a class="nav-item-link @navActive("Products", null)" asp-controller="Products" asp-action="Index">المنتجات والبار</a>
+                    <a class="nav-item-link @navActive("PricingSettings", null)" asp-controller="PricingSettings" asp-action="Index">إعدادات التسعير</a>
+                    <a class="nav-item-link @navActive("Packages", null)" asp-controller="Packages" asp-action="Index">إدارة الباقات</a>
+                    <a class="nav-item-link @navActive("UserPackage", null)" asp-controller="UserPackage" asp-action="Index">باقات المشتركين</a>
+                    <a class="nav-item-link @navActive("Customers", null)" asp-controller="Customers" asp-action="Index">قاعدة العملاء</a>
+
+                    <a class="nav-item-link @navActive("Expenses", null)" asp-controller="Expenses" asp-action="Index">إدارة المصروفات</a>
+
+                    <a class="nav-item-link @navActive("Session", "DailyReport")" asp-controller="Session" asp-action="DailyReport">التقارير</a>
+                    <a class="nav-item-link @navActive("Analysis", "Index")" asp-controller="Analysis" asp-action="Index">التحليل المالي</a>
+                </nav>
+            </div>
         </aside>
 
         <!-- Main Content Area -->
         <main class="app-main">
-            <!-- Top Nav Bar -->
-            @* <header class="app-topbar">
-                <h1 class="topbar-title">@ViewData["Title"]</h1>
-                <a asp-controller="Session" asp-action="Open" class="btn-aurelian-primary">
-                    بدء جلسة جديدة
-                </a>
-            </header> *@
-
             <div class="p-4">
-                <!-- تم إزالة رسائل النجاح تماماً -->
                 @RenderBody()
             </div>
         </main>
@@ -55,6 +52,42 @@
 
     <script src="~/lib/jquery/dist/jquery.min.js"></script>
     <script src="~/lib/bootstrap/dist/js/bootstrap.bundle.min.js"></script>
+
+    <script>
+        $(document).ready(function () {
+            $('form').on('submit', function (e) {
+                var $form = $(this);
+
+                // 1. نتأكد إن مكتبة التحقق (Validation) موجودة، وإن البيانات سليمة
+                if (typeof $.validator !== 'undefined') {
+                    if (!$form.valid()) {
+                        return true; // لو في بيانات ناقصة، سيب الزرار شغال عشان الكاشير يصلحها
+                    }
+                }
+
+                // 2. لو الفورم بتتبعت حالاً، امنع أي ضغطة جديدة
+                if ($form.data('submitted') === true) {
+                    e.preventDefault();
+                    return false;
+                }
+
+                // 3. علم على الفورم إنها اتبعتت خلاص
+                $form.data('submitted', true);
+
+                // 4. اقفل الزرار
+                var $btn = $form.find('button[type="submit"], input[type="submit"]');
+                $btn.prop('disabled', true);
+
+                // 5. غير النص عشان الكاشير يطمن إن السيستم بيحمل
+                if ($btn.is('button')) {
+                    $btn.text('جاري التحميل...');
+                } else {
+                    $btn.val('جاري التحميل...');
+                }
+            });
+        });
+    </script>
+
     @await RenderSectionAsync("Scripts", required: false)
 </body>
 </html>

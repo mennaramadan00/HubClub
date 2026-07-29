@@ -30,6 +30,6 @@ namespace HubClub.Models
 
         [Display(Name = "ملاحظات وتفاصيل")]
         [StringLength(500)]
-        public string Notes { get; set; }
+        public string? Notes { get; set; }
     }
 }

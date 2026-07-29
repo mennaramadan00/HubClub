@@ -4,13 +4,21 @@
     ViewData["Title"] = "بنود المصروفات";
 }
 
-<div class="d-flex justify-content-between align-items-center mb-4 mt-3">
+<div class="d-flex justify-content-between align-items-center mb-4 mt-3 flex-wrap gap-3">
     <h1 class="topbar-title">إدارة بنود المصروفات</h1>
-    <a asp-action="Create" class="btn-aurelian-primary">
-        <i class="fas fa-plus me-2"></i> إضافة بند جديد
-    </a>
-</div>
 
+    <div class="d-flex gap-2">
+        <!-- الزرار الجديد للانتقال لسجل المصروفات -->
+        <a asp-controller="Expenses" asp-action="Index" class="btn-aurelian-outline">
+            <i class="fas fa-file-invoice-dollar me-2"></i> العوده الي سجل المصروفات
+        </a>
+
+        <!-- الزرار الأصلي لإضافة بند جديد -->
+        <a asp-action="Create" class="btn-aurelian-primary">
+            <i class="fas fa-plus me-2"></i> إضافة بند جديد
+        </a>
+    </div>
+</div>
 <div class="table-glass-wrap">
     <table class="table-glass">
         <thead>

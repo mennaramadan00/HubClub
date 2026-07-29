@@ -7,7 +7,6 @@ using Microsoft.AspNetCore.Mvc.Rendering;
 using Microsoft.EntityFrameworkCore;
 using HubClub.Data;
 using HubClub.Models;
-// 🟢 تأكدي من استدعاء الـ Helper اللي فيه BusinessDate
 using HubClub.Helpers;
 
 namespace HubClub.Controllers
@@ -24,7 +23,6 @@ namespace HubClub.Controllers
         // GET: Expenses
         public async Task<IActionResult> Index()
         {
-            // 🟢 ترتيب المصروفات من الأحدث للأقدم
             var appDbContext = _context.Expenses
                 .Include(e => e.ExpenseCategory)
                 .OrderByDescending(e => e.Date);
@@ -55,21 +53,26 @@ namespace HubClub.Controllers
         // POST: Expenses/Create
         [HttpPost]
         [ValidateAntiForgeryToken]
-        // 🟢 شلنا Date و BusinessDate من الـ Bind عشان السيستم يحسبهم لوحده
         public async Task<IActionResult> Create([Bind("ExpenseId,Amount,ExpenseCategoryId,Notes")] Expense expense)
         {
+            // 🟢 الحل: استبعاد الحقول التي يتم توليدها برمجياً أو المرتبطة بعلاقات من التحقق
+            ModelState.Remove("ExpenseCategory");
+            ModelState.Remove("Date");
+            ModelState.Remove("BusinessDate");
+
             if (ModelState.IsValid)
             {
-                // 🟢 تعيين الوقت والوردية تلقائياً
+                // تعيين الوقت والوردية تلقائياً
                 expense.Date = DateTime.Now;
-                // افترضت إن عندك BusinessHelper زي ما عملنا في الجلسات
-                // هنا بنقوله خد التاريخ، وحط معاه الوقت الساعة 12 بالليل عشان يقبل يتحفظ في الداتابيز
-                expense.BusinessDate = BusinessHelper.GetBusinessDate(expense.Date).ToDateTime(TimeOnly.MinValue); _context.Add(expense);
+                expense.BusinessDate = BusinessHelper.GetBusinessDate(expense.Date).ToDateTime(TimeOnly.MinValue);
+
+                _context.Add(expense);
                 await _context.SaveChangesAsync();
 
                 TempData["Success"] = "تم تسجيل المصروف بنجاح!";
                 return RedirectToAction(nameof(Index));
             }
+
             ViewData["ExpenseCategoryId"] = new SelectList(_context.ExpenseCategories, "ExpenseCategoryId", "Name", expense.ExpenseCategoryId);
             return View(expense);
         }
@@ -92,6 +95,9 @@ namespace HubClub.Controllers
         public async Task<IActionResult> Edit(int id, [Bind("ExpenseId,Amount,ExpenseCategoryId,Date,BusinessDate,Notes")] Expense expense)
         {
             if (id != expense.ExpenseId) return NotFound();
+
+            // 🟢 الحل هنا أيضاً: استبعاد كائن العلاقة من التحقق حتى لا يمنع التعديل
+            ModelState.Remove("ExpenseCategory");
 
             if (ModelState.IsValid)
             {

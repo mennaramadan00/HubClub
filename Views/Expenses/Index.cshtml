@@ -4,11 +4,20 @@
     ViewData["Title"] = "سجل المصروفات";
 }
 
-<div class="d-flex justify-content-between align-items-center mb-4 mt-3">
+<div class="d-flex justify-content-between align-items-center mb-4 mt-3 flex-wrap gap-3">
     <h1 class="topbar-title">سجل المصروفات المالية</h1>
-    <a asp-action="Create" class="btn-aurelian-primary">
-        <i class="fas fa-hand-holding-usd me-2"></i> تسجيل مصروف جديد
-    </a>
+
+    <div class="d-flex gap-2">
+        <!-- الزرار الجديد للانتقال لإدارة بنود المصروفات -->
+        <a asp-controller="ExpenseCategories" asp-action="Index" class="btn-aurelian-outline">
+            <i class="fas fa-tags me-2"></i> إدارة بنود المصروفات
+        </a>
+
+        <!-- الزرار الأصلي لتسجيل مصروف جديد -->
+        <a asp-action="Create" class="btn-aurelian-primary">
+            <i class="fas fa-hand-holding-usd me-2"></i> تسجيل مصروف جديد
+        </a>
+    </div>
 </div>
 
 <div class="table-glass-wrap">
