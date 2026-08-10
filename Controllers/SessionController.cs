@@ -447,6 +447,9 @@ namespace HubClub.Controllers
         [ValidateAntiForgeryToken]
         public async Task<IActionResult> ConfirmClose(SessionCloseViewModel vm)
         {
+            // 🟢 التعديل الأول: تثبيت الوقت الفعلي للعملية لضمان عدم تغيره أثناء التنفيذ
+            var operationTime = DateTime.Now;
+
             var session = await _context.Sessions
                 .Include(s => s.SessionProducts)
                     .ThenInclude(sp => sp.Product)
@@ -460,7 +463,8 @@ namespace HubClub.Controllers
                 return RedirectToAction("Index", "Home");
             }
 
-            if (vm.EndTime < session.StartTime || vm.EndTime > DateTime.Now.AddMinutes(5))
+            // 🟢 استخدام operationTime بدلاً من DateTime.Now
+            if (vm.EndTime < session.StartTime || vm.EndTime > operationTime.AddMinutes(5))
             {
                 TempData["Error"] = "خطأ في بيانات وقت الإغلاق.";
                 return RedirectToAction("CloseReview", new { id = vm.SessionId });
@@ -498,8 +502,9 @@ namespace HubClub.Controllers
                                 QuantityChanged = existingLine.Quantity,
                                 MovementType = "Session Product Return",
                                 SessionId = session.SessionId,
-                                BusinessDate = BusinessHelper.GetBusinessDate(DateTime.Now),
-                                Timestamp = DateTime.Now
+                                // 🟢 التعديل الثاني: ربط حركة المخزن بيوم الإغلاق والوقت الموحد
+                                BusinessDate = BusinessHelper.GetBusinessDate(vm.EndTime),
+                                Timestamp = operationTime
                             });
 
                             _context.SessionProducts.Remove(existingLine);
@@ -515,8 +520,9 @@ namespace HubClub.Controllers
                                 QuantityChanged = -qtyDiff,
                                 MovementType = qtyDiff > 0 ? "Mid-Session Sale" : "Session Product Return",
                                 SessionId = session.SessionId,
-                                BusinessDate = BusinessHelper.GetBusinessDate(DateTime.Now),
-                                Timestamp = DateTime.Now
+                                // 🟢 التعديل الثاني: ربط حركة المخزن بيوم الإغلاق والوقت الموحد
+                                BusinessDate = BusinessHelper.GetBusinessDate(vm.EndTime),
+                                Timestamp = operationTime
                             });
 
                             existingLine.Quantity = item.Quantity;
@@ -567,8 +573,9 @@ namespace HubClub.Controllers
                             QuantityChanged = -item.SelectedQuantity,
                             MovementType = "Mid-Session Sale",
                             SessionId = session.SessionId,
-                            BusinessDate = BusinessHelper.GetBusinessDate(DateTime.Now),
-                            Timestamp = DateTime.Now
+                            // 🟢 التعديل الثاني: ربط حركة المخزن بيوم الإغلاق والوقت الموحد
+                            BusinessDate = BusinessHelper.GetBusinessDate(vm.EndTime),
+                            Timestamp = operationTime
                         });
 
                         product.Quantity -= item.SelectedQuantity;
@@ -611,12 +618,18 @@ namespace HubClub.Controllers
                     session.PriceSettingId = tier?.PricingSettingId;
                 }
 
-                // 🟢 1. قفل الأمان: استقبال الأسعار مع منع أي أرقام سالبة تماماً
                 session.TotalTimePrice = Math.Max(0, vm.CalculatedTimePrice);
                 session.TotalProductPrice = Math.Max(0, vm.TotalProductPrice);
 
-                // 🟢 2. التوزيع النسبي: تعديل أسعار المنتجات الفردية لو الكاشير غير إجمالي البار
+                // ⚠️ تذكير: بلوك "التوزيع النسبي" موجود هنا كما أرسلتيه. 
+                // إذا كنتِ تريدين الحفاظ على الأسعار من التشويه كما اتفقنا في المهمة الأولى، يرجى استبدال بلوك التوزيع النسبي بـ:
+                // session.TotalProductPrice = session.SessionProducts.Sum(sp => sp.TotalPrice);
                 decimal originalProductsSum = session.SessionProducts.Sum(sp => sp.TotalPrice);
+                // قفل الأمان: لو الفرق بين الشاشة والداتابيز 10 قروش أو أقل، اعتبره فرق تقريب وتجاهله
+                //if (Math.Abs(session.TotalProductPrice - originalProductsSum) <= 0.2m)
+                //{
+                //    session.TotalProductPrice = originalProductsSum;
+                //}
 
                 if (session.TotalProductPrice != originalProductsSum && originalProductsSum > 0 && session.SessionProducts.Any())
                 {
@@ -629,7 +642,6 @@ namespace HubClub.Controllers
                         var sp = spList[i];
                         if (i == spList.Count - 1)
                         {
-                            // العنصر الأخير بياخد الباقي بالضبط عشان الكسور
                             sp.TotalPrice = session.TotalProductPrice - runningTotal;
                         }
                         else
@@ -638,12 +650,10 @@ namespace HubClub.Controllers
                             runningTotal += sp.TotalPrice;
                         }
 
-                        // تحديث سعر الوحدة بعد الخصم
                         sp.UnitPriceAtSale = sp.Quantity > 0 ? (sp.TotalPrice / sp.Quantity) : 0;
                     }
                 }
 
-                // 🟢 3. حساب الإجمالي النهائي بناءً على الأسعار المعتمدة من الكاشير
                 session.GrandTotal = session.TotalTimePrice + session.TotalProductPrice;
 
                 await _context.SaveChangesAsync();
@@ -668,8 +678,10 @@ namespace HubClub.Controllers
         public async Task<IActionResult> ReopenSession(int id)
         {
             var session = await _context.Sessions
-                .Include(s => s.UserPackage)
-                .FirstOrDefaultAsync(s => s.SessionId == id);
+                     .Include(s => s.UserPackage)
+                     .Include(s => s.SessionProducts)
+                     .ThenInclude(sp => sp.Product)
+                     .FirstOrDefaultAsync(s => s.SessionId == id);   
 
             if (session == null || !session.IsClosed)
             {
@@ -700,6 +712,15 @@ namespace HubClub.Controllers
                 session.EndTime = null;
                 session.TotalTimePrice = 0;
                 session.PriceSettingId = null;
+                // إرجاع أسعار المنتجات لسعر الكتالوج الأصلي لمسح أي خصم مضروب سابقاً
+                foreach (var sp in session.SessionProducts)
+                {
+                    if (sp.Product != null)
+                    {
+                        sp.UnitPriceAtSale = sp.Product.Price;
+                        sp.TotalPrice = sp.UnitPriceAtSale * sp.Quantity;
+                    }
+                }
 
                 // 3. تصفير حقل الساعات المستخدمة لتبدأ الجلسة نظيفة مرة أخرى
                 session.PackageHoursUsed = null;
@@ -721,13 +742,25 @@ namespace HubClub.Controllers
         }
         public async Task<IActionResult> DailyReport(DateTime? date)
         {
-            DateTime selectedDate = (date ?? DateTime.Now).Date;
-            DateOnly targetBusinessDate = DateOnly.FromDateTime(selectedDate);
+            // 1. تحديد يوم العمل المحاسبي بدقة احترافية
+            DateOnly targetBusinessDate;
+            if (date.HasValue)
+            {
+                // لو المستخدم اختار تاريخ من النتيجة، نحوله ליوم عمل
+                targetBusinessDate = BusinessHelper.GetBusinessDate(date.Value);
+            }
+            else
+            {
+                // لو فاتح التقرير بتاع النهاردة، نستخدم الـ Helper عشان نحمي نفسنا لو الساعة 2 الفجر
+                targetBusinessDate = BusinessHelper.GetBusinessDate(DateTime.Now);
+            }
 
+            // للمتغيرات اللي بتتبعت للـ View فقط (عشان العرض في الشاشة)
+            DateTime selectedDate = targetBusinessDate.ToDateTime(TimeOnly.MinValue);
             var businessStart = selectedDate.AddHours(8).AddMinutes(30);
             var businessEnd = businessStart.AddDays(1);
 
-            // 1. تقرير الجلسات
+            // 2. تقرير الجلسات (مبني على BusinessDate)
             var sessions = await _context.Sessions
                 .Include(s => s.Customer)
                 .Include(s => s.SessionProducts)
@@ -736,16 +769,25 @@ namespace HubClub.Controllers
                 .OrderBy(s => s.StartTime)
                 .ToListAsync();
 
-            // 2. تقرير المخزون
+            // 3. 🟢 جلب حركات المخزن الخاصة بيوم التقرير (الاعتماد التام على BusinessDate وليس Timestamp)
             var movementsToday = await _context.StockMovements
-                .Where(m => m.Timestamp >= businessStart && m.Timestamp < businessEnd)
+                .Where(m => m.BusinessDate == targetBusinessDate)
                 .ToListAsync();
 
-            var groupedMovements = movementsToday
+            var groupedMovementsToday = movementsToday
                 .GroupBy(m => m.ProductId)
                 .ToDictionary(g => g.Key, g => g.ToList());
 
-            var products = await _context.Products.ToListAsync();
+            // 4. 🟢 جلب كل حركات المستقبل لمعرفة الرصيد بأثر رجعي
+            var futureMovements = await _context.StockMovements
+                .Where(m => m.BusinessDate > targetBusinessDate)
+                .ToListAsync();
+
+            var groupedFutureMovements = futureMovements
+                .GroupBy(m => m.ProductId)
+                .ToDictionary(g => g.Key, g => g.Sum(m => m.QuantityChanged));
+
+            var products = await _context.Products.AsNoTracking().ToListAsync();
             var inventoryReport = new List<ProductReportItem>();
 
             foreach (var p in products)
@@ -754,25 +796,37 @@ namespace HubClub.Controllers
                 int added = 0;
                 int deficit = 0;
 
-                if (groupedMovements.TryGetValue(p.ProductId, out var movements))
+                // حساب حركات اليوم فقط
+                if (groupedMovementsToday.TryGetValue(p.ProductId, out var movements))
                 {
                     sold = movements.Where(m => m.MovementType == "Sale" || m.MovementType == "Mid-Session Sale" || m.MovementType == "Session Product Return").Sum(m => -m.QuantityChanged);
                     added = movements.Where(m => m.MovementType == "Stock In").Sum(m => m.QuantityChanged);
                     deficit = movements.Where(m => m.MovementType == "Deficit").Sum(m => -m.QuantityChanged);
                 }
 
+                // 5. 🟢 المعادلة الاحترافية الصارمة (Strict Logic بدون إخفاء للسوالب)
+
+                // أ) صافي التغير في المستقبل
+                int futureNetChange = groupedFutureMovements.TryGetValue(p.ProductId, out var change) ? change : 0;
+
+                // ب) الرصيد النهائي ليوم التقرير = الرصيد الفعلي الحالي في الداتابيز - التغيرات المستقبلية
+                int actualEndQuantity = p.Quantity - futureNetChange;
+
+                // ج) الرصيد الافتتاحي ليوم التقرير = الرصيد النهائي لليوم - الوارد + المنصرف
+                int actualStartQuantity = actualEndQuantity - added + sold + deficit;
+
                 inventoryReport.Add(new ProductReportItem
                 {
                     ProductName = p.Name,
-                    StartQuantity = p.Quantity - added + sold + deficit,
+                    StartQuantity = actualStartQuantity, // سيظهر بالسالب إذا كان هناك خطأ إداري في الإدخال
                     SoldQuantity = sold,
                     AddedQuantity = added,
                     DeficitQuantity = deficit,
-                    EndQuantity = p.Quantity
+                    EndQuantity = actualEndQuantity      // سيظهر بالسالب إذا تم البيع بدون تسجيل وارد
                 });
             }
 
-            // 🟢 3. حساب إيرادات الباقات لهذا اليوم المحاسبي
+            // 6. حساب إيرادات الباقات لهذا اليوم المحاسبي
             var packagesSoldToday = await _context.UserPackages
                 .Where(up => up.PurchaseBusinessDate == targetBusinessDate && !up.IsDeleted)
                 .ToListAsync();
@@ -791,7 +845,6 @@ namespace HubClub.Controllers
                     Revenue = g.Sum(s => s.GrandTotal)
                 }).ToList();
 
-            // 🟢 إضافة مبيعات الباقات لتفاصيل الدخل
             if (todayPackagesRevenue > 0)
             {
                 paymentBreakdown.Add(new PaymentTypeSummaryItem
@@ -812,15 +865,222 @@ namespace HubClub.Controllers
 
                 TotalTimeRevenue = closedSessions.Sum(s => s.TotalTimePrice),
                 TotalProductRevenue = closedSessions.Sum(s => s.TotalProductPrice),
-                TotalPackageRevenue = todayPackagesRevenue, // إيراد الباقات
-                TotalRevenue = closedSessions.Sum(s => s.GrandTotal) + todayPackagesRevenue, // الإجمالي الكلي للدرج
+                TotalPackageRevenue = todayPackagesRevenue,
+                TotalRevenue = closedSessions.Sum(s => s.GrandTotal) + todayPackagesRevenue,
 
                 ClosedSessionsCount = closedSessions.Count,
                 OpenSessionsCount = openSessions.Count,
                 PaymentBreakdown = paymentBreakdown.OrderByDescending(x => x.Revenue).ToList()
             });
         }
-       
 
+        // ─────────────────────────────────────────
+        // GET: Session/Edit/5
+        // ─────────────────────────────────────────
+        [HttpGet]
+        public async Task<IActionResult> Edit(int id)
+        {
+            // 🟢 تضمين المنتجات مع الجلسة
+            var session = await _context.Sessions
+                .Include(s => s.SessionProducts)
+                    .ThenInclude(sp => sp.Product)
+                .FirstOrDefaultAsync(s => s.SessionId == id);
+
+            if (session == null || !session.IsClosed) return NotFound("الجلسة غير موجودة أو لم يتم إغلاقها بعد.");
+
+            decimal hours = session.EndTime.HasValue
+                ? (decimal)(session.EndTime.Value - session.StartTime).TotalHours
+                : 0;
+
+            var vm = new EditClosedSessionViewModel
+            {
+                SessionId = session.SessionId,
+                CusId = session.CusId,
+                PaymentType = session.PaymentType,
+                StartTime = session.StartTime,
+                EndTime = session.EndTime,
+                HoursElapsed = Math.Round(hours, 2),
+                TotalTimePrice = session.TotalTimePrice,
+                TotalProductPrice = session.TotalProductPrice,
+                GrandTotal = session.GrandTotal,
+                AllCustomers = await GetCustomerListAsync(),
+
+                // 🟢 تعبئة المنتجات لإرسالها للشاشة
+                Products = session.SessionProducts.Select(sp => new EditSessionProductViewModel
+                {
+                    SessionProductId = sp.SProductId,
+                    ProductId = sp.ProductId,
+                    ProductName = sp.Product.Name,
+                    Quantity = sp.Quantity,
+                    UnitPriceAtSale = sp.UnitPriceAtSale
+                }).ToList()
+            };
+
+            return View(vm);
+        }
+
+        // ─────────────────────────────────────────
+        // POST: Session/Edit/5
+        // ─────────────────────────────────────────
+        [HttpPost]
+        [ValidateAntiForgeryToken]
+        public async Task<IActionResult> Edit(int id, EditClosedSessionViewModel vm)
+        {
+            if (id != vm.SessionId) return NotFound();
+
+            var session = await _context.Sessions
+                .Include(s => s.SessionProducts)
+                .FirstOrDefaultAsync(s => s.SessionId == id);
+
+            if (session == null) return NotFound();
+
+            // 🟢 فتح Transaction لأننا سنقوم بتعديل المخزون والفاتورة معاً
+            using var transaction = await _context.Database.BeginTransactionAsync();
+            try
+            {
+                session.CusId = vm.CusId;
+                session.PaymentType = vm.PaymentType;
+                session.TotalTimePrice = vm.TotalTimePrice;
+
+                // 🟢 معالجة المنتجات وتحديث المخزون
+                if (vm.Products != null)
+                {
+                    foreach (var item in vm.Products)
+                    {
+                        var existingSp = session.SessionProducts.FirstOrDefault(sp => sp.SProductId == item.SessionProductId);
+                        if (existingSp != null)
+                        {
+                            var product = await _context.Products.FindAsync(existingSp.ProductId);
+
+                            // حساب فرق الكمية (الجديد - القديم)
+                            int qtyDiff = item.Quantity - existingSp.Quantity;
+
+                            // التحقق من توافر المخزون في حالة زيادة الكمية
+                            if (qtyDiff > 0 && product != null && product.Quantity < qtyDiff)
+                            {
+                                await transaction.RollbackAsync();
+                                TempData["Error"] = $"عفواً، المخزون لا يكفي لزيادة كمية ({item.ProductName}). المتاح: {product.Quantity}";
+                                return RedirectToAction(nameof(Edit), new { id = session.SessionId });
+                            }
+
+                            // تحديث المخزون وتسجيل الحركة
+                            if (qtyDiff != 0 && product != null)
+                            {
+                                product.Quantity -= qtyDiff;
+                                _context.Products.Update(product);
+
+                                _context.StockMovements.Add(new StockMovement
+                                {
+                                    ProductId = product.ProductId,
+                                    QuantityChanged = -qtyDiff,
+                                    MovementType = qtyDiff > 0 ? "Edit Session Sale" : "Edit Session Return",
+                                    SessionId = session.SessionId,
+                                    BusinessDate = BusinessHelper.GetBusinessDate(DateTime.Now),
+                                    Timestamp = DateTime.Now
+                                });
+                            }
+
+                            // تحديث السعر والكمية في سطر الفاتورة
+                            existingSp.Quantity = item.Quantity;
+                            existingSp.UnitPriceAtSale = item.UnitPriceAtSale;
+                            existingSp.TotalPrice = item.Quantity * item.UnitPriceAtSale;
+
+                            if (item.Quantity == 0)
+                                _context.SessionProducts.Remove(existingSp);
+                            else
+                                _context.SessionProducts.Update(existingSp);
+                        }
+                    }
+                }
+
+                // 🟢 إجبار السيرفر على حساب الإجمالي النهائي من سطور المنتجات لمنع أي تلاعب
+                session.TotalProductPrice = session.SessionProducts.Where(sp => sp.Quantity > 0).Sum(sp => sp.TotalPrice);
+                session.GrandTotal = session.TotalTimePrice + session.TotalProductPrice;
+
+                _context.Update(session);
+                await _context.SaveChangesAsync();
+                await transaction.CommitAsync();
+
+                TempData["Success"] = "تم تعديل بيانات الجلسة والطلبات بنجاح.";
+                return RedirectToAction("Index", "Home");
+            }
+            catch (Exception ex)
+            {
+                await transaction.RollbackAsync();
+                _logger.LogError(ex, "خطأ أثناء تعديل الجلسة");
+                TempData["Error"] = "حدث خطأ غير متوقع أثناء حفظ التعديلات.";
+                return RedirectToAction(nameof(Edit), new { id = session.SessionId });
+            }
+        }
+        // ─────────────────────────────────────────
+        // GET: Session/Delete/5
+        // ─────────────────────────────────────────
+        [HttpGet]
+        public async Task<IActionResult> Delete(int id)
+        {
+            var session = await _context.Sessions
+                .Include(s => s.Customer)
+                .FirstOrDefaultAsync(s => s.SessionId == id);
+
+            if (session == null) return NotFound();
+
+            return View(session);
+        }
+
+        // ─────────────────────────────────────────
+        // POST: Session/Delete/5
+        // ─────────────────────────────────────────
+        [HttpPost, ActionName("Delete")]
+        [ValidateAntiForgeryToken]
+        public async Task<IActionResult> DeleteConfirmed(int id)
+        {
+            var session = await _context.Sessions
+                .Include(s => s.SessionProducts)
+                    .ThenInclude(sp => sp.Product)
+                .FirstOrDefaultAsync(s => s.SessionId == id);
+
+            if (session == null) return NotFound();
+
+            using var transaction = await _context.Database.BeginTransactionAsync();
+            try
+            {
+                // إرجاع المنتجات للمخزن قبل حذف الجلسة (مهم جداً محاسبياً)
+                foreach (var sp in session.SessionProducts)
+                {
+                    if (sp.Product != null)
+                    {
+                        sp.Product.Quantity += sp.Quantity;
+                        _context.Products.Update(sp.Product);
+
+                        _context.StockMovements.Add(new StockMovement
+                        {
+                            ProductId = sp.ProductId,
+                            QuantityChanged = sp.Quantity,
+                            MovementType = "Session Deleted Return",
+                            SessionId = session.SessionId,
+                            BusinessDate = BusinessHelper.GetBusinessDate(DateTime.Now),
+                            Timestamp = DateTime.Now
+                        });
+                    }
+                }
+
+                // حذف المنتجات المرتبطة ثم حذف الجلسة
+                _context.SessionProducts.RemoveRange(session.SessionProducts);
+                _context.Sessions.Remove(session);
+
+                await _context.SaveChangesAsync();
+                await transaction.CommitAsync();
+
+                TempData["Success"] = "تم حذف الجلسة وإرجاع المنتجات للمخزن بنجاح.";
+            }
+            catch (Exception ex)
+            {
+                await transaction.RollbackAsync();
+                _logger.LogError(ex, "خطأ أثناء حذف الجلسة");
+                TempData["Error"] = "حدث خطأ أثناء الحذف.";
+            }
+
+            return RedirectToAction("Index", "Home");
+        }
     }
 }

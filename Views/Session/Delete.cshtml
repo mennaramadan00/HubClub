@@ -1,0 +1,19 @@
+﻿@model HubClub.Models.Session
+@{
+    ViewData["Title"] = "حذف الجلسة";
+}
+
+<div class="alert alert-danger mt-4" dir="rtl">
+    <h4 class="alert-heading fw-bold">⚠️ تحذير مسح نهائي</h4>
+    <p>هل أنت متأكد من رغبتك في حذف جلسة العميل <strong>@Model.Customer.Name</strong>؟</p>
+    <hr>
+    <p class="mb-0">إجمالي الجلسة: @Model.GrandTotal.ToString("N2") ج.م</p>
+    <p class="mb-0 text-muted"><small>سيتم إرجاع المنتجات الخاصة بهذه الجلسة إلى المخزن تلقائياً.</small></p>
+
+    <form asp-action="Delete" method="post" class="mt-4">
+        @Html.AntiForgeryToken()
+        <input type="hidden" asp-for="SessionId" />
+        <button type="submit" class="btn btn-danger px-4 fw-bold">نعم، احذف الجلسة نهائياً</button>
+        <a asp-controller="Home" asp-action="Index" class="btn btn-outline-secondary px-4">إلغاء الأمر</a>
+    </form>
+</div>

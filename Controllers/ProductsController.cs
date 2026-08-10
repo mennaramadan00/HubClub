@@ -1,7 +1,8 @@
-﻿using Microsoft.AspNetCore.Mvc;
-using Microsoft.EntityFrameworkCore;
-using HubClub.Data;
+﻿using HubClub.Data;
+using HubClub.Helpers;
 using HubClub.Models;
+using Microsoft.AspNetCore.Mvc;
+using Microsoft.EntityFrameworkCore;
 
 namespace HubClub.Controllers
 {
@@ -54,6 +55,18 @@ namespace HubClub.Controllers
             {
                 product.CreatedAt = DateTime.Now;
                 _context.Add(product);
+                if (product.Quantity > 0)
+                {
+                    _context.StockMovements.Add(new StockMovement
+                    {
+                        ProductId = product.ProductId,
+                        QuantityChanged = product.Quantity,
+                        MovementType = "Stock In",
+                        Timestamp = DateTime.Now,
+                        BusinessDate = BusinessHelper.GetBusinessDate(DateTime.Now)
+                    });
+                    await _context.SaveChangesAsync();
+                }
                 await _context.SaveChangesAsync();
                 TempData["Success"] = "تم إضافة المنتج بنجاح";
                 return RedirectToAction(nameof(Index));
@@ -102,7 +115,7 @@ namespace HubClub.Controllers
                             QuantityChanged = quantityDifference,
                             MovementType = "Stock In",
                             Timestamp = DateTime.Now,
-                            BusinessDate = DateOnly.FromDateTime(DateTime.Now)
+                            BusinessDate = BusinessHelper.GetBusinessDate(DateTime.Now)
                         });
                     }
                     else if (quantityDifference < 0)
