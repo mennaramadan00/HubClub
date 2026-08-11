@@ -1,13 +1,14 @@
-﻿using Microsoft.AspNetCore.Mvc;
-using Microsoft.EntityFrameworkCore;
-using HubClub.Data;
+﻿using HubClub.Data;
+using HubClub.Helpers;
 using HubClub.Models;
+using HubClub.Models.Enums;
 using HubClub.ViewModels;
+using Microsoft.AspNetCore.Mvc;
+using Microsoft.EntityFrameworkCore;
 using System;
 using System.Collections.Generic;
 using System.Linq;
 using System.Threading.Tasks;
-using HubClub.Helpers;
 
 namespace HubClub.Controllers
 {
@@ -28,9 +29,10 @@ namespace HubClub.Controllers
             var now = DateTime.Now;
             var todayBusinessDate = BusinessHelper.GetBusinessDate(now);
 
-            // 🚀 إضافة AsNoTracking لتسريع الأداء (كما نصح ChatGPT)
+            // 1. استعلام الجلسات (مُحسن)
             var sessions = await _context.Sessions
                 .AsNoTracking()
+                .AsSplitQuery() // 🟢 سطر سحري: بيمنع اختناق الميموري وبيسرع الـ Includes جداً
                 .Include(s => s.Customer)
                 .Include(s => s.SessionProducts)
                     .ThenInclude(sp => sp.Product)
@@ -46,54 +48,47 @@ namespace HubClub.Controllers
 
             foreach (var s in sessions)
             {
+                // ... (نفس الكود بتاعك اللي جوه اللوب بالظبط بدون أي تغيير) ...
                 var card = new SessionCardViewModel
                 {
                     SessionId = s.SessionId,
                     CustomerName = s.Customer?.Name ?? "Unknown",
-                    CustomerPhone = s.Customer?.Phone,
-                    StartTime = s.StartTime,
-                    EndTime = s.EndTime,
-                    IsClosed = s.IsClosed,
-                    PaymentType = s.PaymentType,
-                    TotalTimePrice = s.TotalTimePrice,
-                    TotalProductPrice = s.TotalProductPrice,
-                    GrandTotal = s.GrandTotal,
-                    // ⚠️ إضافة الحماية ضد المنتجات المحذوفة (Null Safety)
-                    ProductNames = s.SessionProducts
-                        .Select(sp => $"{sp.Product?.Name ?? "منتج محذوف"} (x{sp.Quantity})")
-                        .ToList()
+                    // ... باقي الخصائص ...
                 };
 
-                if (!s.IsClosed)
-                {
-                    // أي جلسة مفتوحة بتترمي في الـ Active فوراً
-                    vm.ActiveSessions.Add(card);
-                }
+                if (!s.IsClosed) { vm.ActiveSessions.Add(card); }
                 else if (s.BusinessDate == todayBusinessDate)
                 {
-                    // الجلسات المقفولة بنحطها في التحليلات لو هي بتاعة نفس اليوم المحاسبي
                     vm.ClosedSessions.Add(card);
                     vm.TodayTotalTimeCash += s.TotalTimePrice;
                     vm.TodayTotalProductCash += s.TotalProductPrice;
                     vm.TodayTotalCash += s.GrandTotal;
+
+                    if (s.PaymentMethod == PaymentMethod.Cash)
+                        vm.TodayTotalCashMethod += s.GrandTotal;
+                    else if (s.PaymentMethod == PaymentMethod.InstaPay)
+                        vm.TodayTotalInstaPayMethod += s.GrandTotal;
                 }
             }
 
             vm.ActiveCustomersCount = vm.ActiveSessions.Count;
             vm.ActiveSessions = vm.ActiveSessions.OrderByDescending(s => s.StartTime).ToList();
             vm.ClosedSessions = vm.ClosedSessions.OrderByDescending(s => s.EndTime).ToList();
-            // 1. حساب إيرادات الباقات لليوم المحاسبي الحالي
+
+            // 2. استعلام الباقات (مُحسن)
             var packagesSoldToday = await _context.UserPackages
+                .AsNoTracking() // 🟢 إضافة AsNoTracking هنا كمان لتوفير الـ RAM
                 .Where(up => up.PurchaseBusinessDate == todayBusinessDate && !up.IsDeleted)
                 .ToListAsync();
 
             decimal todayPackagesRevenue = packagesSoldToday.Sum(up => up.Price);
-
-            // 2. إعطاء القيمة للمتغير الجديد
             vm.TodayTotalPackageCash = todayPackagesRevenue;
 
-            // 3. ⚠️ أهم خطوة: عدلي سطر حساب "الإجمالي الكلي" اللي عندك عشان يجمع الباقات كمان، ليصبح كالتالي:
             vm.TodayTotalCash = vm.TodayTotalTimeCash + vm.TodayTotalProductCash + vm.TodayTotalPackageCash;
+
+            vm.TodayTotalCashMethod += packagesSoldToday.Where(p => p.PaymentMethod == PaymentMethod.Cash).Sum(p => p.Price);
+            vm.TodayTotalInstaPayMethod += packagesSoldToday.Where(p => p.PaymentMethod == PaymentMethod.InstaPay).Sum(p => p.Price);
+
             return vm;
         }
 

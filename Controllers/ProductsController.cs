@@ -3,6 +3,9 @@ using HubClub.Helpers;
 using HubClub.Models;
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.EntityFrameworkCore;
+using System;
+using System.Linq;
+using System.Threading.Tasks;
 
 namespace HubClub.Controllers
 {
@@ -20,6 +23,7 @@ namespace HubClub.Controllers
         public async Task<IActionResult> Index()
         {
             var products = await _context.Products
+                .AsNoTracking() // 🟢 تسريع الأداء وتوفير الميموري
                 .OrderByDescending(p => p.IsActive)
                 .ThenBy(p => p.Name)
                 .ToListAsync();
@@ -33,6 +37,7 @@ namespace HubClub.Controllers
             if (id == null) return NotFound();
 
             var product = await _context.Products
+                .AsNoTracking() // 🟢 تسريع الأداء وتوفير الميموري
                 .FirstOrDefaultAsync(m => m.ProductId == id);
 
             if (product == null) return NotFound();
@@ -79,7 +84,10 @@ namespace HubClub.Controllers
         {
             if (id == null) return NotFound();
 
-            var product = await _context.Products.FindAsync(id);
+            var product = await _context.Products
+                .AsNoTracking() // 🟢 تسريع الأداء لفتح الشاشة في صفر ثانية
+                .FirstOrDefaultAsync(m => m.ProductId == id);
+
             if (product == null) return NotFound();
 
             return View(product);
@@ -162,6 +170,7 @@ namespace HubClub.Controllers
             if (id == null) return NotFound();
 
             var product = await _context.Products
+                .AsNoTracking() // 🟢 تسريع عرض شاشة الحذف
                 .FirstOrDefaultAsync(m => m.ProductId == id);
 
             if (product == null) return NotFound();
@@ -174,7 +183,6 @@ namespace HubClub.Controllers
         // This preserves historical session data that references this product
         [HttpPost, ActionName("Delete")]
         [ValidateAntiForgeryToken]
-        
         public async Task<IActionResult> DeleteConfirmed(int id)
         {
             var product = await _context.Products.FindAsync(id);
@@ -200,6 +208,7 @@ namespace HubClub.Controllers
             await _context.SaveChangesAsync();
             return RedirectToAction(nameof(Index));
         }
+
         private bool ProductExists(int id)
         {
             return _context.Products.Any(e => e.ProductId == id);

@@ -46,6 +46,9 @@ namespace HubClub.Models
         [Column(TypeName = "decimal(10,2)")]
         [Display(Name = "سعر الشراء")]
         public decimal Price { get; set; }
+        [Required]
+        [Display(Name = "طريقة التحصيل")]
+        public PaymentMethod PaymentMethod { get; set; } = PaymentMethod.Cash;
 
         [Timestamp]
         public byte[]? RowVersion { get; set; }

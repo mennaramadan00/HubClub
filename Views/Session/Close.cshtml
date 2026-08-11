@@ -105,7 +105,14 @@
                         <!-- سيتم رسم المنتجات هنا عبر الـ JavaScript -->
                     </div>
                 </div>
-
+                <!-- 🟢 طريقة التحصيل (كاش / إنستاباي) -->
+                <div class="wf-data-row mt-3" style="background: rgba(111, 66, 193, 0.05); border-radius: 6px; padding: 5px;">
+                    <span class="wf-data-label" style="color: #6f42c1;">طريقة التحصيل</span>
+                    <select asp-for="PaymentMethod" class="form-select text-center font-weight-bold" style="width: 130px; color: #6f42c1; border-color: rgba(111, 66, 193, 0.3); padding: 4px; cursor: pointer;">
+                        <option value="Cash">كاش</option>
+                        <option value="InstaPay">إنستاباي</option>
+                    </select>
+                </div>
                 <!-- تكلفة الوقت -->
                 <div class="wf-data-row mt-3">
                     <span class="wf-data-label">تكلفة الوقت</span>

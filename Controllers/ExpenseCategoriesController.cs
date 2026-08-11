@@ -22,7 +22,7 @@ namespace HubClub.Controllers
         // GET: ExpenseCategories
         public async Task<IActionResult> Index()
         {
-            return View(await _context.ExpenseCategories.ToListAsync());
+            return View(await _context.ExpenseCategories.AsNoTracking().ToListAsync()); // 🟢 AsNoTracking
         }
 
         // GET: ExpenseCategories/Details/5
@@ -35,6 +35,7 @@ namespace HubClub.Controllers
 
             // 🟢 التعديل 1: جلب المصروفات المرتبطة بهذا البند
             var expenseCategory = await _context.ExpenseCategories
+                .AsNoTracking() // 🟢 AsNoTracking
                 .Include(m => m.Expenses) // جلب المصروفات
                 .FirstOrDefaultAsync(m => m.ExpenseCategoryId == id);
 
@@ -83,7 +84,7 @@ namespace HubClub.Controllers
                 return NotFound();
             }
 
-            var expenseCategory = await _context.ExpenseCategories.FindAsync(id);
+            var expenseCategory = await _context.ExpenseCategories.AsNoTracking().FirstOrDefaultAsync(m => m.ExpenseCategoryId == id); // 🟢 AsNoTracking
             if (expenseCategory == null)
             {
                 return NotFound();
@@ -135,6 +136,7 @@ namespace HubClub.Controllers
 
             // يفضل أيضاً جلب المصروفات هنا لكي نخبر العميل إذا كان هناك مصروفات مرتبطة سيتم حذفها
             var expenseCategory = await _context.ExpenseCategories
+                .AsNoTracking() // 🟢 AsNoTracking
                 .Include(m => m.Expenses)
                 .FirstOrDefaultAsync(m => m.ExpenseCategoryId == id);
 

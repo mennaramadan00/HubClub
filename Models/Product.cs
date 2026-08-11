@@ -36,5 +36,7 @@ namespace HubClub.Models
 
         // Navigation properties
         public ICollection<SessionProduct> SessionProducts { get; set; } = new List<SessionProduct>();
+        // 🟢 الإضافة الجديدة لربط المنتج بطلبات الغرف
+        public ICollection<RoomSessionProduct> RoomSessionProducts { get; set; } = new List<RoomSessionProduct>();
     }
 }

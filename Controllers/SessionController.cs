@@ -31,6 +31,7 @@ namespace HubClub.Controllers
         private async Task<List<SelectListItem>> GetCustomerListAsync()
         {
             return await _context.Customers
+                .AsNoTracking()
                 .OrderBy(c => c.Name)
                 .Select(c => new SelectListItem
                 {
@@ -61,7 +62,7 @@ namespace HubClub.Controllers
 
             return tier;
         }
-
+        #region open
         // ─────────────────────────────────────────
         // GET: Session/Open
         // ─────────────────────────────────────────
@@ -195,6 +196,10 @@ namespace HubClub.Controllers
                 return RedirectToAction("Index", "Home");
             }
         }
+        #endregion
+
+        #region addProduct
+
         // ─────────────────────────────────────────
         // GET: Session/AddProducts
         // ─────────────────────────────────────────
@@ -202,6 +207,7 @@ namespace HubClub.Controllers
         public async Task<IActionResult> AddProducts(int id)
         {
             var session = await _context.Sessions
+                .AsNoTracking()
                 .Include(s => s.Customer)
                 .Include(s => s.SessionProducts)
                     .ThenInclude(sp => sp.Product)
@@ -209,7 +215,7 @@ namespace HubClub.Controllers
 
             if (session == null) return NotFound();
 
-            var allProducts = await _context.Products.Where(p => p.IsActive).OrderBy(p => p.Name).ToListAsync();
+            var allProducts = await _context.Products.AsNoTracking().Where(p => p.IsActive).OrderBy(p => p.Name).ToListAsync();
 
             var vm = new AddProductToSessionViewModel
             {
@@ -253,10 +259,15 @@ namespace HubClub.Controllers
                 var selectedItems = vm.AvailableProducts.Where(p => p.SelectedQuantity > 0).ToList();
                 var errors = new List<string>();
 
+                // Bulk fetch optimization for products
+                var selectedIds = selectedItems.Select(x => x.ProductId).ToList();
+                var productsDict = await _context.Products
+                    .Where(p => selectedIds.Contains(p.ProductId))
+                    .ToDictionaryAsync(p => p.ProductId);
+
                 foreach (var item in selectedItems)
                 {
-                    var productCheck = await _context.Products.AsNoTracking().FirstOrDefaultAsync(p => p.ProductId == item.ProductId);
-                    if (productCheck == null)
+                    if (!productsDict.TryGetValue(item.ProductId, out var productCheck))
                         errors.Add($"المنتج #{item.ProductId} تم حذفه.");
                     else if (item.SelectedQuantity > productCheck.Quantity)
                         errors.Add($"الكمية المطلوبة من ({productCheck.Name}) غير متوفرة! المتاح: {productCheck.Quantity}");
@@ -273,8 +284,7 @@ namespace HubClub.Controllers
                 {
                     foreach (var item in selectedItems)
                     {
-                        var product = await _context.Products.FindAsync(item.ProductId);
-                        if (product == null) continue;
+                        var product = productsDict[item.ProductId];
 
                         if (item.SelectedQuantity > product.Quantity)
                         {
@@ -346,7 +356,9 @@ namespace HubClub.Controllers
 
             return RedirectToAction("Index", "Home");
         }
+        #endregion
 
+        #region Close
         // ─────────────────────────────────────────
         // GET: Session/CloseReview/5
         // ─────────────────────────────────────────
@@ -354,6 +366,7 @@ namespace HubClub.Controllers
         public async Task<IActionResult> CloseReview(int id)
         {
             var session = await _context.Sessions
+                .AsNoTracking()
                 .Include(s => s.Customer)
                 .Include(s => s.SessionProducts)
                     .ThenInclude(sp => sp.Product)
@@ -403,6 +416,7 @@ namespace HubClub.Controllers
             }
 
             var allProducts = await _context.Products
+                .AsNoTracking()
                 .Where(p => p.IsActive)
                 .OrderBy(p => p.Name)
                 .ToListAsync();
@@ -473,6 +487,15 @@ namespace HubClub.Controllers
             using var transaction = await _context.Database.BeginTransactionAsync();
             try
             {
+                // Bulk fetch optimization for products
+                var allRequestedIds = new List<int>();
+                if (vm.AlreadyAddedProducts != null) allRequestedIds.AddRange(vm.AlreadyAddedProducts.Select(p => p.ProductId));
+                if (vm.AvailableProducts != null) allRequestedIds.AddRange(vm.AvailableProducts.Where(p => p.SelectedQuantity > 0).Select(p => p.ProductId));
+
+                var productsDict = await _context.Products
+                    .Where(p => allRequestedIds.Contains(p.ProductId))
+                    .ToDictionaryAsync(p => p.ProductId);
+
                 if (vm.AlreadyAddedProducts != null)
                 {
                     foreach (var item in vm.AlreadyAddedProducts)
@@ -480,8 +503,7 @@ namespace HubClub.Controllers
                         var existingLine = session.SessionProducts.FirstOrDefault(sp => sp.ProductId == item.ProductId);
                         if (existingLine == null) continue;
 
-                        var product = await _context.Products.FindAsync(item.ProductId);
-                        if (product == null) continue;
+                        if (!productsDict.TryGetValue(item.ProductId, out var product)) continue;
 
                         int qtyDiff = item.Quantity - existingLine.Quantity;
 
@@ -537,8 +559,7 @@ namespace HubClub.Controllers
                 {
                     foreach (var item in vm.AvailableProducts.Where(p => p.SelectedQuantity > 0))
                     {
-                        var product = await _context.Products.FindAsync(item.ProductId);
-                        if (product == null) continue;
+                        if (!productsDict.TryGetValue(item.ProductId, out var product)) continue;
 
                         if (item.SelectedQuantity > product.Quantity)
                         {
@@ -582,7 +603,7 @@ namespace HubClub.Controllers
                         _context.Products.Update(product);
                     }
                 }
-
+                session.PaymentMethod = vm.PaymentMethod;
                 session.EndTime = vm.EndTime;
                 session.IsClosed = true;
                 session.BusinessDate = BusinessHelper.GetBusinessDate(vm.EndTime);
@@ -621,15 +642,9 @@ namespace HubClub.Controllers
                 session.TotalTimePrice = Math.Max(0, vm.CalculatedTimePrice);
                 session.TotalProductPrice = Math.Max(0, vm.TotalProductPrice);
 
-                // ⚠️ تذكير: بلوك "التوزيع النسبي" موجود هنا كما أرسلتيه. 
-                // إذا كنتِ تريدين الحفاظ على الأسعار من التشويه كما اتفقنا في المهمة الأولى، يرجى استبدال بلوك التوزيع النسبي بـ:
-                // session.TotalProductPrice = session.SessionProducts.Sum(sp => sp.TotalPrice);
+
                 decimal originalProductsSum = session.SessionProducts.Sum(sp => sp.TotalPrice);
-                // قفل الأمان: لو الفرق بين الشاشة والداتابيز 10 قروش أو أقل، اعتبره فرق تقريب وتجاهله
-                //if (Math.Abs(session.TotalProductPrice - originalProductsSum) <= 0.2m)
-                //{
-                //    session.TotalProductPrice = originalProductsSum;
-                //}
+
 
                 if (session.TotalProductPrice != originalProductsSum && originalProductsSum > 0 && session.SessionProducts.Any())
                 {
@@ -670,6 +685,9 @@ namespace HubClub.Controllers
                 return RedirectToAction("CloseReview", new { id = vm.SessionId });
             }
         }
+        #endregion
+
+        #region reopen
         // ─────────────────────────────────────────
         // 🟢 NEW POST: Session/ReopenSession (صمام الأمان لحماية الداتابيز من الإغلاق الخاطئ)
         // ─────────────────────────────────────────
@@ -681,7 +699,7 @@ namespace HubClub.Controllers
                      .Include(s => s.UserPackage)
                      .Include(s => s.SessionProducts)
                      .ThenInclude(sp => sp.Product)
-                     .FirstOrDefaultAsync(s => s.SessionId == id);   
+                     .FirstOrDefaultAsync(s => s.SessionId == id);
 
             if (session == null || !session.IsClosed)
             {
@@ -740,6 +758,9 @@ namespace HubClub.Controllers
 
             return RedirectToAction("Index", "Home");
         }
+        #endregion
+
+        #region daily report seperate page 
         public async Task<IActionResult> DailyReport(DateTime? date)
         {
             // 1. تحديد يوم العمل المحاسبي بدقة احترافية
@@ -762,6 +783,8 @@ namespace HubClub.Controllers
 
             // 2. تقرير الجلسات (مبني على BusinessDate)
             var sessions = await _context.Sessions
+                .AsNoTracking()
+                .AsSplitQuery()
                 .Include(s => s.Customer)
                 .Include(s => s.SessionProducts)
                     .ThenInclude(sp => sp.Product)
@@ -771,6 +794,7 @@ namespace HubClub.Controllers
 
             // 3. 🟢 جلب حركات المخزن الخاصة بيوم التقرير (الاعتماد التام على BusinessDate وليس Timestamp)
             var movementsToday = await _context.StockMovements
+                .AsNoTracking()
                 .Where(m => m.BusinessDate == targetBusinessDate)
                 .ToListAsync();
 
@@ -780,6 +804,7 @@ namespace HubClub.Controllers
 
             // 4. 🟢 جلب كل حركات المستقبل لمعرفة الرصيد بأثر رجعي
             var futureMovements = await _context.StockMovements
+                .AsNoTracking()
                 .Where(m => m.BusinessDate > targetBusinessDate)
                 .ToListAsync();
 
@@ -828,6 +853,7 @@ namespace HubClub.Controllers
 
             // 6. حساب إيرادات الباقات لهذا اليوم المحاسبي
             var packagesSoldToday = await _context.UserPackages
+                .AsNoTracking()
                 .Where(up => up.PurchaseBusinessDate == targetBusinessDate && !up.IsDeleted)
                 .ToListAsync();
 
@@ -868,12 +894,23 @@ namespace HubClub.Controllers
                 TotalPackageRevenue = todayPackagesRevenue,
                 TotalRevenue = closedSessions.Sum(s => s.GrandTotal) + todayPackagesRevenue,
 
+                // 🟢 تم دمج إيراد الجلسات وإيراد الباقات معاً حسب طريقة الدفع
+                TotalCashMethod =
+    closedSessions.Where(s => s.PaymentMethod == HubClub.Models.Enums.PaymentMethod.Cash).Sum(s => s.GrandTotal) +
+    packagesSoldToday.Where(p => p.PaymentMethod == HubClub.Models.Enums.PaymentMethod.Cash).Sum(p => p.Price),
+
+                TotalInstaPayMethod =
+    closedSessions.Where(s => s.PaymentMethod == HubClub.Models.Enums.PaymentMethod.InstaPay).Sum(s => s.GrandTotal) +
+    packagesSoldToday.Where(p => p.PaymentMethod == HubClub.Models.Enums.PaymentMethod.InstaPay).Sum(p => p.Price),
+
                 ClosedSessionsCount = closedSessions.Count,
                 OpenSessionsCount = openSessions.Count,
                 PaymentBreakdown = paymentBreakdown.OrderByDescending(x => x.Revenue).ToList()
             });
         }
+        #endregion
 
+        #region session edit closed
         // ─────────────────────────────────────────
         // GET: Session/Edit/5
         // ─────────────────────────────────────────
@@ -882,6 +919,7 @@ namespace HubClub.Controllers
         {
             // 🟢 تضمين المنتجات مع الجلسة
             var session = await _context.Sessions
+                .AsNoTracking()
                 .Include(s => s.SessionProducts)
                     .ThenInclude(sp => sp.Product)
                 .FirstOrDefaultAsync(s => s.SessionId == id);
@@ -945,12 +983,18 @@ namespace HubClub.Controllers
                 // 🟢 معالجة المنتجات وتحديث المخزون
                 if (vm.Products != null)
                 {
+                    // Bulk fetch optimization for edit
+                    var productIds = vm.Products.Select(p => p.ProductId).ToList();
+                    var productsDict = await _context.Products
+                        .Where(p => productIds.Contains(p.ProductId))
+                        .ToDictionaryAsync(p => p.ProductId);
+
                     foreach (var item in vm.Products)
                     {
                         var existingSp = session.SessionProducts.FirstOrDefault(sp => sp.SProductId == item.SessionProductId);
                         if (existingSp != null)
                         {
-                            var product = await _context.Products.FindAsync(existingSp.ProductId);
+                            productsDict.TryGetValue(existingSp.ProductId, out var product);
 
                             // حساب فرق الكمية (الجديد - القديم)
                             int qtyDiff = item.Quantity - existingSp.Quantity;
@@ -1012,6 +1056,9 @@ namespace HubClub.Controllers
                 return RedirectToAction(nameof(Edit), new { id = session.SessionId });
             }
         }
+        #endregion
+
+        #region delete session
         // ─────────────────────────────────────────
         // GET: Session/Delete/5
         // ─────────────────────────────────────────
@@ -1019,6 +1066,7 @@ namespace HubClub.Controllers
         public async Task<IActionResult> Delete(int id)
         {
             var session = await _context.Sessions
+                .AsNoTracking()
                 .Include(s => s.Customer)
                 .FirstOrDefaultAsync(s => s.SessionId == id);
 
@@ -1082,5 +1130,6 @@ namespace HubClub.Controllers
 
             return RedirectToAction("Index", "Home");
         }
+        #endregion
     }
 }

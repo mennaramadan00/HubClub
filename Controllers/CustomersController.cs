@@ -23,18 +23,23 @@ namespace HubClub.Controllers
         {
             // عرض العملاء النشطين أولاً ثم الأحدث تسجيلاً
             var customers = await _context.Customers
+                .AsNoTracking() // 🟢 تسريع الأداء وتوفير الميموري
                 .OrderByDescending(c => c.IsActive)
                 .ThenByDescending(c => c.CreatedAt)
                 .ToListAsync();
 
             return View(customers);
         }
+
         [HttpGet]
         public async Task<IActionResult> Details(int? id)
         {
             if (id == null) return NotFound();
 
+            // 🟢 استخدام AsNoTracking و AsSplitQuery لمنع اختناق السيرفر بسبب الـ Includes الكثيرة
             var customer = await _context.Customers
+                .AsNoTracking()
+                .AsSplitQuery()
                 .Include(c => c.UserPackages.Where(up => !up.IsDeleted))
                     .ThenInclude(up => up.Package)
                 .Include(c => c.Sessions)
@@ -167,6 +172,7 @@ namespace HubClub.Controllers
             if (id == null) return NotFound();
 
             var customer = await _context.Customers
+                .AsNoTracking() // 🟢 تسريع الأداء وتوفير الميموري
                 .FirstOrDefaultAsync(m => m.CustomerId == id);
 
             if (customer == null) return NotFound();

@@ -4,6 +4,7 @@ using HubClub.Data;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.EntityFrameworkCore.Infrastructure;
 using Microsoft.EntityFrameworkCore.Metadata;
+using Microsoft.EntityFrameworkCore.Migrations;
 using Microsoft.EntityFrameworkCore.Storage.ValueConversion;
 
 #nullable disable
@@ -11,9 +12,11 @@ using Microsoft.EntityFrameworkCore.Storage.ValueConversion;
 namespace HubClub.Migrations
 {
     [DbContext(typeof(AppDbContext))]
-    partial class AppDbContextModelSnapshot : ModelSnapshot
+    [Migration("20260810144447_AddPackagePaymentMethod")]
+    partial class AddPackagePaymentMethod
     {
-        protected override void BuildModel(ModelBuilder modelBuilder)
+        /// <inheritdoc />
+        protected override void BuildTargetModel(ModelBuilder modelBuilder)
         {
 #pragma warning disable 612, 618
             modelBuilder
@@ -256,119 +259,6 @@ namespace HubClub.Migrations
                     b.ToTable("products");
                 });
 
-            modelBuilder.Entity("HubClub.Models.Room", b =>
-                {
-                    b.Property<int>("RoomId")
-                        .ValueGeneratedOnAdd()
-                        .HasColumnType("int");
-
-                    MySqlPropertyBuilderExtensions.UseMySqlIdentityColumn(b.Property<int>("RoomId"));
-
-                    b.Property<bool>("IsActive")
-                        .HasColumnType("tinyint(1)");
-
-                    b.Property<string>("Name")
-                        .IsRequired()
-                        .HasColumnType("longtext");
-
-                    b.HasKey("RoomId");
-
-                    b.ToTable("Rooms");
-                });
-
-            modelBuilder.Entity("HubClub.Models.RoomPricing", b =>
-                {
-                    b.Property<int>("RoomPricingId")
-                        .ValueGeneratedOnAdd()
-                        .HasColumnType("int");
-
-                    MySqlPropertyBuilderExtensions.UseMySqlIdentityColumn(b.Property<int>("RoomPricingId"));
-
-                    b.Property<decimal>("PricePerHour")
-                        .HasColumnType("decimal(18,2)");
-
-                    b.HasKey("RoomPricingId");
-
-                    b.ToTable("RoomPricings");
-                });
-
-            modelBuilder.Entity("HubClub.Models.RoomSession", b =>
-                {
-                    b.Property<int>("RoomSessionId")
-                        .ValueGeneratedOnAdd()
-                        .HasColumnType("int");
-
-                    MySqlPropertyBuilderExtensions.UseMySqlIdentityColumn(b.Property<int>("RoomSessionId"));
-
-                    b.Property<DateOnly>("BusinessDate")
-                        .HasColumnType("date");
-
-                    b.Property<DateTime?>("EndTime")
-                        .HasColumnType("datetime(6)");
-
-                    b.Property<decimal>("GrandTotal")
-                        .HasColumnType("decimal(18,2)");
-
-                    b.Property<decimal>("HourlyPrice")
-                        .HasColumnType("decimal(18,2)");
-
-                    b.Property<bool>("IsClosed")
-                        .HasColumnType("tinyint(1)");
-
-                    b.Property<int?>("PaymentMethod")
-                        .HasColumnType("int");
-
-                    b.Property<int>("RoomId")
-                        .HasColumnType("int");
-
-                    b.Property<DateTime>("StartTime")
-                        .HasColumnType("datetime(6)");
-
-                    b.Property<decimal>("TotalProductPrice")
-                        .HasColumnType("decimal(18,2)");
-
-                    b.Property<decimal>("TotalTimePrice")
-                        .HasColumnType("decimal(18,2)");
-
-                    b.HasKey("RoomSessionId");
-
-                    b.HasIndex("RoomId");
-
-                    b.ToTable("RoomSessions");
-                });
-
-            modelBuilder.Entity("HubClub.Models.RoomSessionProduct", b =>
-                {
-                    b.Property<int>("RoomSessionProductId")
-                        .ValueGeneratedOnAdd()
-                        .HasColumnType("int");
-
-                    MySqlPropertyBuilderExtensions.UseMySqlIdentityColumn(b.Property<int>("RoomSessionProductId"));
-
-                    b.Property<int>("ProductId")
-                        .HasColumnType("int");
-
-                    b.Property<int>("Quantity")
-                        .HasColumnType("int");
-
-                    b.Property<int>("RoomSessionId")
-                        .HasColumnType("int");
-
-                    b.Property<decimal>("TotalPrice")
-                        .HasColumnType("decimal(18,2)");
-
-                    b.Property<decimal>("UnitPriceAtSale")
-                        .HasColumnType("decimal(18,2)");
-
-                    b.HasKey("RoomSessionProductId");
-
-                    b.HasIndex("ProductId");
-
-                    b.HasIndex("RoomSessionId");
-
-                    b.ToTable("RoomSessionProducts");
-                });
-
             modelBuilder.Entity("HubClub.Models.Session", b =>
                 {
                     b.Property<int>("SessionId")
@@ -485,9 +375,6 @@ namespace HubClub.Migrations
                     b.Property<int>("QuantityChanged")
                         .HasColumnType("int");
 
-                    b.Property<int?>("RoomSessionId")
-                        .HasColumnType("int");
-
                     b.Property<int?>("SessionId")
                         .HasColumnType("int");
 
@@ -497,10 +384,6 @@ namespace HubClub.Migrations
                     b.HasKey("StockMovementId");
 
                     b.HasIndex("ProductId");
-
-                    b.HasIndex("RoomSessionId");
-
-                    b.HasIndex("SessionId");
 
                     b.ToTable("StockMovements");
                 });
@@ -568,36 +451,6 @@ namespace HubClub.Migrations
                     b.Navigation("ExpenseCategory");
                 });
 
-            modelBuilder.Entity("HubClub.Models.RoomSession", b =>
-                {
-                    b.HasOne("HubClub.Models.Room", "Room")
-                        .WithMany("RoomSessions")
-                        .HasForeignKey("RoomId")
-                        .OnDelete(DeleteBehavior.Cascade)
-                        .IsRequired();
-
-                    b.Navigation("Room");
-                });
-
-            modelBuilder.Entity("HubClub.Models.RoomSessionProduct", b =>
-                {
-                    b.HasOne("HubClub.Models.Product", "Product")
-                        .WithMany("RoomSessionProducts")
-                        .HasForeignKey("ProductId")
-                        .OnDelete(DeleteBehavior.Cascade)
-                        .IsRequired();
-
-                    b.HasOne("HubClub.Models.RoomSession", "RoomSession")
-                        .WithMany("RoomSessionProducts")
-                        .HasForeignKey("RoomSessionId")
-                        .OnDelete(DeleteBehavior.Cascade)
-                        .IsRequired();
-
-                    b.Navigation("Product");
-
-                    b.Navigation("RoomSession");
-                });
-
             modelBuilder.Entity("HubClub.Models.Session", b =>
                 {
                     b.HasOne("HubClub.Models.Customer", "Customer")
@@ -648,19 +501,7 @@ namespace HubClub.Migrations
                         .OnDelete(DeleteBehavior.Cascade)
                         .IsRequired();
 
-                    b.HasOne("HubClub.Models.RoomSession", "RoomSession")
-                        .WithMany()
-                        .HasForeignKey("RoomSessionId");
-
-                    b.HasOne("HubClub.Models.Session", "Session")
-                        .WithMany()
-                        .HasForeignKey("SessionId");
-
                     b.Navigation("Product");
-
-                    b.Navigation("RoomSession");
-
-                    b.Navigation("Session");
                 });
 
             modelBuilder.Entity("HubClub.Models.UserPackage", b =>
@@ -706,19 +547,7 @@ namespace HubClub.Migrations
 
             modelBuilder.Entity("HubClub.Models.Product", b =>
                 {
-                    b.Navigation("RoomSessionProducts");
-
                     b.Navigation("SessionProducts");
-                });
-
-            modelBuilder.Entity("HubClub.Models.Room", b =>
-                {
-                    b.Navigation("RoomSessions");
-                });
-
-            modelBuilder.Entity("HubClub.Models.RoomSession", b =>
-                {
-                    b.Navigation("RoomSessionProducts");
                 });
 
             modelBuilder.Entity("HubClub.Models.Session", b =>

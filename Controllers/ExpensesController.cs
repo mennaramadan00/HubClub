@@ -24,6 +24,7 @@ namespace HubClub.Controllers
         public async Task<IActionResult> Index()
         {
             var appDbContext = _context.Expenses
+                .AsNoTracking() // 🟢 AsNoTracking
                 .Include(e => e.ExpenseCategory)
                 .OrderByDescending(e => e.Date);
             return View(await appDbContext.ToListAsync());
@@ -35,6 +36,7 @@ namespace HubClub.Controllers
             if (id == null) return NotFound();
 
             var expense = await _context.Expenses
+                .AsNoTracking() // 🟢 AsNoTracking
                 .Include(e => e.ExpenseCategory)
                 .FirstOrDefaultAsync(m => m.ExpenseId == id);
 
@@ -46,7 +48,8 @@ namespace HubClub.Controllers
         // GET: Expenses/Create
         public IActionResult Create()
         {
-            ViewData["ExpenseCategoryId"] = new SelectList(_context.ExpenseCategories, "ExpenseCategoryId", "Name");
+            // 🟢 استخدام AsNoTracking مع الـ SelectList لتقليل الـ RAM
+            ViewData["ExpenseCategoryId"] = new SelectList(_context.ExpenseCategories.AsNoTracking(), "ExpenseCategoryId", "Name");
             return View();
         }
 
@@ -73,7 +76,7 @@ namespace HubClub.Controllers
                 return RedirectToAction(nameof(Index));
             }
 
-            ViewData["ExpenseCategoryId"] = new SelectList(_context.ExpenseCategories, "ExpenseCategoryId", "Name", expense.ExpenseCategoryId);
+            ViewData["ExpenseCategoryId"] = new SelectList(_context.ExpenseCategories.AsNoTracking(), "ExpenseCategoryId", "Name", expense.ExpenseCategoryId); // 🟢 AsNoTracking
             return View(expense);
         }
 
@@ -82,10 +85,10 @@ namespace HubClub.Controllers
         {
             if (id == null) return NotFound();
 
-            var expense = await _context.Expenses.FindAsync(id);
+            var expense = await _context.Expenses.AsNoTracking().FirstOrDefaultAsync(m => m.ExpenseId == id); // 🟢 AsNoTracking
             if (expense == null) return NotFound();
 
-            ViewData["ExpenseCategoryId"] = new SelectList(_context.ExpenseCategories, "ExpenseCategoryId", "Name", expense.ExpenseCategoryId);
+            ViewData["ExpenseCategoryId"] = new SelectList(_context.ExpenseCategories.AsNoTracking(), "ExpenseCategoryId", "Name", expense.ExpenseCategoryId); // 🟢 AsNoTracking
             return View(expense);
         }
 
@@ -114,7 +117,7 @@ namespace HubClub.Controllers
                 }
                 return RedirectToAction(nameof(Index));
             }
-            ViewData["ExpenseCategoryId"] = new SelectList(_context.ExpenseCategories, "ExpenseCategoryId", "Name", expense.ExpenseCategoryId);
+            ViewData["ExpenseCategoryId"] = new SelectList(_context.ExpenseCategories.AsNoTracking(), "ExpenseCategoryId", "Name", expense.ExpenseCategoryId); // 🟢 AsNoTracking
             return View(expense);
         }
 
@@ -124,6 +127,7 @@ namespace HubClub.Controllers
             if (id == null) return NotFound();
 
             var expense = await _context.Expenses
+                .AsNoTracking() // 🟢 AsNoTracking
                 .Include(e => e.ExpenseCategory)
                 .FirstOrDefaultAsync(m => m.ExpenseId == id);
 

@@ -22,7 +22,7 @@ namespace HubClub.Controllers
         public async Task<IActionResult> Index()
         {
             // عرض الملاحظات الأحدث أولاً
-            return View(await _context.Notes.OrderByDescending(n => n.CreatedAt).ToListAsync());
+            return View(await _context.Notes.AsNoTracking().OrderByDescending(n => n.CreatedAt).ToListAsync()); // 🟢 AsNoTracking
         }
 
         // GET: Notes/Details/5
@@ -30,7 +30,7 @@ namespace HubClub.Controllers
         {
             if (id == null) return NotFound();
 
-            var note = await _context.Notes.FirstOrDefaultAsync(m => m.NoteId == id);
+            var note = await _context.Notes.AsNoTracking().FirstOrDefaultAsync(m => m.NoteId == id); // 🟢 AsNoTracking
             if (note == null) return NotFound();
 
             return View(note);
@@ -74,7 +74,7 @@ namespace HubClub.Controllers
         {
             if (id == null) return NotFound();
 
-            var note = await _context.Notes.FindAsync(id);
+            var note = await _context.Notes.AsNoTracking().FirstOrDefaultAsync(m => m.NoteId == id); // 🟢 AsNoTracking
             if (note == null) return NotFound();
 
             return View(note);
@@ -117,7 +117,7 @@ namespace HubClub.Controllers
         {
             if (id == null) return NotFound();
 
-            var note = await _context.Notes.FirstOrDefaultAsync(m => m.NoteId == id);
+            var note = await _context.Notes.AsNoTracking().FirstOrDefaultAsync(m => m.NoteId == id); // 🟢 AsNoTracking
             if (note == null) return NotFound();
 
             return View(note);

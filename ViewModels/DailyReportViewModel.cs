@@ -25,6 +25,8 @@ namespace HubClub.ViewModels
         {
             get; set;
         }
+        public decimal TotalCashMethod { get; set; }
+        public decimal TotalInstaPayMethod { get; set; }
         public int ClosedSessionsCount { get; set; }
         public int OpenSessionsCount { get; set; }        // جلسات لسه مفتوحة (عملاء موجودين دلوقتي)
 

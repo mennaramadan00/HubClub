@@ -22,5 +22,10 @@ namespace HubClub.Data
         public DbSet<Note> Notes { get; set; }
         public DbSet<ExpenseCategory> ExpenseCategories { get; set; }
         public DbSet<Expense> Expenses { get; set; }
+        public DbSet<Room> Rooms { get; set; }
+        public DbSet<RoomSession> RoomSessions { get; set; }
+        public DbSet<RoomSessionProduct> RoomSessionProducts { get; set; }
+        // 🟢 الجدول الجديد الخاص بأسعار الغرف الديناميكية
+        public DbSet<RoomPricing> RoomPricings { get; set; }
     }
 }

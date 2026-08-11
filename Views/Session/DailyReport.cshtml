@@ -72,6 +72,20 @@
             <div class="fs-5 fw-bold text-primary">@Model.TotalPackageRevenue.ToString("N2") ج</div>
         </div>
     </div>
+    <!-- ملخص التحصيل (كاش / إنستاباي) -->
+    <div class="row g-3 mb-4">
+        <div class="col-md-4">
+            <div class="card p-3 text-center h-100" style="border-right: 4px solid #198754; background: rgba(25, 135, 84, 0.05); border-radius: 8px;">
+                <div class="text-muted fw-bold mb-1">المحصل (كاش)</div>
+                <div class="fs-4 fw-bold text-success">@Model.TotalCashMethod.ToString("N2") <span style="font-size: 1rem;">ج.م</span></div>
+            </div>
+        </div>
+        <div class="col-md-4">
+            <div class="card p-3 text-center h-100" style="border-right: 4px solid #6f42c1; background: rgba(111, 66, 193, 0.05); border-radius: 8px;">
+                <div class="text-muted fw-bold mb-1">المحصل (إنستاباي)</div>
+                <div class="fs-4 fw-bold" style="color: #6f42c1;">@Model.TotalInstaPayMethod.ToString("N2") <span style="font-size: 1rem;">ج.م</span></div>
+            </div>
+        </div>
     <div class="col">
         <div class="card p-3 text-center h-100">
             <div class="text-muted">عدد الجلسات المغلقة</div>

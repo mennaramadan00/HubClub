@@ -130,7 +130,8 @@ namespace HubClub.Controllers
                 Status = UserPackageStatus.Active,
                 IsDeleted = false,
                 // 🟢 الإضافة الأهم: تسجيل الباقة في يوم العمل الحالي المحاسبي
-                PurchaseBusinessDate = HubClub.Helpers.BusinessHelper.GetBusinessDate(now)
+                PurchaseBusinessDate = HubClub.Helpers.BusinessHelper.GetBusinessDate(now),
+                PaymentMethod = vm.PaymentMethod
             };
 
             _context.UserPackages.Add(userPackage);

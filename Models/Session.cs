@@ -38,6 +38,11 @@ namespace HubClub.Models
         [Display(Name = "نوع الدفع")]
         public PaymentType PaymentType { get; set; } = PaymentType.PerSession;
 
+
+        [Required]
+        [Display(Name = "طريقة التحصيل")]
+        public PaymentMethod PaymentMethod { get; set; } = PaymentMethod.Cash;
+
         [Column(TypeName = "decimal(10,2)")]
         [Range(0, 99999.99)]
         [Display(Name = "تكلفة الوقت")]

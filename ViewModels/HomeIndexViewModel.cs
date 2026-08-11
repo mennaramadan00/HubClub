@@ -20,6 +20,8 @@ namespace HubClub.ViewModels
         public decimal TodayTotalProductCash { get; set; } 
         public decimal TodayTotalPackageCash { get; set; }
         public decimal TodayTotalCash { get; set; }
+        public decimal TodayTotalCashMethod { get; set; }
+        public decimal TodayTotalInstaPayMethod { get; set; }
     }
 
     public class SessionCardViewModel

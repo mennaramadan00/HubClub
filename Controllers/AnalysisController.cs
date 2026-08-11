@@ -18,6 +18,7 @@ namespace HubClub.Controllers
         {
             // 1. أفضل 3 منتجات مبيعاً (بناءً على الكمية)
             var topProducts = await _context.SessionProducts
+                .AsNoTracking() // 🟢 صمام أمان لسرعة الميموري
                 .GroupBy(sp => sp.Product.Name)
                 .OrderByDescending(g => g.Sum(sp => sp.Quantity))
                 .Take(3)
@@ -26,6 +27,7 @@ namespace HubClub.Controllers
 
             // 2. أفضل 3 عملاء (بناءً على إجمالي دفع الجلسات)
             var topCustomers = await _context.Sessions
+                .AsNoTracking() // 🟢 صمام أمان لسرعة الميموري
                 .Where(s => s.IsClosed)
                 .GroupBy(s => s.Customer.Name)
                 .OrderByDescending(g => g.Sum(s => s.GrandTotal))
@@ -35,6 +37,7 @@ namespace HubClub.Controllers
 
             // 3. الباقة الأكثر اشتراكاً
             var popularPackage = await _context.UserPackages
+                .AsNoTracking() // 🟢 صمام أمان لسرعة الميموري
                 .GroupBy(up => up.Package.Name)
                 .OrderByDescending(g => g.Count())
                 .Select(g => new { Name = g.Key, Count = g.Count() })

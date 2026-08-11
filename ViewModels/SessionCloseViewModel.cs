@@ -18,6 +18,7 @@ namespace HubClub.ViewModels
         public string? PricingRangeLabel { get; set; }
         public decimal CalculatedTimePrice { get; set; }
         public bool IsPackageSession { get; set; }
+        public PaymentMethod PaymentMethod { get; set; }
 
         // المنتجات المتاحة للإضافة أثناء الإغلاق
         public List<ProductSelectionItem> AvailableProducts { get; set; } = new();

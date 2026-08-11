@@ -1,6 +1,7 @@
 ﻿using System.Collections.Generic;
 using System.ComponentModel.DataAnnotations;
 using Microsoft.AspNetCore.Mvc.Rendering;
+using HubClub.Models.Enums;
 
 namespace HubClub.ViewModels
 {
@@ -11,6 +12,10 @@ namespace HubClub.ViewModels
         public int? SelectedCustomerId { get; set; }
         public string? NewCustomerName { get; set; }
         public string? NewCustomerPhone { get; set; }
+
+        [Required(ErrorMessage = "يرجى اختيار طريقة الدفع")]
+        [Display(Name = "طريقة التحصيل")]
+        public PaymentMethod PaymentMethod { get; set; } = PaymentMethod.Cash;
 
         // 2. الباقة المختارة
         [Required(ErrorMessage = "يرجى اختيار الباقة المطلوبة")]
