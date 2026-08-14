@@ -1,0 +1,88 @@
+﻿@model HubClub.ViewModels.EditClosedRoomSessionViewModel
+@{
+    ViewData["Title"] = "تعديل جلسة الغرفة";
+}
+
+<div class="glass-form-container">
+    <div class="form-header">
+        <h2 class="val-danger">تعديل جلسة غرفة (مغلقة)</h2>
+        <p>تعديل بيانات جلسة تم إصدار فاتورتها بالفعل: <strong class="val-success">#@Model.RoomSessionId</strong></p>
+    </div>
+
+    <form asp-action="Edit">
+        <div asp-validation-summary="ModelOnly" class="text-danger mb-3"></div>
+        <input type="hidden" asp-for="RoomSessionId" />
+
+        <div class="row">
+            <div class="col-md-6 form-group mb-4">
+                <label asp-for="CustomerId" class="premium-label"></label>
+                <select asp-for="CustomerId" class="premium-input" asp-items="Model.AllCustomers">
+                    <option value="">-- عميل طيار --</option>
+                </select>
+            </div>
+            <div class="col-md-6 form-group mb-4">
+                <label asp-for="PaymentMethod" class="premium-label"></label>
+                <select asp-for="PaymentMethod" class="premium-input" asp-items="Html.GetEnumSelectList<HubClub.Models.Enums.PaymentMethod>()">
+                </select>
+            </div>
+        </div>
+
+        <div class="wf-data-row mb-4">
+            <span class="wf-data-label">الوقت المحسوب:</span>
+            <span class="wf-data-val">@Model.HoursElapsed ساعة</span>
+        </div>
+
+        <div class="form-group mb-5">
+            <label asp-for="TotalTimePrice" class="premium-label"></label>
+            <input asp-for="TotalTimePrice" type="number" step="0.01" class="premium-input" />
+            <span asp-validation-for="TotalTimePrice" class="text-danger"></span>
+            <small class="text-muted fw-bold">ملاحظة: يمكنك تعديل مبلغ الوقت المحتسب يدوياً للتعويض أو الخصم.</small>
+        </div>
+
+        @if (Model.Products != null && Model.Products.Any())
+        {
+            <h4 class="topbar-title mb-3 fs-5">الطلبات المسجلة (تعديل الطلبات يؤثر على المخزون)</h4>
+            <div class="table-glass-wrap mb-4">
+                <table class="table-glass">
+                    <thead>
+                        <tr>
+                            <th>المنتج</th>
+                            <th class="text-center-glass">الكمية</th>
+                            <th class="text-center-glass">سعر الوحدة</th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                        @for (int i = 0; i < Model.Products.Count; i++)
+                        {
+                            <tr>
+                                <td>
+                                    <input type="hidden" asp-for="Products[i].RoomSessionProductId" />
+                                    <input type="hidden" asp-for="Products[i].ProductId" />
+                                    <input type="hidden" asp-for="Products[i].ProductName" />
+                                    <strong>@Model.Products[i].ProductName</strong>
+                                </td>
+                                <td>
+                                    <input type="number" asp-for="Products[i].Quantity" class="premium-input text-center-glass mb-0" min="0" />
+                                </td>
+                                <td>
+                                    <input type="number" step="0.01" asp-for="Products[i].UnitPriceAtSale" class="premium-input text-center-glass mb-0" />
+                                </td>
+                            </tr>
+                        }
+                    </tbody>
+                </table>
+            </div>
+        }
+
+        <div class="form-actions mt-4">
+            <a asp-controller="Home" asp-action="Index" class="btn-aurelian-outline">إلغاء</a>
+            <button type="submit" class="btn-aurelian-primary">حفظ التعديلات الجوهرية</button>
+        </div>
+    </form>
+</div>
+
+@section Scripts {
+    @{
+        await Html.RenderPartialAsync("_ValidationScriptsPartial");
+    }
+}

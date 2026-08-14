@@ -1,0 +1,274 @@
+﻿@model HubClub.ViewModels.RoomSessionCloseViewModel
+@{
+    ViewData["Title"] = "إغلاق الغرفة";
+}
+
+<form asp-action="ConfirmClose" method="post" id="closeForm">
+    <input type="hidden" asp-for="RoomSessionId" />
+    <input type="hidden" asp-for="EndTime" />
+    <input type="hidden" asp-for="HoursElapsed" />
+
+    <div class="row">
+        <!-- 🟢 قسم الفاتورة والحسابات -->
+        <div class="col-lg-5 mb-4">
+            <div class="glass-form-container mt-0 p-4">
+                <h3 class="topbar-title mb-4 border-bottom pb-2">فاتورة الغرفة</h3>
+
+                <div class="wf-data-row">
+                    <span class="wf-data-label">الغرفة:</span>
+                    <span class="wf-data-val">@Model.RoomName</span>
+                </div>
+                <div class="wf-data-row">
+                    <span class="wf-data-label">العميل:</span>
+                    <span class="wf-data-val">@(string.IsNullOrEmpty(Model.CustomerName) ? "عميل طيار" : Model.CustomerName)</span>
+                </div>
+                <div class="wf-data-row">
+                    <span class="wf-data-label">الوقت الفعلي:</span>
+                    <span class="wf-data-val val-amber">@Model.ActualDurationText</span>
+                </div>
+                <div class="wf-data-row">
+                    <span class="wf-data-label">ساعات الحساب:</span>
+                    <span class="wf-data-val">@Model.HoursElapsed.ToString("0.##") ساعة (@Model.HourlyPrice.ToString("N2") ج/س)</span>
+                </div>
+
+                <hr class="text-muted my-3" />
+
+                <!-- 🟢 حاوية المنتجات المضافة لحظياً (الجديدة) -->
+                <div id="new-products-container" style="display: none;">
+                    <div class="mt-2 mb-2 px-1" style="font-size: 0.9rem; color: var(--azure); font-weight: 800;">إضافات جديدة:</div>
+                    <div id="new-products-list" style="background: rgba(0, 128, 255, 0.05); padding: 0.5rem; border-radius: 4px; border: 1px dashed var(--azure-soft); margin-bottom: 1rem;">
+                        <!-- سيتم رسم المنتجات هنا عبر الـ JavaScript -->
+                    </div>
+                </div>
+
+                <!-- 🟢 حقول الحسابات (تم تحويلها لـ Inputs شيك عشان تتحدث ديناميكياً) -->
+                <div class="wf-data-row">
+                    <span class="wf-data-label">حساب الوقت:</span>
+                    <input type="number" step="0.01" id="CalculatedTimePrice" name="CalculatedTimePrice" value="@Model.CalculatedTimePrice.ToString("F2", System.Globalization.CultureInfo.InvariantCulture)" class="premium-input text-center font-weight-bold" oninput="manualRecalc()" style="width: 120px; padding: 4px; margin: 0; background: rgba(255,255,255,0.5);" />
+                </div>
+                <div class="wf-data-row mt-2">
+                    <span class="wf-data-label">حساب الطلبات:</span>
+                    <input type="number" step="0.01" id="TotalProductPrice" name="TotalProductPrice" value="@Model.TotalProductPrice.ToString("F2", System.Globalization.CultureInfo.InvariantCulture)" class="premium-input text-center font-weight-bold" oninput="manualRecalc()" style="width: 120px; padding: 4px; margin: 0; background: rgba(255,255,255,0.5);" />
+                </div>
+
+                <!-- 🟢 الإجمالي النهائي -->
+                <div class="alert-glass text-center-glass mt-4">
+                    <div class="text-muted fw-bold mb-1">الإجمالي المطلوب</div>
+                    <div class="room-status-active d-flex justify-content-center align-items-center gap-1">
+                        <input type="number" step="0.01" id="GrandTotal" name="GrandTotal" value="@((Model.CalculatedTimePrice + Model.TotalProductPrice).ToString("F2", System.Globalization.CultureInfo.InvariantCulture))" readonly style="width: 130px; text-align: center; font-size: 1.5rem; font-weight: bold; color: var(--sapphire); background: transparent; border: none; padding: 0; pointer-events: none;" />
+                        <span>ج.م</span>
+                    </div>
+                </div>
+
+                <div class="form-group mt-4">
+                    <label asp-for="PaymentMethod" class="premium-label">طريقة الدفع</label>
+                    <select asp-for="PaymentMethod" class="premium-input" asp-items="Html.GetEnumSelectList<HubClub.Models.Enums.PaymentMethod>()">
+                        <option value="">-- اختر طريقة الدفع --</option>
+                    </select>
+                    <span asp-validation-for="PaymentMethod" class="text-danger"></span>
+                </div>
+
+                <div class="form-actions mt-4">
+                    <a asp-controller="Home" asp-action="Index" class="btn-aurelian-outline">تأجيل الإغلاق</a>
+                    <button type="submit" class="btn-aurelian-primary" onclick="return confirm('هل أنت متأكد من إغلاق الجلسة بشكل نهائي وإصدار الفاتورة؟')">إصدار الفاتورة 💰</button>
+                </div>
+            </div>
+        </div>
+
+        <!-- 🟢 قسم تعديل المنتجات وإضافتها -->
+        <div class="col-lg-7">
+            @if (Model.AlreadyAddedProducts != null && Model.AlreadyAddedProducts.Any())
+            {
+                <div class="table-glass-wrap mb-4">
+                    <h4 class="px-4 pt-3 pb-2 mb-0 topbar-title fs-5">مراجعة طلبات الغرفة</h4>
+                    <table class="table-glass">
+                        <thead>
+                            <tr>
+                                <th>المنتج</th>
+                                <th class="text-center-glass">الكمية</th>
+                                <th class="text-center-glass">الإجمالي</th>
+                            </tr>
+                        </thead>
+                        <tbody>
+                            @for (int i = 0; i < Model.AlreadyAddedProducts.Count; i++)
+                            {
+                                var oldItem = Model.AlreadyAddedProducts[i];
+                                var correspondingProduct = Model.AvailableProducts.FirstOrDefault(p => p.ProductId == oldItem.ProductId);
+                                int extraStock = correspondingProduct != null ? correspondingProduct.AvailableStock : 0;
+                                int maxAllowed = oldItem.Quantity + extraStock;
+
+                                <tr>
+                                    <td>
+                                        <input type="hidden" asp-for="AlreadyAddedProducts[i].ProductId" />
+                                        <strong>@oldItem.ProductName</strong>
+                                    </td>
+                                    <td>
+                                        <!-- تم ربط الأزرار بالـ JavaScript الحقيقي -->
+                                        <div class="ps-action-bar rounded m-auto" style="max-width: 130px;">
+                                            <button type="button" class="ps-btn btn-plus-existing" onclick="changeOldQty(@i, 1, @maxAllowed)">+</button>
+                                            <input type="number" id="old-qty-@i" asp-for="AlreadyAddedProducts[i].Quantity" class="ps-qty qty-existing" min="0" readonly />
+                                            <button type="button" class="ps-btn btn-minus-existing" onclick="changeOldQty(@i, -1, @maxAllowed)">-</button>
+                                        </div>
+                                    </td>
+                                    <td class="text-center-glass fw-bold val-amber" id="old-line-total-@i">
+                                        @oldItem.LineTotal.ToString("F2") ج
+                                    </td>
+                                </tr>
+                            }
+                        </tbody>
+                    </table>
+                </div>
+            }
+
+            <h4 class="topbar-title mb-3 fs-5">إضافة سريعة (من البار)</h4>
+            <div class="product-squares-grid">
+                @for (int i = 0; i < Model.AvailableProducts.Count; i++)
+                {
+                    var p = Model.AvailableProducts[i];
+                    <div class="product-square" id="pcard-@i" style="@(p.AvailableStock <= 0 ? "opacity: 0.5; pointer-events: none;" : "")">
+                        <input type="hidden" asp-for="AvailableProducts[i].ProductId" />
+                        <input type="hidden" asp-for="AvailableProducts[i].Name" />
+                        <input type="hidden" asp-for="AvailableProducts[i].Price" />
+
+                        <div class="ps-info py-2">
+                            <div class="ps-name small">@p.Name</div>
+                            <div class="text-muted fw-bold mt-1" style="font-size: 0.8rem;">@p.Price.ToString("N0") ج</div>
+                        </div>
+
+                        <!-- تم ربط الأزرار بالـ JavaScript الحقيقي -->
+                        <div class="ps-action-bar">
+                            <button type="button" class="ps-btn btn-plus-new" onclick="changeQty(@i, 1, @p.AvailableStock)">+</button>
+                            <input type="number" id="qty-@i" asp-for="AvailableProducts[i].SelectedQuantity" class="ps-qty qty-new" min="0" max="@p.AvailableStock" readonly />
+                            <button type="button" class="ps-btn btn-minus-new" onclick="changeQty(@i, -1, @p.AvailableStock)">-</button>
+                        </div>
+                    </div>
+                }
+            </div>
+        </div>
+    </div>
+</form>
+
+@section Scripts {
+    @{
+        await Html.RenderPartialAsync("_ValidationScriptsPartial");
+    }
+    <script>
+        document.addEventListener("DOMContentLoaded", function () {
+            manualRecalc();
+        });
+
+        // 🟢 بيانات المنتجات الجديدة للإضافة السريعة
+        const newProductsData = {
+            @for (int i = 0; i < Model.AvailableProducts.Count; i++)
+            {
+                    var p = Model.AvailableProducts[i];
+                    @:@i: { name: "@Html.Raw(p.Name.Replace("\"", "\\\""))", price: @p.Price.ToString("F2", System.Globalization.CultureInfo.InvariantCulture) },
+            }
+        };
+
+        // 🟢 أسعار المنتجات القديمة المسجلة بالفاتورة
+        const oldPrices = {
+            @for (int j = 0; j < Model.AlreadyAddedProducts.Count; j++)
+            {
+                    var price = Model.AlreadyAddedProducts[j].Quantity > 0 ? (Model.AlreadyAddedProducts[j].LineTotal / Model.AlreadyAddedProducts[j].Quantity) : 0;
+                    @:@j: @price.ToString("F2", System.Globalization.CultureInfo.InvariantCulture),
+            }
+        };
+
+        // دالة تغيير كمية الإضافة السريعة
+        function changeQty(index, delta, maxStock) {
+            const input = document.getElementById('qty-' + index);
+            const current = parseInt(input.value) || 0;
+            const newVal = current + delta;
+
+            if (newVal > maxStock) {
+                alert("عفواً، هذه هي أقصى كمية متوفرة في المخزن لهذا المنتج!");
+                return;
+            }
+            if (newVal < 0) return;
+
+            input.value = newVal;
+            recalc();
+        }
+
+        // دالة تغيير كمية الطلبات القديمة المسجلة مسبقاً
+        function changeOldQty(index, delta, maxAllowed) {
+            const input = document.getElementById('old-qty-' + index);
+            const current = parseInt(input.value) || 0;
+            const newVal = current + delta;
+
+            if (newVal > maxAllowed) {
+                alert("عفواً، لا يوجد رصيد إضافي في المخزن لزيادة هذا الطلب!");
+                return;
+            }
+            if (newVal < 0) return;
+
+            input.value = newVal;
+
+            // تحديث سعر السطر في الجدول لحظياً
+            const lineTotal = newVal * oldPrices[index];
+            document.getElementById('old-line-total-' + index).textContent = lineTotal.toFixed(2) + " ج";
+
+            recalc();
+        }
+
+        // الحساب اليدوي للإجمالي النهائي
+        function manualRecalc() {
+            const tCost = parseFloat(document.getElementById('CalculatedTimePrice').value) || 0;
+            const pCost = parseFloat(document.getElementById('TotalProductPrice').value) || 0;
+            document.getElementById('GrandTotal').value = (tCost + pCost).toFixed(2);
+        }
+
+        // الحساب الكلي وتحديث الفاتورة
+        function recalc() {
+            let newProductTotal = 0;
+            let newProductsHTML = '';
+            const newProductsContainer = document.getElementById('new-products-container');
+            const newProductsList = document.getElementById('new-products-list');
+
+            // 1. حساب المنتجات الجديدة
+            Object.keys(newProductsData).forEach(i => {
+                const qty = parseInt(document.getElementById('qty-' + i)?.value) || 0;
+                if (qty > 0) {
+                    const lineTotal = qty * newProductsData[i].price;
+                    newProductTotal += lineTotal;
+
+                    newProductsHTML += `
+                        <div class="d-flex justify-content-between align-items-center mb-2 pb-1 border-bottom border-light">
+                            <div class="d-flex flex-column">
+                                <span class="val-azure fw-bold fs-6">${newProductsData[i].name} <span class="badge bg-primary rounded-pill text-white ms-1" style="font-size:0.6rem;">جديد</span></span>
+                                <strong class="text-muted small">${lineTotal.toFixed(2)} ج.م</strong>
+                            </div>
+                            <div class="badge-glass px-2 py-1 fs-6">
+                                x${qty}
+                            </div>
+                        </div>
+                    `;
+                }
+            });
+
+            // إظهار أو إخفاء حاوية المنتجات الجديدة
+            if (newProductsHTML !== '') {
+                newProductsList.innerHTML = newProductsHTML;
+                newProductsContainer.style.display = 'block';
+            } else {
+                newProductsList.innerHTML = '';
+                newProductsContainer.style.display = 'none';
+            }
+
+            // 2. حساب المنتجات القديمة بعد التعديل
+            let oldProductTotal = 0;
+            Object.keys(oldPrices).forEach(j => {
+                const qty = parseInt(document.getElementById('old-qty-' + j)?.value) || 0;
+                oldProductTotal += qty * oldPrices[j];
+            });
+
+            // 3. دمجهم وتحديث حقل إجمالي البار
+            const finalProductTotal = oldProductTotal + newProductTotal;
+            document.getElementById('TotalProductPrice').value = finalProductTotal.toFixed(2);
+
+            // 4. تحديث الإجمالي النهائي
+            manualRecalc();
+        }
+    </script>
+}

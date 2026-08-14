@@ -1,0 +1,24 @@
+﻿@model HubClub.Models.RoomPricing
+@{
+    ViewData["Title"] = "حذف التسعيرة";
+}
+
+<div class="glass-form-container-sm">
+    <div class="form-header">
+        <h2 class="text-danger">حذف التسعيرة!</h2>
+        <p>هل أنت متأكد من رغبتك في حذف هذا السعر؟ (لن يؤثر هذا على الفواتير أو الجلسات القديمة التي استخدمت هذا السعر)</p>
+    </div>
+
+    <div class="wf-data-row mb-5">
+        <span class="wf-data-label">سعر الساعة المراد حذفه:</span>
+        <span class="wf-data-val price-highlight-lg">@Model.PricePerHour.ToString("N2") ج.م</span>
+    </div>
+
+    <form asp-action="Delete">
+        <input type="hidden" asp-for="RoomPricingId" />
+        <div class="form-actions">
+            <a asp-action="Index" class="btn-aurelian-outline">إلغاء</a>
+            <button type="submit" class="btn-aurelian-primary btn-primary-danger">تأكيد الحذف النهائي</button>
+        </div>
+    </form>
+</div>

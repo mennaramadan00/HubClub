@@ -1,0 +1,80 @@
+﻿@model HubClub.Models.Room
+@{
+    ViewData["Title"] = "سجل الغرفة";
+}
+
+<div class="d-flex justify-content-between align-items-center mb-4 mt-3">
+    <h2 class="topbar-title">سجل وتفاصيل: @Model.Name</h2>
+    <div class="d-flex align-items-center gap-3">
+        <a asp-action="Index" class="btn-aurelian-primary px-4">عودة</a>
+    </div>
+</div>
+
+<div class="analysis-summary-grid mb-5">
+    <div class="summary-box">
+        <div class="sb-title">إجمالي إيرادات الغرفة (تاريخياً)</div>
+        <div class="sb-val">@Convert.ToDecimal(ViewBag.TotalRoomRevenue ?? 0).ToString("N2") ج</div>
+    </div>
+    <div class="summary-box">
+        <div class="sb-title">عدد الجلسات المؤجرة</div>
+        <div class="sb-val val-amber">@ViewBag.TotalSessionsCount</div>
+    </div>
+    <div class="summary-box">
+        <div class="sb-title">الحالة الحالية للغرفة</div>
+        <div class="@(Model.IsActive ? "room-status-active" : "room-status-inactive")">
+            @(Model.IsActive ? "متاحة للاستخدام" : "موقوفة")
+        </div>
+    </div>
+</div>
+
+<h3 class="topbar-title mb-3 fs-5">السجل التاريخي للجلسات</h3>
+<div class="table-glass-wrap mb-5">
+    <table class="table-glass">
+        <thead>
+            <tr>
+                <th>رقم الجلسة</th>
+                <th>اسم العميل</th>
+                <th>وقت البداية</th>
+                <th>وقت النهاية</th>
+                <th>تسعيرة الساعة</th>
+                <th>مبيعات الطلبات</th>
+                <th>إجمالي الجلسة</th>
+                <th>الحالة</th>
+            </tr>
+        </thead>
+        <tbody>
+            @if (Model.RoomSessions != null && Model.RoomSessions.Any())
+            {
+                foreach (var session in Model.RoomSessions)
+                {
+                    <tr>
+                        <td><strong>#@session.RoomSessionId</strong></td>
+                        <td>@(session.Customer != null ? session.Customer.Name : "عميل طيار")</td>
+                        <td dir="ltr">@session.StartTime.ToString("yyyy/MM/dd - hh:mm tt")</td>
+                        <td dir="ltr">@(session.EndTime.HasValue? session.EndTime.Value.ToString("yyyy/MM/dd - hh:mm tt") : "---")</td>
+                        <td>@session.HourlyPrice.ToString("N2") ج</td>
+                        <td>@session.TotalProductPrice.ToString("N2") ج</td>
+                        <td class="val-success">@session.GrandTotal.ToString("N2") ج</td>
+                        <td>
+                            @if (session.IsClosed)
+                            {
+                                <span class="badge-glass">مغلقة</span>
+                            }
+                            else
+                            {
+
+                                <span class="badge-glass badge-success-glass">مفتوحة الآن</span>
+                            }
+                        </td>
+                    </tr>
+                }
+            }
+            else
+            {
+                <tr>
+                    <td colspan="8" class="empty-table-msg">لم يتم تسجيل أي جلسات لهذه الغرفة حتى الآن.</td>
+                </tr>
+            }
+        </tbody>
+    </table>
+</div>

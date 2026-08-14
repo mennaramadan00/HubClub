@@ -1,0 +1,114 @@
+﻿@model HubClub.ViewModels.AddProductToRoomSessionViewModel
+@{
+    ViewData["Title"] = "إضافة طلبات للغرفة";
+}
+
+<!-- 🟢 تم تغليف الصفحة بالكامل في كونتينر زجاجي لضبط الشكل -->
+<div class="glass-form-container" style="max-width: 1000px; margin: 2rem auto; padding: 2rem;">
+
+    <!-- الـ Header -->
+    <div class="d-flex justify-content-between align-items-center mb-4 border-bottom pb-3">
+        <div>
+            <h2 class="topbar-title m-0">طلبات الغرفة: <span class="val-success">@Model.RoomName</span></h2>
+            <p class="mb-0 text-muted fw-bold mt-1">العميل: @(string.IsNullOrEmpty(Model.CustomerName) ? "عميل طيار" : Model.CustomerName)</p>
+        </div>
+        <a asp-controller="Home" asp-action="Index" class="btn-aurelian-outline">عودة للرئيسية</a>
+    </div>
+
+    <form asp-action="ConfirmAddProducts">
+        <input type="hidden" asp-for="RoomSessionId" />
+
+        <!-- 🟢 قسم الطلبات الحالية -->
+        @if (Model.AlreadyAdded != null && Model.AlreadyAdded.Any())
+        {
+            <div class="table-glass-wrap mb-5">
+                <h4 class="px-4 pt-3 pb-2 mb-0 topbar-title fs-5">الطلبات الحالية المسجلة بالمنظومة</h4>
+                <table class="table-glass">
+                    <thead>
+                        <tr>
+                            <th>المنتج</th>
+                            <th class="text-center-glass">الكمية</th>
+                            <th>السعر الإجمالي</th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                        @foreach (var item in Model.AlreadyAdded)
+                        {
+                            <tr>
+                                <td><strong>@item.ProductName</strong></td>
+                                <td class="text-center-glass"><span class="badge-glass px-3 fs-6">@item.Quantity</span></td>
+                                <td><strong class="price-highlight">@item.LineTotal.ToString("N2") ج</strong></td>
+                            </tr>
+                        }
+                    </tbody>
+                </table>
+            </div>
+        }
+        else
+        {
+            <!-- رسالة توضيحية في حالة عدم وجود طلبات مسبقة -->
+            <div class="alert-glass mb-5 text-center-glass text-muted fw-bold">
+                لم يتم تسجيل أي طلبات لهذه الغرفة حتى الآن.
+            </div>
+        }
+
+        <h3 class="topbar-title mb-4 fs-5 border-bottom pb-2">إضافة منتجات جديدة من البار</h3>
+
+        <div class="product-squares-grid mb-5">
+            @for (int i = 0; i < Model.AvailableProducts.Count; i++)
+            {
+                // 🟢 تظليل المنتج لو الرصيد صفر عشان الكاشير يفهم
+                bool isOutOfStock = Model.AvailableProducts[i].AvailableStock == 0;
+
+                <div class="product-square" style="@(isOutOfStock ? "opacity: 0.6; filter: grayscale(1);" : "")">
+                    <input type="hidden" asp-for="AvailableProducts[i].ProductId" />
+
+                    <div class="ps-info py-3">
+                        <div class="ps-name fs-6">@Model.AvailableProducts[i].Name</div>
+                        <div class="text-muted fw-bold small mt-1">المتاح: @Model.AvailableProducts[i].AvailableStock</div>
+                        <div class="val-amber mt-2 fs-6">@Model.AvailableProducts[i].Price.ToString("N0") ج</div>
+                    </div>
+
+                    <div class="ps-action-bar">
+                        <!-- تم ربط الأزرار بدوال جافاسكريبت مباشرة لضمان العمل 100% -->
+                        <button type="button" class="ps-btn btn-plus" onclick="increaseQty(this, @Model.AvailableProducts[i].AvailableStock)" @(isOutOfStock ? "disabled" : "")>+</button>
+
+                        <input type="number" asp-for="AvailableProducts[i].SelectedQuantity" class="ps-qty qty-input" min="0" max="@Model.AvailableProducts[i].AvailableStock" readonly style="background: transparent;" />
+
+                        <button type="button" class="ps-btn btn-minus" onclick="decreaseQty(this)" @(isOutOfStock ? "disabled" : "")>-</button>
+                    </div>
+                </div>
+            }
+        </div>
+
+        <!-- 🟢 الزرار تم توسيطه وتكبيره ليكون واضحاً وجميلاً -->
+        <div class="d-flex justify-content-center mt-5">
+            <button type="submit" class="btn-aurelian-primary px-5 py-3 fs-5" style="min-width: 350px; border-radius: 50px;">
+                حفظ الطلبات وإضافتها للفاتورة 🍽️
+            </button>
+        </div>
+    </form>
+</div>
+
+@section Scripts {
+    <script>
+        // 🟢 دوال جافاسكريبت محصنة (Vanilla JS) بدلاً من jQuery لضمان زيادة ونقصان الأرقام
+        function increaseQty(btn, max) {
+            var container = btn.parentElement;
+            var input = container.querySelector('.qty-input');
+            var val = parseInt(input.value) || 0;
+            if (val < max) {
+                input.value = val + 1;
+            }
+        }
+
+        function decreaseQty(btn) {
+            var container = btn.parentElement;
+            var input = container.querySelector('.qty-input');
+            var val = parseInt(input.value) || 0;
+            if (val > 0) {
+                input.value = val - 1;
+            }
+        }
+    </script>
+}

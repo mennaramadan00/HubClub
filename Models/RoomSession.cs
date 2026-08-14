@@ -16,10 +16,14 @@ namespace HubClub.Models
         [ForeignKey("RoomId")]
         public Room Room { get; set; } = null!;
 
+        // 🟢 العميل هنا أصبح اختياري (Nullable)
+        public int? CustomerId { get; set; }
+        [ForeignKey("CustomerId")]
+        public Customer? Customer { get; set; }
+
         public DateTime StartTime { get; set; }
         public DateTime? EndTime { get; set; }
 
-        // 🟢 سعر الساعة الذي سيختاره الكاشير لهذه الجلسة تحديداً
         [Column(TypeName = "decimal(18,2)")]
         public decimal HourlyPrice { get; set; }
 
@@ -32,14 +36,12 @@ namespace HubClub.Models
         [Column(TypeName = "decimal(18,2)")]
         public decimal GrandTotal { get; set; }
 
-        // Cash or InstaPay (No Packages for rooms)
         public PaymentMethod? PaymentMethod { get; set; }
 
         public bool IsClosed { get; set; }
 
         public DateOnly BusinessDate { get; set; }
 
-        // علاقة مع المنتجات التي تم طلبها داخل هذه الغرفة
         public ICollection<RoomSessionProduct> RoomSessionProducts { get; set; } = new List<RoomSessionProduct>();
     }
 }

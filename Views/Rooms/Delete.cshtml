@@ -1,0 +1,31 @@
+﻿@model HubClub.Models.Room
+@{
+    ViewData["Title"] = "حذف الغرفة";
+}
+
+<div class="glass-form-container-sm">
+    <div class="form-header">
+        <h2 class="text-danger">حذف الغرفة!</h2>
+        <p>هل أنت متأكد من رغبتك في حذف هذه الغرفة؟ (سيتم إيقافها فقط إذا كانت مرتبطة بجلسات سابقة حفاظاً على الحسابات)</p>
+    </div>
+
+    <div class="wf-data-row mb-3">
+        <span class="wf-data-label">اسم الغرفة:</span>
+        <span class="wf-data-val">@Model.Name</span>
+    </div>
+
+    <div class="wf-data-row mb-5">
+        <span class="wf-data-label">الحالة الحالية:</span>
+        <span class="wf-data-val @(Model.IsActive ? "val-success" : "val-danger")">
+            @(Model.IsActive ? "متاحة" : "موقوفة")
+        </span>
+    </div>
+
+    <form asp-action="Delete">
+        <input type="hidden" asp-for="RoomId" />
+        <div class="form-actions">
+            <a asp-action="Index" class="btn-aurelian-outline">إلغاء</a>
+            <button type="submit" class="btn-aurelian-primary btn-primary-danger">تأكيد الحذف</button>
+        </div>
+    </form>
+</div>

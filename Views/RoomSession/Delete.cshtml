@@ -1,0 +1,39 @@
+﻿@model HubClub.Models.RoomSession
+@{
+    ViewData["Title"] = "حذف جلسة غرفة";
+}
+
+<div class="glass-form-container-sm">
+    <div class="form-header">
+        <h2 class="val-danger">حذف جلسة الغرفة نهائياً!</h2>
+        <p class="text-muted fw-bold">هل أنت متأكد من رغبتك في حذف هذه الجلسة؟ (سيتم إرجاع جميع الطلبات إلى المخزون تلقائياً).</p>
+    </div>
+
+    <div class="wf-data-row mb-3">
+        <span class="wf-data-label">رقم الجلسة:</span>
+        <span class="wf-data-val">#@Model.RoomSessionId</span>
+    </div>
+
+    <div class="wf-data-row mb-3">
+        <span class="wf-data-label">الغرفة:</span>
+        <span class="wf-data-val">@Model.Room?.Name</span>
+    </div>
+
+    <div class="wf-data-row mb-3">
+        <span class="wf-data-label">العميل:</span>
+        <span class="wf-data-val">@(Model.Customer != null ? Model.Customer.Name : "عميل طيار")</span>
+    </div>
+
+    <div class="wf-data-row mb-5">
+        <span class="wf-data-label">إجمالي الفاتورة:</span>
+        <span class="wf-data-val price-highlight-lg">@Model.GrandTotal.ToString("N2") ج</span>
+    </div>
+
+    <form asp-action="Delete">
+        <input type="hidden" asp-for="RoomSessionId" />
+        <div class="form-actions">
+            <a asp-controller="Home" asp-action="Index" class="btn-aurelian-outline">إلغاء الأمر</a>
+            <button type="submit" class="btn-aurelian-primary btn-primary-danger">تأكيد الحذف النهائي</button>
+        </div>
+    </form>
+</div>

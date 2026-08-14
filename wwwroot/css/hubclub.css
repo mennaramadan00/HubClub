@@ -705,3 +705,190 @@ body {
         font-size: 1.5rem;
         font-weight: 800;
     }
+/* ================= Status Badges & Danger Actions ================= */
+.badge-danger-glass {
+    background: rgba(220,53,69,0.08);
+    color: #dc3545;
+    border-color: rgba(220,53,69,0.25);
+}
+
+.badge-success-glass {
+    background: rgba(40,167,69,0.08);
+    color: #28a745;
+    border-color: rgba(40,167,69,0.25);
+}
+
+.btn-outline-danger {
+    color: #dc3545 !important;
+    border-color: rgba(220,53,69,0.3) !important;
+}
+
+    .btn-outline-danger:hover {
+        background: linear-gradient(135deg, rgba(220,53,69,0.1) 0%, rgba(220,53,69,0.2) 100%) !important;
+        color: #dc3545 !important;
+        box-shadow: 0 4px 15px rgba(220,53,69,0.15) !important;
+    }
+
+.btn-primary-danger {
+    background: linear-gradient(135deg, #e05263 0%, #dc3545 100%) !important;
+    box-shadow: 0 6px 20px rgba(220, 53, 69, 0.25) !important;
+}
+
+    .btn-primary-danger:hover {
+        box-shadow: 0 10px 25px rgba(220, 53, 69, 0.4) !important;
+        transform: translateY(-2px);
+    }
+
+/* ================= Utility Classes ================= */
+.glass-form-container-sm {
+    max-width: 600px;
+    margin: 2rem auto;
+    background: var(--glass-grad);
+    backdrop-filter: blur(26px) saturate(150%);
+    border: 1px solid transparent;
+    border-image: var(--glass-border-grad) 1;
+    border-radius: var(--radius-medium);
+    padding: 2.5rem;
+    box-shadow: var(--shadow-glass);
+}
+
+.cursor-pointer {
+    cursor: pointer;
+}
+
+.text-center-glass {
+    text-align: center;
+}
+
+.table-actions-cell {
+    display: flex;
+    justify-content: center;
+    gap: 8px;
+}
+
+.empty-table-msg {
+    text-align: center;
+    padding: 2.5rem;
+    color: var(--text-slate-soft);
+    font-weight: 600;
+}
+
+.price-highlight {
+    color: var(--sapphire);
+    font-size: 1.1rem;
+    font-weight: 800;
+}
+
+.price-highlight-lg {
+    font-size: 1.2rem;
+    font-weight: 800;
+    color: var(--sapphire);
+}
+
+.val-danger {
+    color: #dc3545;
+    font-weight: 800;
+}
+
+.val-success {
+    color: var(--sapphire);
+    font-weight: 800;
+}
+
+.val-amber {
+    color: var(--amber);
+    font-weight: 800;
+}
+
+.room-status-active {
+    font-size: 1.8rem;
+    color: var(--sapphire);
+    font-weight: 800;
+}
+
+.room-status-inactive {
+    font-size: 1.8rem;
+    color: #dc3545;
+    font-weight: 800;
+}
+/* ================= Room Cards (VIP / Distinctive Look) ================= */
+.wf-card-room {
+    background: linear-gradient(135deg, rgba(255, 250, 230, 0.95) 0%, rgba(255, 255, 255, 0.65) 100%);
+    backdrop-filter: blur(20px) saturate(150%);
+    -webkit-backdrop-filter: blur(20px) saturate(150%);
+    border: 1px solid var(--nav-yellow-border);
+    border-radius: var(--radius-medium);
+    padding: 1.5rem;
+    display: flex;
+    flex-direction: column;
+    box-shadow: 0 8px 32px rgba(255, 196, 0, 0.12); /* تظليل ذهبي خفيف */
+    transition: transform 0.35s ease, box-shadow 0.35s ease;
+    position: relative;
+    overflow: hidden;
+}
+
+    .wf-card-room::after {
+        content: '';
+        position: absolute;
+        inset: 0;
+        background: linear-gradient(120deg, transparent 30%, rgba(255, 196, 0, 0.15) 48%, transparent 66%);
+        transform: translateX(-120%) skewX(-15deg);
+        transition: transform 0.7s ease;
+        pointer-events: none;
+    }
+
+    .wf-card-room:hover {
+        transform: translateY(-6px);
+        box-shadow: 0 24px 50px -12px rgba(255, 196, 0, 0.25);
+    }
+
+        .wf-card-room:hover::after {
+            transform: translateX(120%) skewX(-15deg);
+        }
+
+/* تنسيق داتا الغرف الداخلية */
+.wf-data-row-room {
+    display: flex;
+    justify-content: space-between;
+    margin-bottom: 0.8rem;
+    font-size: 0.95rem;
+    border: 1px solid rgba(255, 196, 0, 0.3);
+    padding: 0.6rem 1rem;
+    border-radius: var(--radius-sharp);
+    background: linear-gradient(120deg, rgba(255, 255, 255, 0.9), rgba(255, 250, 230, 0.6));
+    transition: background 0.2s, border-color 0.2s;
+}
+
+    .wf-data-row-room:hover {
+        background: linear-gradient(120deg, rgba(255, 196, 0, 0.1), rgba(255, 255, 255, 0.8));
+        border-color: var(--amber);
+    }
+/* ================= Floating Glass Toasts ================= */
+.glass-toast {
+    background: linear-gradient(120deg, rgba(255, 255, 255, 0.95), rgba(242, 242, 244, 0.85));
+    backdrop-filter: blur(20px) saturate(150%);
+    -webkit-backdrop-filter: blur(20px) saturate(150%);
+    border: 1px solid var(--glass-border);
+    border-right: 4px solid var(--azure); /* لون افتراضي يتغير حسب الحالة */
+    border-radius: var(--radius-sharp);
+    padding: 1rem 1.5rem 1rem 3.5rem; /* مسافة على اليسار عشان زر الـ X */
+    box-shadow: 0 12px 35px rgba(0, 0, 0, 0.15);
+    margin: 0;
+    position: relative;
+    font-weight: 600;
+}
+
+    /* تظبيط زر الإغلاق (X) في الـ RTL */
+    .glass-toast .btn-close {
+        position: absolute;
+        left: 10px; /* على اليسار لأن اللغة عربي */
+        right: auto;
+        top: 50%;
+        transform: translateY(-50%);
+        opacity: 0.6;
+        transition: opacity 0.2s;
+    }
+
+        .glass-toast .btn-close:hover {
+            opacity: 1;
+        }

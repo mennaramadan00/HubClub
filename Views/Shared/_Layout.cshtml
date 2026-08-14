@@ -14,6 +14,50 @@
     <link rel="stylesheet" href="~/css/hubclub.css" asp-append-version="true" />
 </head>
 <body>
+    <!-- 🟢 Global Floating Alerts (Toasts) 🟢 -->
+    <div id="toast-container" style="position: fixed; top: 20px; left: 50%; transform: translateX(-50%); z-index: 9999; display: flex; flex-direction: column; gap: 10px; min-width: 320px; max-width: 90vw;">
+
+        @if (TempData["Success"] != null)
+        {
+            <div class="alert alert-dismissible fade show glass-toast" role="alert" style="border-right-color: #10b981; color: #047857;">
+                <div class="d-flex align-items-center gap-2">
+                    <span class="fs-4">✅</span>
+                    <div>
+                        <strong>نجاح:</strong> @TempData["Success"]
+                    </div>
+                </div>
+                <button type="button" class="btn-close" data-bs-dismiss="alert" aria-label="Close"></button>
+            </div>
+        }
+
+        @if (TempData["Error"] != null)
+        {
+            <div class="alert alert-dismissible fade show glass-toast" role="alert" style="border-right-color: #ef4444; color: #b91c1c;">
+                <div class="d-flex align-items-center gap-2">
+                    <span class="fs-4">❌</span>
+                    <div>
+                        <strong>خطأ:</strong> @TempData["Error"]
+                    </div>
+                </div>
+                <button type="button" class="btn-close" data-bs-dismiss="alert" aria-label="Close"></button>
+            </div>
+        }
+
+        @if (TempData["Warning"] != null)
+        {
+            <div class="alert alert-dismissible fade show glass-toast" role="alert" style="border-right-color: #f59e0b; color: #b45309;">
+                <div class="d-flex align-items-center gap-2">
+                    <span class="fs-4">⚠️</span>
+                    <div>
+                        <strong>تنبيه:</strong> @TempData["Warning"]
+                    </div>
+                </div>
+                <button type="button" class="btn-close" data-bs-dismiss="alert" aria-label="Close"></button>
+            </div>
+        }
+    </div>
+    <!-- 🟢 نهاية التنبيهات 🟢 -->
+
     <div class="app-wrapper">
         <!-- Sidebar Menu -->
         <aside class="app-sidebar">
@@ -23,7 +67,7 @@
                 </a>
             </div>
 
-            <!-- 🟢 التعديل السحري: وضع الروابط داخل "غلاف" مخصص لشريط التمرير -->
+            <!-- التعديل السحري: وضع الروابط داخل "غلاف" مخصص لشريط التمرير -->
             <div class="sidebar-scroll-wrapper" style="flex: 1; overflow-y: auto; overflow-x: hidden; height: 0; padding-left: 5px;">
                 <nav class="sidebar-nav" style="padding-top: 10px; padding-bottom: 30px;">
                     <a class="nav-item-link @navActive("Home", "Index")" asp-controller="Home" asp-action="Index">إدارة الجلسات</a>
@@ -33,11 +77,11 @@
                     <a class="nav-item-link @navActive("Packages", null)" asp-controller="Packages" asp-action="Index">إدارة الباقات</a>
                     <a class="nav-item-link @navActive("UserPackage", null)" asp-controller="UserPackage" asp-action="Index">باقات المشتركين</a>
                     <a class="nav-item-link @navActive("Customers", null)" asp-controller="Customers" asp-action="Index">قاعدة العملاء</a>
-
                     <a class="nav-item-link @navActive("Expenses", null)" asp-controller="Expenses" asp-action="Index">إدارة المصروفات</a>
-
                     <a class="nav-item-link @navActive("Session", "DailyReport")" asp-controller="Session" asp-action="DailyReport">التقارير</a>
                     <a class="nav-item-link @navActive("Analysis", "Index")" asp-controller="Analysis" asp-action="Index">التحليل المالي</a>
+                    <a class="nav-item-link @navActive("Rooms", null)" asp-controller="Rooms" asp-action="Index">إدارة الغرف</a>
+                    <a class="nav-item-link @navActive("RoomPricings", null)" asp-controller="RoomPricings" asp-action="Index">تسعير الغرف</a>
                 </nav>
             </div>
         </aside>
@@ -55,30 +99,33 @@
 
     <script>
         $(document).ready(function () {
+            // 🟢 1. إخفاء الإشعارات العائمة تلقائياً بعد 4 ثوانٍ
+            window.setTimeout(function() {
+                $(".glass-toast").fadeTo(500, 0).slideUp(500, function(){
+                    $(this).remove();
+                });
+            }, 4000);
+
+            // 🟢 2. منع الضغط المتكرر على أزرار الحفظ (Submit)
             $('form').on('submit', function (e) {
                 var $form = $(this);
 
-                // 1. نتأكد إن مكتبة التحقق (Validation) موجودة، وإن البيانات سليمة
                 if (typeof $.validator !== 'undefined') {
                     if (!$form.valid()) {
-                        return true; // لو في بيانات ناقصة، سيب الزرار شغال عشان الكاشير يصلحها
+                        return true;
                     }
                 }
 
-                // 2. لو الفورم بتتبعت حالاً، امنع أي ضغطة جديدة
                 if ($form.data('submitted') === true) {
                     e.preventDefault();
                     return false;
                 }
 
-                // 3. علم على الفورم إنها اتبعتت خلاص
                 $form.data('submitted', true);
 
-                // 4. اقفل الزرار
                 var $btn = $form.find('button[type="submit"], input[type="submit"]');
                 $btn.prop('disabled', true);
 
-                // 5. غير النص عشان الكاشير يطمن إن السيستم بيحمل
                 if ($btn.is('button')) {
                     $btn.text('جاري التحميل...');
                 } else {

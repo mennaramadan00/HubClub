@@ -4,94 +4,134 @@
     ViewData["Title"] = "إدارة الجلسات";
 }
 
-<!-- شريط البحث الفاخر -->
-<div class="mb-4" style="background: rgba(255, 255, 255, 0.6); padding: 1rem; border-radius: 12px; border: 1px solid var(--glass-edge-blue);">
-    <form method="get" asp-action="Index" class="d-flex gap-2 align-items-center m-0">
+<!-- شريط البحث הפاخر -->
+<div class="glass-form-container mt-0 mb-4 p-3 d-flex align-items-center" style="max-width: 100%;">
+    <form method="get" asp-action="Index" class="d-flex gap-2 align-items-center w-100 m-0">
         <input type="text" name="searchString" value="@ViewData["CurrentFilter"]"
                class="premium-input m-0 flex-grow-1"
-               placeholder="ابحث عن جلسة باسم العميل أو رقم الهاتف..." />
+               placeholder="ابحث عن جلسة باسم العميل، رقم الهاتف، أو الغرفة..." />
 
-        <button type="submit" class="btn-aurelian-primary" style="white-space: nowrap; padding: 0.6rem 1.5rem;">
-            بحث
-        </button>
+        <button type="submit" class="btn-aurelian-primary px-4">بحث</button>
 
-        <!-- زر الإلغاء يظهر فقط إذا كان هناك بحث نشط -->
         @if (ViewData["CurrentFilter"] != null && !string.IsNullOrEmpty(ViewData["CurrentFilter"].ToString()))
         {
-            <a asp-action="Index" class="btn-aurelian-outline" style="white-space: nowrap; padding: 0.6rem 1.5rem;">إلغاء البحث</a>
+            <a asp-action="Index" class="btn-aurelian-outline px-4">إلغاء البحث</a>
         }
     </form>
 </div>
 
 <div class="d-flex justify-content-between align-items-center mb-4">
-    <h3 style="font-weight: 800; color: var(--sapphire); margin-bottom: 0;">
+    <h3 class="topbar-title mb-0">
         جميع الجلسات المفتوحة (@Model.ActiveCustomersCount)
     </h3>
 
-    <!-- مجموعة الأزرار مجمعة مع بعضها عشان التنسيق ميبُظش -->
     <div class="d-flex gap-3 align-items-center">
-        <!-- زر إضافة ملاحظة سريع -->
-        <a asp-controller="Notes" asp-action="Index" class="btn-aurelian-outline">
-            الملاحظات
-        </a>
-
-        <!-- زر فتح جلسة جديدة الثابت في أعلى الشاشة -->
-        <a asp-controller="Session" asp-action="Open" class="btn-aurelian-primary">
-            بدء جلسة جديدة
-        </a>
+        <a asp-controller="Notes" asp-action="Index" class="btn-aurelian-outline">الملاحظات</a>
+        <a asp-controller="RoomSession" asp-action="Open" class="btn-aurelian-primary">بدء جلسة غرفة </a>
+        <a asp-controller="Session" asp-action="Open" class="btn-aurelian-primary">بدء جلسة أفراد</a>
     </div>
 </div>
-@if (!Model.ActiveSessions.Any())
+
+@if (!Model.ActiveSessions.Any() && !Model.ActiveRoomSessions.Any())
 {
     <div class="glass-form-container text-center py-5 mt-4">
-        <h3 style="color: var(--sapphire); font-weight: 800;">لا توجد جلسات حالياً</h3>
-        <p style="color: var(--text-slate);">لم يتم العثور على نتائج، أو لا توجد جلسات مفتوحة.</p>
-        <a asp-controller="Session" asp-action="Open" class="btn-aurelian-primary mt-3">بدء جلسة جديدة</a>
+        <h3 class="val-success">لا توجد جلسات حالياً</h3>
+        <p class="text-muted fw-bold">لم يتم العثور على نتائج، أو لا توجد جلسات مفتوحة.</p>
+        <div class="d-flex justify-content-center gap-3 mt-4">
+            <a asp-controller="Session" asp-action="Open" class="btn-aurelian-primary">بدء جلسة أفراد</a>
+            <a asp-controller="RoomSession" asp-action="Open" class="btn-aurelian-primary">بدء جلسة غرفة </a>
+        </div>
     </div>
 }
 else
 {
-    <!-- شبكة الجلسات بـ 3 أعمدة -->
-    <div class="cards-grid-3">
-        @foreach (var session in Model.ActiveSessions)
-        {
-            <div class="wf-card">
-                <div class="wf-card-header text-center">
-                    <h3 style="margin: 0; font-weight: 800; color: var(--sapphire);">@session.CustomerName</h3>
-                </div>
+    <!-- 🟢 قسم الغرف (يظهر في الأعلى لتمييزه) -->
+    @if (Model.ActiveRoomSessions.Any())
+    {
+        <h4 class="topbar-title mb-3 fs-5 val-amber">جلسات الغرف </h4>
+        <div class="cards-grid-3 mb-5">
+            @foreach (var rs in Model.ActiveRoomSessions)
+            {
+                <div class="wf-card-room">
+                    <div class="wf-card-header text-center-glass border-bottom pb-2 mb-3">
+                        <h3 class="val-amber m-0">@rs.RoomName</h3>
+                        <div class="small fw-bold mt-1 text-muted">@rs.CustomerName</div>
+                    </div>
 
-                <div class="wf-data-row">
-                    <span class="wf-data-label">رقم الهاتف</span>
-                    <span class="wf-data-val">@session.CustomerPhone</span>
-                </div>
+                    <div class="wf-data-row-room">
+                        <span class="wf-data-label">رقم الهاتف</span>
+                        <span class="wf-data-val">@rs.CustomerPhone</span>
+                    </div>
 
-                <div class="wf-data-row">
-                    <span class="wf-data-label">نظام الدفع</span>
-                    <span class="wf-data-val">@(session.PaymentType == PaymentType.Package ? "خصم من الباقة" : "دفع نقدي")</span>
-                </div>
+                    <div class="wf-data-row-room">
+                        <span class="wf-data-label">وقت البدء</span>
+                        <span class="wf-data-val" dir="ltr">@rs.StartTime.ToString("hh:mm tt")</span>
+                    </div>
 
-                <div class="wf-data-row">
-                    <span class="wf-data-label">وقت البدء</span>
-                    <span class="wf-data-val" dir="ltr">@session.StartTime.ToString("hh:mm tt")</span>
-                </div>
+                    <div class="mt-3 mb-4 flex-grow-1">
+                        <strong class="val-amber d-block mb-2 fs-6">الطلبات الحالية:</strong>
+                        <div class="alert-glass text-center-glass p-2 small">
+                            @(rs.ProductNames.Any() ? string.Join("، ", rs.ProductNames) : "لا توجد طلبات حتى الآن")
+                        </div>
+                    </div>
 
-                <div class="mt-3 mb-4 flex-grow-1">
-                    <strong style="color: var(--sapphire); font-size: 0.95rem; display: block; margin-bottom: 0.5rem;">الطلبات الحالية:</strong>
-                    <div style="font-size: 0.9rem; color: var(--text-slate); background: rgba(255, 255, 255, 0.6); padding: 0.8rem; border-radius: var(--radius-sharp); border: 1px solid var(--glass-edge-blue); min-height: 45px; text-align: center; font-weight: 600;">
-                        @(session.ProductNames.Any() ? string.Join("، ", session.ProductNames) : "لا توجد طلبات حتى الآن")
+                    <div class="mt-auto d-flex gap-2">
+                        <a asp-controller="RoomSession" asp-action="AddProducts" asp-route-id="@rs.RoomSessionId" class="btn-aurelian-primary w-50 text-center-glass p-2">
+                            إضافة طلبات
+                        </a>
+                        <a asp-controller="RoomSession" asp-action="CloseReview" asp-route-id="@rs.RoomSessionId" class="btn-aurelian-outline w-50 text-center-glass p-2">
+                            إنهاء الجلسة
+                        </a>
                     </div>
                 </div>
+            }
+        </div>
+    }
 
-                <!-- أزرار الإجراءات: إضافة طلبات وإنهاء الجلسة -->
-                <div class="mt-auto d-flex gap-2">
-                    <a asp-controller="Session" asp-action="AddProducts" asp-route-id="@session.SessionId" class="btn-aurelian-primary" style="flex: 1; text-align: center; font-size: 0.9rem; padding: 0.6rem;">
-                        إضافة طلبات
-                    </a>
-                    <a asp-controller="Session" asp-action="CloseReview" asp-route-id="@session.SessionId" class="btn-aurelian-outline" style="flex: 1; text-align: center; font-size: 0.9rem; padding: 0.6rem;">
-                        إنهاء الجلسة
-                    </a>
+    <!-- 🟢 قسم جلسات الأفراد العادية -->
+    @if (Model.ActiveSessions.Any())
+    {
+        <h4 class="topbar-title mb-3 fs-5">جلسات الصالة المفتوحة </h4>
+        <div class="cards-grid-3">
+            @foreach (var session in Model.ActiveSessions)
+            {
+                <div class="wf-card">
+                    <div class="wf-card-header text-center-glass border-bottom pb-2 mb-3">
+                        <h3 class="val-success m-0">@session.CustomerName</h3>
+                    </div>
+
+                    <div class="wf-data-row">
+                        <span class="wf-data-label">رقم الهاتف</span>
+                        <span class="wf-data-val">@session.CustomerPhone</span>
+                    </div>
+
+                    <div class="wf-data-row">
+                        <span class="wf-data-label">نظام الدفع</span>
+                        <span class="wf-data-val">@(session.PaymentType == PaymentType.Package ? "خصم من الباقة" : "دفع نقدي")</span>
+                    </div>
+
+                    <div class="wf-data-row">
+                        <span class="wf-data-label">وقت البدء</span>
+                        <span class="wf-data-val" dir="ltr">@session.StartTime.ToString("hh:mm tt")</span>
+                    </div>
+
+                    <div class="mt-3 mb-4 flex-grow-1">
+                        <strong class="val-success d-block mb-2 fs-6">الطلبات الحالية:</strong>
+                        <div class="alert-glass text-center-glass p-2 small">
+                            @(session.ProductNames.Any() ? string.Join("، ", session.ProductNames) : "لا توجد طلبات حتى الآن")
+                        </div>
+                    </div>
+
+                    <div class="mt-auto d-flex gap-2">
+                        <a asp-controller="Session" asp-action="AddProducts" asp-route-id="@session.SessionId" class="btn-aurelian-primary w-50 text-center-glass p-2">
+                            إضافة طلبات
+                        </a>
+                        <a asp-controller="Session" asp-action="CloseReview" asp-route-id="@session.SessionId" class="btn-aurelian-outline w-50 text-center-glass p-2">
+                            إنهاء الجلسة
+                        </a>
+                    </div>
                 </div>
-            </div>
-        }
-    </div>
+            }
+        </div>
+    }
 }

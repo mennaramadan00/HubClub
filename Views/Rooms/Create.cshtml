@@ -1,0 +1,40 @@
+﻿@model HubClub.Models.Room
+@{
+    ViewData["Title"] = "إضافة غرفة";
+}
+
+<div class="glass-form-container">
+    <div class="form-header">
+        <h2>إضافة غرفة جديدة</h2>
+        <p>قم بتسجيل اسم الغرفة لتكون متاحة في شاشة فتح الجلسات</p>
+    </div>
+
+    <form asp-action="Create">
+        <div asp-validation-summary="ModelOnly" class="text-danger mb-3"></div>
+
+        <div class="form-group mb-4">
+            <label asp-for="Name" class="premium-label"></label>
+            <input asp-for="Name" class="premium-input" placeholder="مثال: غرفة اجتماعات، Room 1..." autocomplete="off" />
+            <span asp-validation-for="Name" class="text-danger"></span>
+        </div>
+
+        <div class="form-group form-check mb-5">
+            <label class="form-check-label premium-label cursor-pointer">
+                <input class="form-check-input ms-2" asp-for="IsActive" checked />
+                @Html.DisplayNameFor(model => model.IsActive)
+            </label>
+        </div>
+
+        <div class="form-actions">
+            <a asp-action="Index" class="btn-aurelian-outline">عودة للقائمة</a>
+            <button type="submit" class="btn-aurelian-primary">حفظ الغرفة</button>
+        </div>
+    </form>
+</div>
+
+@section Scripts {
+    @{
+        await Html.RenderPartialAsync("_ValidationScriptsPartial");
+    }
+
+}

@@ -1,0 +1,41 @@
+﻿@model HubClub.Models.Room
+@{
+    ViewData["Title"] = "تعديل الغرفة";
+}
+
+<div class="glass-form-container">
+    <div class="form-header">
+        <h2>تعديل بيانات الغرفة</h2>
+        <p>تعديل اسم أو حالة الغرفة: <strong class="val-success">@Model.Name</strong></p>
+    </div>
+
+    <form asp-action="Edit">
+        <div asp-validation-summary="ModelOnly" class="text-danger mb-3"></div>
+        <input type="hidden" asp-for="RoomId" />
+
+        <div class="form-group mb-4">
+            <label asp-for="Name" class="premium-label"></label>
+            <input asp-for="Name" class="premium-input" autocomplete="off" />
+            <span asp-validation-for="Name" class="text-danger"></span>
+        </div>
+
+        <div class="form-group form-check mb-5">
+            <label class="form-check-label premium-label cursor-pointer">
+                <input class="form-check-input ms-2" asp-for="IsActive" />
+                @Html.DisplayNameFor(model => model.IsActive)
+            </label>
+        </div>
+
+        <div class="form-actions">
+            <a asp-action="Index" class="btn-aurelian-outline">عودة للقائمة</a>
+            <button type="submit" class="btn-aurelian-primary">حفظ التعديلات</button>
+        </div>
+    </form>
+</div>
+
+@section Scripts {
+    @{
+        await Html.RenderPartialAsync("_ValidationScriptsPartial");
+    }
+
+}

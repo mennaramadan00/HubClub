@@ -59,20 +59,26 @@ namespace HubClub.Controllers
             if (ModelState.IsValid)
             {
                 product.CreatedAt = DateTime.Now;
+
+                // ✅ الخطوة الأولى: حفظ المنتج في قاعدة البيانات أولاً
                 _context.Add(product);
+                await _context.SaveChangesAsync(); // هنا الـ EF Core بتجيب الـ ID الحقيقي من قاعدة البيانات
+
+                // ✅ الخطوة الثانية: إضافة حركة المخزن لو كان فيه كمية
                 if (product.Quantity > 0)
                 {
                     _context.StockMovements.Add(new StockMovement
                     {
-                        ProductId = product.ProductId,
+                        ProductId = product.ProductId, // الآن الـ ID أصبح سليم 100% وليس 0
                         QuantityChanged = product.Quantity,
-                        MovementType = "Stock In",
+                        MovementType = "Stock In", // رصيد افتتاحي
                         Timestamp = DateTime.Now,
                         BusinessDate = BusinessHelper.GetBusinessDate(DateTime.Now)
                     });
-                    await _context.SaveChangesAsync();
+
+                    await _context.SaveChangesAsync(); // حفظ حركة المخزن
                 }
-                await _context.SaveChangesAsync();
+
                 TempData["Success"] = "تم إضافة المنتج بنجاح";
                 return RedirectToAction(nameof(Index));
             }
@@ -135,7 +141,7 @@ namespace HubClub.Controllers
                             QuantityChanged = quantityDifference,
                             MovementType = "Deficit",
                             Timestamp = DateTime.Now,
-                            BusinessDate = DateOnly.FromDateTime(DateTime.Now)
+                            BusinessDate = BusinessHelper.GetBusinessDate(DateTime.Now) // تم توحيد دالة الوقت لتجنب أخطاء BusinessDate
                         });
                     }
 

@@ -29,6 +29,8 @@ namespace HubClub.Models
         public bool IsActive { get; set; } = true;
 
         // Navigation properties
+        // 🟢 لا تنسي إضافة هذا السطر فقط داخل موديل Customer.cs القديم لربط العلاقة
+        public ICollection<RoomSession> RoomSessions { get; set; } = new List<RoomSession>();
         public ICollection<Session> Sessions { get; set; } = new List<Session>();
         public ICollection<UserPackage> UserPackages { get; set; } = new List<UserPackage>();
     }
