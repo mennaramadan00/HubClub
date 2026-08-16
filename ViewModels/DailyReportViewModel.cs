@@ -14,21 +14,33 @@ namespace HubClub.ViewModels
         public DateTime BusinessDayStart { get; set; }
         public DateTime BusinessDayEnd { get; set; }
 
+        // 🟢 جلسات الصالة المفتوحة والمغلقة
         public List<Session> Sessions { get; set; } = new();
+
+        // 🟢 جلسات الغرف (VIP) - (الإضافة الجديدة)
+        public List<RoomSession> RoomSessions { get; set; } = new();
+
         public List<ProductReportItem> InventoryReport { get; set; } = new();
 
         // ملخص الإيرادات
-        public decimal TotalRevenue { get; set; }        // إجمالي كل حاجة (وقت + منتجات) للجلسات المغلقة فقط
-        public decimal TotalTimeRevenue { get; set; }     // إيراد الوقت فقط
-        public decimal TotalProductRevenue { get; set; }  // إيراد المنتجات فقط
-        public decimal TotalPackageRevenue
-        {
-            get; set;
-        }
+        public decimal TotalRevenue { get; set; }        // إجمالي كل حاجة (وقت + منتجات + باقات + غرف)
+        public decimal TotalTimeRevenue { get; set; }      // إيراد وقت الصالة
+        public decimal TotalProductRevenue { get; set; }   // إيراد المنتجات
+        public decimal TotalPackageRevenue { get; set; }   // إيراد الباقات
+
+        // 🟢 إيراد الغرف - (الإضافة الجديدة)
+        public decimal TotalRoomRevenue { get; set; }
+
         public decimal TotalCashMethod { get; set; }
         public decimal TotalInstaPayMethod { get; set; }
+
+        // إحصائيات جلسات الصالة
         public int ClosedSessionsCount { get; set; }
         public int OpenSessionsCount { get; set; }        // جلسات لسه مفتوحة (عملاء موجودين دلوقتي)
+
+        // 🟢 إحصائيات جلسات الغرف - (الإضافة الجديدة)
+        public int ClosedRoomSessionsCount { get; set; }
+        public int OpenRoomSessionsCount { get; set; }
 
         public List<PaymentTypeSummaryItem> PaymentBreakdown { get; set; } = new();
     }

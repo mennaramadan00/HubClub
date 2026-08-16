@@ -26,7 +26,6 @@ namespace HubClub.Controllers
             var now = DateTime.Now;
             var todayBusinessDate = BusinessHelper.GetBusinessDate(now);
 
-            // 1. استعلام جلسات الأفراد
             var sessions = await _context.Sessions
                 .AsNoTracking()
                 .AsSplitQuery()
@@ -36,7 +35,6 @@ namespace HubClub.Controllers
                 .Where(s => !s.IsClosed || s.BusinessDate == todayBusinessDate)
                 .ToListAsync();
 
-            // 🟢 2. استعلام جلسات الغرف (الجديد)
             var roomSessions = await _context.RoomSessions
                 .AsNoTracking()
                 .AsSplitQuery()
@@ -54,7 +52,6 @@ namespace HubClub.Controllers
                 ClosedSessions = new List<SessionCardViewModel>()
             };
 
-            // معالجة جلسات الأفراد
             foreach (var s in sessions)
             {
                 var card = new SessionCardViewModel
@@ -65,6 +62,7 @@ namespace HubClub.Controllers
                     PaymentType = s.PaymentType,
                     StartTime = s.StartTime,
                     EndTime = s.IsClosed ? s.EndTime : null,
+                    GrandTotal = s.GrandTotal,
                     ProductNames = s.SessionProducts.Where(sp => sp.Quantity > 0).Select(sp => sp.Product.Name).ToList()
                 };
 
@@ -81,7 +79,6 @@ namespace HubClub.Controllers
                 }
             }
 
-            // 🟢 معالجة جلسات الغرف
             foreach (var rs in roomSessions)
             {
                 var roomCard = new RoomSessionCardViewModel
@@ -91,6 +88,8 @@ namespace HubClub.Controllers
                     CustomerName = rs.Customer?.Name ?? "عميل طيار",
                     CustomerPhone = rs.Customer?.Phone ?? "-",
                     StartTime = rs.StartTime,
+                    EndTime = rs.IsClosed ? rs.EndTime : null,
+                    GrandTotal = rs.GrandTotal,
                     ProductNames = rs.RoomSessionProducts.Where(p => p.Quantity > 0).Select(p => p.Product.Name).ToList()
                 };
 
@@ -99,9 +98,8 @@ namespace HubClub.Controllers
                 {
                     vm.ClosedRoomSessions.Add(roomCard);
 
-                    // إضافة فلوس الغرف لخزينة اليوم
-                    vm.TodayTotalTimeCash += rs.TotalTimePrice;
-                    vm.TodayTotalProductCash += rs.TotalProductPrice;
+                    // 🟢 إضافة إيرادات الغرفة للكارت المستقل وللإجمالي العام
+                    vm.TodayTotalRoomCash += rs.GrandTotal;
                     vm.TodayTotalCash += rs.GrandTotal;
 
                     if (rs.PaymentMethod == PaymentMethod.Cash) vm.TodayTotalCashMethod += rs.GrandTotal;
@@ -109,12 +107,14 @@ namespace HubClub.Controllers
                 }
             }
 
-            vm.ActiveCustomersCount = vm.ActiveSessions.Count + vm.ActiveRoomSessions.Count; // إجمالي المفتوح أفراد + غرف
+            vm.ActiveCustomersCount = vm.ActiveSessions.Count + vm.ActiveRoomSessions.Count;
             vm.ActiveSessions = vm.ActiveSessions.OrderByDescending(s => s.StartTime).ToList();
             vm.ClosedSessions = vm.ClosedSessions.OrderByDescending(s => s.EndTime).ToList();
             vm.ActiveRoomSessions = vm.ActiveRoomSessions.OrderByDescending(rs => rs.StartTime).ToList();
 
-            // 3. استعلام الباقات
+            // ترتيب الغرف المغلقة
+            vm.ClosedRoomSessions = vm.ClosedRoomSessions.OrderByDescending(rs => rs.EndTime).ToList();
+
             var packagesSoldToday = await _context.UserPackages
                 .AsNoTracking()
                 .Where(up => up.PurchaseBusinessDate == todayBusinessDate && !up.IsDeleted)
@@ -137,7 +137,6 @@ namespace HubClub.Controllers
 
             if (!string.IsNullOrEmpty(searchString))
             {
-                // فلترة الأفراد
                 if (vm.ActiveSessions != null)
                 {
                     vm.ActiveSessions = vm.ActiveSessions
@@ -146,7 +145,6 @@ namespace HubClub.Controllers
                         .ToList();
                 }
 
-                // 🟢 فلترة الغرف أيضاً في نفس البحث
                 if (vm.ActiveRoomSessions != null)
                 {
                     vm.ActiveRoomSessions = vm.ActiveRoomSessions

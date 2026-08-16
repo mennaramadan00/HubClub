@@ -11,6 +11,7 @@ using System;
 using System.Collections.Generic;
 using System.Linq;
 using System.Threading.Tasks;
+using Microsoft.EntityFrameworkCore;
 
 namespace HubClub.Controllers
 {
@@ -142,28 +143,57 @@ namespace HubClub.Controllers
                 }
 
                 int? activeUserPackageId = null;
-
                 if (vm.PaymentType == PaymentType.Package)
                 {
-                    var activePackage = await _context.UserPackages
-                        .Where(p => p.CusId == finalCustomerId
-                                   && p.Status == UserPackageStatus.Active
-                                   && p.RemainingHours > 0
-                                   && p.ExpiryDate >= now)
-                        // 🟢 التعديل هنا: ترتيب تصاعدي حسب تاريخ الانتهاء لاختيار الباقة الأقرب للانتهاء أولاً
-                        .OrderBy(p => p.ExpiryDate)
-                        .FirstOrDefaultAsync();
+                    // 1. نجلب كل الباقات المسجلة كـ "Active" لهذا العميل لكي ننظفها ونبحث فيها
+                    var activePackages = await _context.UserPackages
+                        .Where(p => p.CusId == finalCustomerId && p.Status == UserPackageStatus.Active && !p.IsDeleted)
+                        .OrderBy(p => p.ExpiryDate) // الترتيب لاستخدام الباقة الأقرب للانتهاء أولاً
+                        .ToListAsync();
 
-                    if (activePackage == null)
+                    UserPackage validPackageToUse = null;
+                    bool needsDbUpdate = false;
+
+                    // 2. المرور على الباقات واحدة تلو الأخرى
+                    foreach (var pkg in activePackages)
                     {
+                        // إذا كانت الباقة منتهية تاريخاً (مقارنة باليوم فقط) أو رصيداً
+                        if (pkg.ExpiryDate.Date < now.Date || pkg.RemainingHours <= 0)
+                        {
+                            pkg.Status = UserPackageStatus.Expired;
+                            _context.UserPackages.Update(pkg);
+                            needsDbUpdate = true; // نعلم السيستم أن هناك تحديثاً يجب حفظه
+                        }
+                        else if (validPackageToUse == null)
+                        {
+                            // أول باقة نجدها سليمة ولا تخضع لشرط الانتهاء، نلتقطها ونحفظها للاستخدام
+                            validPackageToUse = pkg;
+                        }
+                    }
+
+                    // 3. حفظ تغييرات الحالات المنتهية في الداتابيز بصمت (Lazy Updating)
+                    if (needsDbUpdate)
+                    {
+                        await _context.SaveChangesAsync();
+                    }
+
+                    // 4. اتخاذ القرار النهائي
+                    if (validPackageToUse != null)
+                    {
+                        // وجدنا باقة صالحة! نربطها بالجلسة ونكمل بدون إزعاج الكاشير
+                        activeUserPackageId = validPackageToUse.UserPackageId;
+                    }
+                    else
+                    {
+                        // لم نجد أي باقة صالحة (كلهم كانوا منتهيين)
                         await transaction.RollbackAsync();
-                        ModelState.AddModelError("PaymentType", "هذا العميل لا يمتلك باقة نشطة أو رصيد باقته انتهى.");
+                        ModelState.AddModelError("PaymentType", "عفواً، باقة هذا العميل منتهية الصلاحية (تاريخاً أو رصيداً). يرجى تجديدها أولاً.");
                         vm.AllCustomers = await GetCustomerListAsync();
                         vm.StartTime = now;
                         return View(vm);
                     }
-                    activeUserPackageId = activePackage.UserPackageId;
                 }
+
 
                 var session = new Session
                 {
@@ -761,27 +791,25 @@ namespace HubClub.Controllers
         #endregion
 
         #region daily report seperate page 
+
         public async Task<IActionResult> DailyReport(DateTime? date)
         {
             // 1. تحديد يوم العمل المحاسبي بدقة احترافية
             DateOnly targetBusinessDate;
             if (date.HasValue)
             {
-                // لو المستخدم اختار تاريخ من النتيجة، نحوله ליوم عمل
                 targetBusinessDate = BusinessHelper.GetBusinessDate(date.Value);
             }
             else
             {
-                // لو فاتح التقرير بتاع النهاردة، نستخدم الـ Helper عشان نحمي نفسنا لو الساعة 2 الفجر
                 targetBusinessDate = BusinessHelper.GetBusinessDate(DateTime.Now);
             }
 
-            // للمتغيرات اللي بتتبعت للـ View فقط (عشان العرض في الشاشة)
             DateTime selectedDate = targetBusinessDate.ToDateTime(TimeOnly.MinValue);
             var businessStart = selectedDate.AddHours(8).AddMinutes(30);
             var businessEnd = businessStart.AddDays(1);
 
-            // 2. تقرير الجلسات (مبني على BusinessDate)
+            // 2. تقرير جلسات الصالة
             var sessions = await _context.Sessions
                 .AsNoTracking()
                 .AsSplitQuery()
@@ -792,7 +820,29 @@ namespace HubClub.Controllers
                 .OrderBy(s => s.StartTime)
                 .ToListAsync();
 
-            // 3. 🟢 جلب حركات المخزن الخاصة بيوم التقرير (الاعتماد التام على BusinessDate وليس Timestamp)
+            // 🟢 3. تقرير جلسات الغرف (الجديد)
+            var roomSessions = await _context.RoomSessions
+                .AsNoTracking()
+                .AsSplitQuery()
+                .Include(rs => rs.Room)
+                .Include(rs => rs.Customer)
+                .Include(rs => rs.RoomSessionProducts)
+                    .ThenInclude(sp => sp.Product)
+                .Where(rs => rs.BusinessDate == targetBusinessDate)
+                .OrderBy(rs => rs.StartTime)
+                .ToListAsync();
+
+            // تقسيم الجلسات (مفتوح / مغلق)
+            var closedSessions = sessions.Where(s => s.IsClosed).ToList();
+            var openSessions = sessions.Where(s => !s.IsClosed).ToList();
+
+            var closedRoomSessions = roomSessions.Where(rs => rs.IsClosed).ToList();
+            var openRoomSessions = roomSessions.Where(rs => !rs.IsClosed).ToList();
+
+            // حساب إيرادات الغرف
+            decimal totalRoomRevenue = closedRoomSessions.Sum(rs => rs.GrandTotal);
+
+            // 4. جلب حركات المخزن الخاصة بيوم التقرير فقط (آمنة لأنها يوم واحد)
             var movementsToday = await _context.StockMovements
                 .AsNoTracking()
                 .Where(m => m.BusinessDate == targetBusinessDate)
@@ -802,15 +852,22 @@ namespace HubClub.Controllers
                 .GroupBy(m => m.ProductId)
                 .ToDictionary(g => g.Key, g => g.ToList());
 
-            // 4. 🟢 جلب كل حركات المستقبل لمعرفة الرصيد بأثر رجعي
-            var futureMovements = await _context.StockMovements
+            // 🚀 5. جلب كل حركات المستقبل لمعرفة الرصيد بأثر رجعي (تم حل مشكلة الـ Memory بأمان تام)
+            // الداتابيز هي من ستقوم بالجمع، وسيعود لنا فقط عدد سطور يساوي عدد المنتجات (مثلاً 50 سطر فقط بدلاً من الآلاف)
+            var futureMovementsSummary = await _context.StockMovements
                 .AsNoTracking()
                 .Where(m => m.BusinessDate > targetBusinessDate)
+                .GroupBy(m => m.ProductId)
+                .Select(g => new
+                {
+                    ProductId = g.Key,
+                    NetChange = g.Sum(m => m.QuantityChanged)
+                })
                 .ToListAsync();
 
-            var groupedFutureMovements = futureMovements
-                .GroupBy(m => m.ProductId)
-                .ToDictionary(g => g.Key, g => g.Sum(m => m.QuantityChanged));
+            // تحويل النتيجة الصافية إلى Dictionary لتستخدمها حلقة الـ foreach بسرعة
+            var groupedFutureMovements = futureMovementsSummary
+                .ToDictionary(g => g.ProductId, g => g.NetChange);
 
             var products = await _context.Products.AsNoTracking().ToListAsync();
             var inventoryReport = new List<ProductReportItem>();
@@ -821,7 +878,6 @@ namespace HubClub.Controllers
                 int added = 0;
                 int deficit = 0;
 
-                // حساب حركات اليوم فقط
                 if (groupedMovementsToday.TryGetValue(p.ProductId, out var movements))
                 {
                     sold = movements.Where(m => m.MovementType == "Sale" || m.MovementType == "Mid-Session Sale" || m.MovementType == "Session Product Return").Sum(m => -m.QuantityChanged);
@@ -829,29 +885,23 @@ namespace HubClub.Controllers
                     deficit = movements.Where(m => m.MovementType == "Deficit").Sum(m => -m.QuantityChanged);
                 }
 
-                // 5. 🟢 المعادلة الاحترافية الصارمة (Strict Logic بدون إخفاء للسوالب)
-
-                // أ) صافي التغير في المستقبل
+                // استخدام الـ Dictionary الآمن والجاهز
                 int futureNetChange = groupedFutureMovements.TryGetValue(p.ProductId, out var change) ? change : 0;
-
-                // ب) الرصيد النهائي ليوم التقرير = الرصيد الفعلي الحالي في الداتابيز - التغيرات المستقبلية
                 int actualEndQuantity = p.Quantity - futureNetChange;
-
-                // ج) الرصيد الافتتاحي ليوم التقرير = الرصيد النهائي لليوم - الوارد + المنصرف
                 int actualStartQuantity = actualEndQuantity - added + sold + deficit;
 
                 inventoryReport.Add(new ProductReportItem
                 {
                     ProductName = p.Name,
-                    StartQuantity = actualStartQuantity, // سيظهر بالسالب إذا كان هناك خطأ إداري في الإدخال
+                    StartQuantity = actualStartQuantity,
                     SoldQuantity = sold,
                     AddedQuantity = added,
                     DeficitQuantity = deficit,
-                    EndQuantity = actualEndQuantity      // سيظهر بالسالب إذا تم البيع بدون تسجيل وارد
+                    EndQuantity = actualEndQuantity
                 });
             }
 
-            // 6. حساب إيرادات الباقات لهذا اليوم المحاسبي
+            // 6. حساب إيرادات الباقات
             var packagesSoldToday = await _context.UserPackages
                 .AsNoTracking()
                 .Where(up => up.PurchaseBusinessDate == targetBusinessDate && !up.IsDeleted)
@@ -859,9 +909,7 @@ namespace HubClub.Controllers
 
             decimal todayPackagesRevenue = packagesSoldToday.Sum(up => up.Price);
 
-            var closedSessions = sessions.Where(s => s.IsClosed).ToList();
-            var openSessions = sessions.Where(s => !s.IsClosed).ToList();
-
+            // 7. تجميع تفاصيل الإيرادات حسب النوع (PaymentBreakdown)
             var paymentBreakdown = closedSessions
                 .GroupBy(s => s.PaymentType)
                 .Select(g => new PaymentTypeSummaryItem
@@ -881,33 +929,57 @@ namespace HubClub.Controllers
                 });
             }
 
+            // 🟢 إضافة الغرف لجدول التحليل
+            if (totalRoomRevenue > 0)
+            {
+                paymentBreakdown.Add(new PaymentTypeSummaryItem
+                {
+                    PaymentTypeName = "جلسات الغرف (VIP)",
+                    SessionsCount = closedRoomSessions.Count,
+                    Revenue = totalRoomRevenue
+                });
+            }
+
             return View(new DailyReportViewModel
             {
                 SelectedDate = selectedDate,
                 BusinessDayStart = businessStart,
                 BusinessDayEnd = businessEnd,
+
                 Sessions = sessions,
+                RoomSessions = roomSessions,
                 InventoryReport = inventoryReport,
 
                 TotalTimeRevenue = closedSessions.Sum(s => s.TotalTimePrice),
                 TotalProductRevenue = closedSessions.Sum(s => s.TotalProductPrice),
                 TotalPackageRevenue = todayPackagesRevenue,
-                TotalRevenue = closedSessions.Sum(s => s.GrandTotal) + todayPackagesRevenue,
+                TotalRoomRevenue = totalRoomRevenue,
 
-                // 🟢 تم دمج إيراد الجلسات وإيراد الباقات معاً حسب طريقة الدفع
+                // الإجمالي الشامل
+                TotalRevenue = closedSessions.Sum(s => s.GrandTotal) + todayPackagesRevenue + totalRoomRevenue,
+
+                // 🟢 تجميع الكاش (صالة + باقات + غرف)
                 TotalCashMethod =
-    closedSessions.Where(s => s.PaymentMethod == HubClub.Models.Enums.PaymentMethod.Cash).Sum(s => s.GrandTotal) +
-    packagesSoldToday.Where(p => p.PaymentMethod == HubClub.Models.Enums.PaymentMethod.Cash).Sum(p => p.Price),
+                    closedSessions.Where(s => s.PaymentMethod == HubClub.Models.Enums.PaymentMethod.Cash).Sum(s => s.GrandTotal) +
+                    packagesSoldToday.Where(p => p.PaymentMethod == HubClub.Models.Enums.PaymentMethod.Cash).Sum(p => p.Price) +
+                    closedRoomSessions.Where(rs => rs.PaymentMethod == HubClub.Models.Enums.PaymentMethod.Cash).Sum(rs => rs.GrandTotal),
 
+                // 🟢 تجميع الإنستاباي (صالة + باقات + غرف)
                 TotalInstaPayMethod =
-    closedSessions.Where(s => s.PaymentMethod == HubClub.Models.Enums.PaymentMethod.InstaPay).Sum(s => s.GrandTotal) +
-    packagesSoldToday.Where(p => p.PaymentMethod == HubClub.Models.Enums.PaymentMethod.InstaPay).Sum(p => p.Price),
+                    closedSessions.Where(s => s.PaymentMethod == HubClub.Models.Enums.PaymentMethod.InstaPay).Sum(s => s.GrandTotal) +
+                    packagesSoldToday.Where(p => p.PaymentMethod == HubClub.Models.Enums.PaymentMethod.InstaPay).Sum(p => p.Price) +
+                    closedRoomSessions.Where(rs => rs.PaymentMethod == HubClub.Models.Enums.PaymentMethod.InstaPay).Sum(rs => rs.GrandTotal),
 
                 ClosedSessionsCount = closedSessions.Count,
                 OpenSessionsCount = openSessions.Count,
+
+                ClosedRoomSessionsCount = closedRoomSessions.Count,
+                OpenRoomSessionsCount = openRoomSessions.Count,
+
                 PaymentBreakdown = paymentBreakdown.OrderByDescending(x => x.Revenue).ToList()
             });
         }
+
         #endregion
 
         #region session edit closed

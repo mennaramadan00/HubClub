@@ -5,185 +5,253 @@
     var todayStr = DateTime.Now.Date.ToString("yyyy-MM-dd");
 }
 
-<h2>تقرير يوم @Model.SelectedDate.ToString("yyyy-MM-dd")</h2>
+<div class="d-flex justify-content-between align-items-center mb-3">
+    <h2 class="topbar-title m-0 fs-4">تقرير يوم @Model.SelectedDate.ToString("yyyy-MM-dd")</h2>
+</div>
 
-<!-- فلتر التاريخ + تنقل بين الأيام -->
-<div class="card p-3 mb-4">
-    <form method="get" asp-controller="Session" asp-action="DailyReport" class="row g-3 align-items-end">
-        <div class="col-md-4">
-            <label for="date" class="form-label fw-bold">تاريخ يوم العمل:</label>
-            <input type="date" id="date" name="date" class="form-control"
-                   value="@Model.SelectedDate.ToString("yyyy-MM-dd")" required />
+<!-- 🟢 1. فلتر التاريخ + معلومات الوردية (تم دمجهم لتوفير المساحة) -->
+<div class="glass-form-container mt-0 p-3 mb-4">
+    <form method="get" asp-controller="Session" asp-action="DailyReport" class="row g-2 align-items-center m-0">
+        <div class="col-md-auto">
+            <label for="date" class="fw-bold text-muted small mb-1">تاريخ العمل:</label>
+            <input type="date" id="date" name="date" class="premium-input m-0 py-1" value="@Model.SelectedDate.ToString("yyyy-MM-dd")" required style="min-width: 150px;" />
         </div>
-        <div class="col-md-2">
-            <button type="submit" class="btn btn-primary w-100">عرض التقرير</button>
+        <div class="col-md-auto mt-auto">
+            <button type="submit" class="btn-aurelian-primary py-1 px-4">عرض</button>
         </div>
-        <div class="col-md-6 d-flex gap-2 justify-content-md-end">
-            <a class="btn btn-outline-secondary" asp-controller="Session" asp-action="DailyReport" asp-route-date="@prevDay">
-                &raquo; اليوم السابق
-            </a>
-            <a class="btn btn-outline-secondary" asp-controller="Session" asp-action="DailyReport" asp-route-date="@todayStr">
-                اليوم
-            </a>
-            <a class="btn btn-outline-secondary" asp-controller="Session" asp-action="DailyReport" asp-route-date="@nextDay">
-                اليوم التالي &laquo;
-            </a>
+        <div class="col-md-auto ms-auto mt-auto d-flex gap-2">
+            <a class="btn-aurelian-outline py-1 px-2 small" asp-controller="Session" asp-action="DailyReport" asp-route-date="@prevDay">&raquo; السابق</a>
+            <a class="btn-aurelian-outline py-1 px-2 small" asp-controller="Session" asp-action="DailyReport" asp-route-date="@todayStr">اليوم</a>
+            <a class="btn-aurelian-outline py-1 px-2 small" asp-controller="Session" asp-action="DailyReport" asp-route-date="@nextDay">التالي &laquo;</a>
         </div>
     </form>
+
+    <hr class="my-3" style="border-color: var(--glass-edge-blue);" />
+
+    <div class="d-flex justify-content-between align-items-center flex-wrap gap-2 small">
+        <span class="fw-bold text-secondary">
+            <span class="val-azure">وردية الحساب:</span>
+            @Model.BusinessDayStart.ToString("MM/dd hh:mm tt") <i class="bi bi-arrow-left mx-1"></i> @Model.BusinessDayEnd.ToString("MM/dd hh:mm tt")
+        </span>
+        <div class="d-flex gap-3">
+            <span>الغرف: <span class="badge bg-secondary">@Model.ClosedRoomSessionsCount مغلقة</span> <span class="badge bg-warning text-dark">@Model.OpenRoomSessionsCount مفتوحة</span></span>
+            <span>الصالة: <span class="badge bg-secondary">@Model.ClosedSessionsCount مغلقة</span> <span class="badge bg-primary">@Model.OpenSessionsCount مفتوحة</span></span>
+        </div>
+    </div>
 </div>
 
-<!-- شريط توضيح نافذة يوم العمل الفعلية -->
-<div class="alert alert-info d-flex justify-content-between flex-wrap">
-    <span>
-        <strong>يوم العمل المعروض:</strong>
-        من @Model.BusinessDayStart.ToString("yyyy-MM-dd hh:mm tt")
-        إلى @Model.BusinessDayEnd.ToString("yyyy-MM-dd hh:mm tt")
-    </span>
-    <span>
-        الجلسات المغلقة: <strong>@Model.ClosedSessionsCount</strong> |
-        الجلسات المفتوحة الآن: <strong>@Model.OpenSessionsCount</strong>
-    </span>
-</div>
+<!-- 🟢 2. لوحة القيادة المالية (3 كروت فقط بدلاً من 7 لدعم الأرقام الكبيرة) -->
+<div class="row g-3 mb-5">
 
-<!-- ملخص الإيرادات 🟢 التعديل: 5 أعمدة متساوية -->
-<div class="row g-3 mb-4">
-    <div class="col">
-        <div class="card p-3 text-center h-100" style="border-bottom: 3px solid #198754;">
-            <div class="text-muted">إجمالي الدرج (كاش)</div>
-            <div class="fs-4 fw-bold text-success">@Model.TotalRevenue.ToString("N2") ج</div>
-        </div>
-    </div>
-    <div class="col">
-        <div class="card p-3 text-center h-100">
-            <div class="text-muted">إيراد الوقت</div>
-            <div class="fs-5 fw-bold">@Model.TotalTimeRevenue.ToString("N2") ج</div>
-        </div>
-    </div>
-    <div class="col">
-        <div class="card p-3 text-center h-100">
-            <div class="text-muted">إيراد المنتجات</div>
-            <div class="fs-5 fw-bold">@Model.TotalProductRevenue.ToString("N2") ج</div>
-        </div>
-    </div>
-    <!-- 🟢 الإضافة الجديدة -->
-    <div class="col">
-        <div class="card p-3 text-center h-100" style="border-bottom: 3px solid var(--bs-primary);">
-            <div class="text-muted">مبيعات الباقات</div>
-            <div class="fs-5 fw-bold text-primary">@Model.TotalPackageRevenue.ToString("N2") ج</div>
-        </div>
-    </div>
-    <!-- ملخص التحصيل (كاش / إنستاباي) -->
-    <div class="row g-3 mb-4">
-        <div class="col-md-4">
-            <div class="card p-3 text-center h-100" style="border-right: 4px solid #198754; background: rgba(25, 135, 84, 0.05); border-radius: 8px;">
-                <div class="text-muted fw-bold mb-1">المحصل (كاش)</div>
-                <div class="fs-4 fw-bold text-success">@Model.TotalCashMethod.ToString("N2") <span style="font-size: 1rem;">ج.م</span></div>
+    <!-- الكارت الأول: الإجمالي النهائي (Hero Card) -->
+    <div class="col-lg-4">
+        <div class="glass-form-container h-100 d-flex flex-column justify-content-center align-items-center p-4 text-center" style="background: linear-gradient(135deg, var(--azure) 0%, #1E3A8A 100%); border: none;">
+            <div class="text-white opacity-75 mb-2 fw-bold fs-6">إجمالي الدخل ليوم العمل</div>
+            <!-- text-break تضمن عدم خروج الأرقام الكبيرة جداً عن الكارت -->
+            <div class="text-white fw-bold text-break w-100" style="font-size: 2.2rem; line-height: 1.2;">
+                @Model.TotalRevenue.ToString("N2") <span class="fs-5 opacity-75">ج.م</span>
             </div>
         </div>
-        <div class="col-md-4">
-            <div class="card p-3 text-center h-100" style="border-right: 4px solid #6f42c1; background: rgba(111, 66, 193, 0.05); border-radius: 8px;">
-                <div class="text-muted fw-bold mb-1">المحصل (إنستاباي)</div>
-                <div class="fs-4 fw-bold" style="color: #6f42c1;">@Model.TotalInstaPayMethod.ToString("N2") <span style="font-size: 1rem;">ج.م</span></div>
+    </div>
+
+    <!-- الكارت الثاني: تفصيل التحصيل (كاش وإنستاباي) -->
+    <div class="col-lg-4">
+        <div class="glass-form-container h-100 p-4 d-flex flex-column justify-content-center">
+            <h6 class="text-muted fw-bold border-bottom pb-2 mb-3">طريقة التحصيل</h6>
+
+            <div class="d-flex justify-content-between align-items-center mb-3 flex-wrap">
+                <div class="d-flex align-items-center gap-2">
+                    <span style="width: 10px; height: 10px; border-radius: 50%; background-color: #198754;"></span>
+                    <span class="fw-bold text-dark small">كاش نقدي</span>
+                </div>
+                <span class="fw-bold fs-5 text-break" style="color: #198754; max-width: 60%; text-align: left;">@Model.TotalCashMethod.ToString("N2") ج</span>
+            </div>
+
+            <div class="d-flex justify-content-between align-items-center flex-wrap">
+                <div class="d-flex align-items-center gap-2">
+                    <span style="width: 10px; height: 10px; border-radius: 50%; background-color: #6f42c1;"></span>
+                    <span class="fw-bold text-dark small">إنستاباي</span>
+                </div>
+                <span class="fw-bold fs-5 text-break" style="color: #6f42c1; max-width: 60%; text-align: left;">@Model.TotalInstaPayMethod.ToString("N2") ج</span>
             </div>
         </div>
-    <div class="col">
-        <div class="card p-3 text-center h-100">
-            <div class="text-muted">عدد الجلسات المغلقة</div>
-            <div class="fs-5 fw-bold">@Model.ClosedSessionsCount</div>
+    </div>
+
+    <!-- الكارت الثالث: مصادر الدخل المدمجة -->
+    <div class="col-lg-4">
+        <div class="glass-form-container h-100 p-4 d-flex flex-column justify-content-center">
+            <h6 class="text-muted fw-bold border-bottom pb-2 mb-3">مصادر الدخل</h6>
+
+            <div class="d-flex justify-content-between align-items-center mb-2 flex-wrap">
+                <span class="text-secondary fw-bold small">البار:</span>
+                <span class="fw-bold text-dark text-break" style="max-width: 70%; text-align: left;">@Model.TotalProductRevenue.ToString("N2") ج</span>
+            </div>
+            <div class="d-flex justify-content-between align-items-center mb-2 flex-wrap">
+                <span class="text-secondary fw-bold small">وقت الصالة:</span>
+                <span class="fw-bold text-dark text-break" style="max-width: 70%; text-align: left;">@Model.TotalTimeRevenue.ToString("N2") ج</span>
+            </div>
+            <div class="d-flex justify-content-between align-items-center mb-2 flex-wrap">
+                <span class="text-secondary fw-bold small">غرف VIP:</span>
+                <span class="fw-bold val-amber text-break" style="max-width: 70%; text-align: left;">@Model.TotalRoomRevenue.ToString("N2") ج</span>
+            </div>
+            <div class="d-flex justify-content-between align-items-center flex-wrap">
+                <span class="text-secondary fw-bold small">الباقات:</span>
+                <span class="fw-bold text-break" style="color: var(--nav-orange-text); max-width: 70%; text-align: left;">@Model.TotalPackageRevenue.ToString("N2") ج</span>
+            </div>
         </div>
     </div>
 </div>
 
-<!-- توزيع الإيراد حسب طريقة الدفع -->
-<h4>الإيراد حسب طريقة الدفع</h4>
-@if (!Model.PaymentBreakdown.Any())
+<hr style="border-color: var(--glass-edge-blue); margin-bottom: 2rem;" />
+
+<!-- 🟢 3. الجداول (تم وضعها في حاويات Table-Responsive لتجنب كسر الشاشة) -->
+<!-- تحليل تفصيلي للإيرادات -->
+@if (Model.PaymentBreakdown.Any())
 {
-    <p class="text-muted">لا توجد جلسات مغلقة في هذا اليوم.</p>
+    <div class="row mb-4">
+        <div class="col-md-6">
+            <h4 class="topbar-title mb-3 fs-6">تفصيل حركات الدفع</h4>
+            <div class="table-glass-wrap table-responsive">
+                <table class="table-glass mb-0">
+                    <thead>
+                        <tr>
+                            <th>البند</th>
+                            <th class="text-center-glass">العمليات</th>
+                            <th>الإجمالي</th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                        @foreach (var p in Model.PaymentBreakdown)
+                        {
+                            <tr>
+                                <td class="fw-bold val-sapphire small">@p.PaymentTypeName</td>
+                                <td class="text-center-glass"><span class="badge-glass px-2 py-1">@p.SessionsCount</span></td>
+                                <td class="fw-bold small">@p.Revenue.ToString("N2") ج</td>
+                            </tr>
+                        }
+                    </tbody>
+                </table>
+            </div>
+        </div>
+    </div>
+}
+
+<!-- تقرير جلسات الغرف -->
+<h4 class="topbar-title mb-3 fs-6 val-amber mt-4">جلسات الغرف (VIP) 🚪</h4>
+@if (!Model.RoomSessions.Any())
+{
+    <p class="text-muted fw-bold small mb-4">لا توجد جلسات غرف في هذا اليوم.</p>
 }
 else
 {
-    <table class="table  mb-4">
-        <thead>
-            <tr>
-                <th>طريقة الدفع</th>
-                <th>عدد العمليات</th>
-                <th>الإيراد</th>
-            </tr>
-        </thead>
-        <tbody>
-            @foreach (var p in Model.PaymentBreakdown)
-            {
+    <div class="table-glass-wrap table-responsive mb-4" style="border-color: rgba(255, 196, 0, 0.3);">
+        <table class="table-glass mb-0" style="font-size: 0.9rem;">
+            <thead style="background: linear-gradient(120deg, rgba(255, 250, 230, 0.9), rgba(255, 255, 255, 0.6));">
                 <tr>
-                    <td>@p.PaymentTypeName</td>
-                    <td>@p.SessionsCount</td>
-                    <td>@p.Revenue.ToString("N2") ج</td>
+                    <th>الغرفة</th>
+                    <th>العميل</th>
+                    <th>البداية - النهاية</th>
+                    <th>السداد</th>
+                    <th>الحالة</th>
+                    <th>الإجمالي</th>
+                    <th>الطلبات</th>
                 </tr>
-            }
-        </tbody>
-    </table>
+            </thead>
+            <tbody>
+                @foreach (var rs in Model.RoomSessions)
+                {
+                    <tr style="@(rs.IsClosed ? "" : "background-color: rgba(255, 196, 0, 0.05);")">
+                        <td class="fw-bold val-amber">@rs.Room.Name</td>
+                        <td class="fw-bold">@(rs.Customer?.Name ?? "عميل طيار")</td>
+                        <td dir="ltr" class="text-muted small">@rs.StartTime.ToString("hh:mm tt") - @(rs.EndTime.HasValue? rs.EndTime.Value.ToString("hh:mm tt") : "مستمرة")</td>
+                        <td>@rs.PaymentMethod</td>
+                        <td>@(rs.IsClosed? Html.Raw("<span class='badge bg-secondary'>مغلقة</span>") : Html.Raw("<span class='badge bg-warning text-dark'>مفتوحة</span>"))</td>
+                        <td class="fw-bold val-amber text-break">@rs.GrandTotal.ToString("N2")</td>
+                        <td>
+                            <div class="d-flex flex-wrap gap-1">
+                                @foreach (var sp in rs.RoomSessionProducts.Where(p => p.Quantity > 0))
+                                {
+                                    <span class="badge bg-warning text-dark opacity-75">@sp.Product.Name (@sp.Quantity)</span>
+                                }
+                            </div>
+                        </td>
+                    </tr>
+                }
+            </tbody>
+        </table>
+    </div>
 }
 
-<!-- جدول الجلسات -->
-<h4>تقرير الجلسات</h4>
+<!-- تقرير جلسات الصالة -->
+<h4 class="topbar-title mb-3 fs-6 mt-4">جلسات الصالة العادية ☕</h4>
 @if (!Model.Sessions.Any())
 {
-    <p class="text-muted">لا توجد جلسات في هذا اليوم.</p>
+    <p class="text-muted fw-bold small mb-4">لا توجد جلسات صالة في هذا اليوم.</p>
 }
 else
 {
-    <table class="table  mb-4">
+    <div class="table-glass-wrap table-responsive mb-4">
+        <table class="table-glass mb-0" style="font-size: 0.9rem;">
+            <thead>
+                <tr>
+                    <th>العميل</th>
+                    <th>البداية - النهاية</th>
+                    <th>السداد</th>
+                    <th>الحالة</th>
+                    <th>الإجمالي</th>
+                    <th>الطلبات</th>
+                </tr>
+            </thead>
+            <tbody>
+                @foreach (var s in Model.Sessions)
+                {
+                    <tr style="@(s.IsClosed ? "" : "background-color: rgba(0, 128, 255, 0.05);")">
+                        <td class="fw-bold val-sapphire">@s.Customer.Name</td>
+                        <td dir="ltr" class="text-muted small">@s.StartTime.ToString("hh:mm tt") - @(s.EndTime.HasValue? s.EndTime.Value.ToString("hh:mm tt") : "مستمرة")</td>
+                        <td>@s.PaymentType</td>
+                        <td>@(s.IsClosed? Html.Raw("<span class='badge bg-secondary'>مغلقة</span>") : Html.Raw("<span class='badge bg-primary'>مفتوحة</span>"))</td>
+                        <td class="fw-bold val-sapphire text-break">@s.GrandTotal.ToString("N2")</td>
+                        <td>
+                            <div class="d-flex flex-wrap gap-1">
+                                @foreach (var sp in s.SessionProducts.Where(p => p.Quantity > 0))
+                                {
+                                    <span style="background: var(--azure-glow-soft); padding: 1px 5px; border-radius: 4px; border: 1px solid var(--azure-glow); font-size: 0.75rem; color: var(--sapphire);">@sp.Product.Name (@sp.Quantity)</span>
+                                }
+                            </div>
+                        </td>
+                    </tr>
+                }
+            </tbody>
+        </table>
+    </div>
+}
+
+<!-- جدول حركة المخزون -->
+<h4 class="topbar-title mb-3 fs-6 mt-4">حركة المخزون للبار</h4>
+<div class="table-glass-wrap table-responsive mb-5">
+    <table class="table-glass mb-0" style="font-size: 0.9rem;">
         <thead>
             <tr>
-                <th>العميل</th>
-                <th>البداية</th>
-                <th>النهاية</th>
-                <th>طريقة الدفع</th>
-                <th>الحالة</th>
-                <th>الإجمالي</th>
-                <th>المنتجات</th>
+                <th>المنتج</th>
+                <th class="text-center-glass">الافتتاحي</th>
+                <th class="text-center-glass">وارد (+)</th>
+                <th class="text-center-glass">مبيعات (-)</th>
+                <th class="text-center-glass">عجز/تالف (-)</th>
+                <th class="text-center-glass">الختامي</th>
             </tr>
         </thead>
         <tbody>
-            @foreach (var s in Model.Sessions)
+            @foreach (var r in Model.InventoryReport)
             {
-                <tr class="@(s.IsClosed ? "" : "table-warning")">
-                    <td>@s.Customer.Name</td>
-                    <td>@s.StartTime.ToString("hh:mm tt")</td>
-                    <td>@(s.EndTime.HasValue? s.EndTime.Value.ToString("hh:mm tt") : "—")</td>
-                    <td>@s.PaymentType</td>
-                    <td>@(s.IsClosed ? "مغلقة" : "مفتوحة الآن")</td>
-                    <td>@s.GrandTotal.ToString("N2") ج</td>
-                    <td>@string.Join(", ", s.SessionProducts.Select(sp => sp.Product.Name + " (" + sp.Quantity + ")"))</td>
+                <tr>
+                    <td class="fw-bold val-sapphire">@r.ProductName</td>
+                    <td class="text-center-glass text-muted fw-bold">@r.StartQuantity</td>
+                    <td class="text-center-glass val-success fw-bold">@r.AddedQuantity</td>
+                    <td class="text-center-glass text-danger fw-bold">@r.SoldQuantity</td>
+                    <td class="text-center-glass val-amber fw-bold">@r.DeficitQuantity</td>
+                    <td class="text-center-glass"><span class="badge-glass px-2 py-1 fs-6">@r.EndQuantity</span></td>
                 </tr>
             }
         </tbody>
     </table>
-}
-
-<!-- جدول المخزون -->
-<h4>تقرير حركة المخزون</h4>
-<table class="table ">
-    <thead>
-        <tr>
-            <th>المنتج</th>
-            <th>الافتتاحي</th>
-            <th>إضافة (+)</th>
-            <th>مبيعات (-)</th>
-            <th>عجز/تالف (-)</th>
-            <th>الختامي</th>
-        </tr>
-    </thead>
-    <tbody>
-        @foreach (var r in Model.InventoryReport)
-        {
-            <tr>
-                <td>@r.ProductName</td>
-                <td>@r.StartQuantity</td>
-                <td class="text-success">@r.AddedQuantity</td>
-                <td class="text-danger">@r.SoldQuantity</td>
-                <td class="text-warning">@r.DeficitQuantity</td>
-                <td><strong>@r.EndQuantity</strong></td>
-            </tr>
-        }
-    </tbody>
-</table>
+</div>

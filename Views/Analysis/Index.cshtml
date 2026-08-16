@@ -4,15 +4,38 @@
 }
 
 <div class="container-fluid p-4" dir="rtl">
-    <!-- العنوان -->
-    <div class="d-flex justify-content-between align-items-center mb-4">
-        <h2 style="color: var(--sapphire); font-weight: 800; margin: 0;">التحليل المالي والمؤشرات</h2>
+
+    <!-- العنوان مع أزرار الفلتر -->
+    <div class="d-flex justify-content-between align-items-center flex-wrap gap-3 mb-4">
+        <h2 style="color: var(--sapphire); font-weight: 800; margin: 0;">
+            المؤشرات والتحليل المالي <span class="fs-5 text-muted fw-normal">(إحصائيات @Model.FilterTitle)</span>
+        </h2>
+
+        <!-- 🟢 أزرار الفلتر الزمني -->
+        <div class="glass-form-container py-2 px-3 d-flex gap-2 m-0">
+            <a asp-action="Index" asp-route-filter="today"
+               class="@(Model.CurrentFilter == "today" ? "btn-aurelian-primary" : "btn-aurelian-outline") py-1 px-3 fs-6">
+                اليوم
+            </a>
+            <a asp-action="Index" asp-route-filter="week"
+               class="@(Model.CurrentFilter == "week" ? "btn-aurelian-primary" : "btn-aurelian-outline") py-1 px-3 fs-6">
+                آخر أسبوع
+            </a>
+            <a asp-action="Index" asp-route-filter="month"
+               class="@(Model.CurrentFilter == "month" ? "btn-aurelian-primary" : "btn-aurelian-outline") py-1 px-3 fs-6">
+                آخر شهر
+            </a>
+            <a asp-action="Index" asp-route-filter="year"
+               class="@(Model.CurrentFilter == "year" ? "btn-aurelian-primary" : "btn-aurelian-outline") py-1 px-3 fs-6">
+                آخر سنة
+            </a>
+        </div>
     </div>
 
-    <!-- 1. الباقة الأكثر شعبية (كارت ملخص في الأعلى) -->
+    <!-- 1. الباقة الأكثر شعبية -->
     <div class="analysis-summary-grid mb-5">
         <div class="summary-box">
-            <div class="sb-title">الباقة الأكثر شعبية</div>
+            <div class="sb-title">الباقة الأكثر شعبية خلال (@Model.FilterTitle)</div>
             <div class="sb-val" style="font-size: 2rem;">@Model.MostPopularPackageName</div>
             <div class="text-muted fw-bold">عدد المشتركين: @Model.MostPopularPackageCount</div>
         </div>
@@ -27,16 +50,19 @@
                     <thead>
                         <tr>
                             <th>المنتج</th>
-                            <th class="text-center">الكمية المباعة</th>
+                            <th class="text-center-glass">الكمية المباعة</th>
                         </tr>
                     </thead>
                     <tbody>
+                        @if (!Model.TopProducts.Any())
+                        {
+                            <tr><td colspan="2" class="text-center text-muted fw-bold py-3">لا توجد مبيعات في هذه الفترة</td></tr>
+                        }
                         @foreach (var item in Model.TopProducts)
                         {
                             <tr>
-                                <td class="fw-bold">@item.Name</td>
-                                <!-- تم استخدام ToString("F0") لإخفاء الكسور والأصفار -->
-                                <td class="text-center">@item.Value.ToString("F0")</td>
+                                <td class="fw-bold val-sapphire">@item.Name</td>
+                                <td class="text-center-glass"><span class="badge-glass px-3 py-1 fs-6">@item.Value.ToString("F0")</span></td>
                             </tr>
                         }
                     </tbody>
@@ -52,15 +78,19 @@
                     <thead>
                         <tr>
                             <th>العميل</th>
-                            <th class="text-center">إجمالي الإيرادات</th>
+                            <th class="text-center-glass">إجمالي الإيرادات</th>
                         </tr>
                     </thead>
                     <tbody>
+                        @if (!Model.TopCustomers.Any())
+                        {
+                            <tr><td colspan="2" class="text-center text-muted fw-bold py-3">لا توجد إيرادات في هذه الفترة</td></tr>
+                        }
                         @foreach (var item in Model.TopCustomers)
                         {
                             <tr>
-                                <td class="fw-bold">@item.Name</td>
-                                <td class="text-center text-success fw-bold">@item.Value.ToString("N2") ج</td>
+                                <td class="fw-bold val-sapphire">@item.Name</td>
+                                <td class="text-center-glass text-success fw-bold">@item.Value.ToString("N2") ج</td>
                             </tr>
                         }
                     </tbody>
