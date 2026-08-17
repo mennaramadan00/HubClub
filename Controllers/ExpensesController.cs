@@ -67,8 +67,7 @@ namespace HubClub.Controllers
             {
                 // تعيين الوقت والوردية تلقائياً
                 expense.Date = DateTime.Now;
-                expense.BusinessDate = BusinessHelper.GetBusinessDate(expense.Date).ToDateTime(TimeOnly.MinValue);
-
+                expense.BusinessDate = BusinessHelper.GetBusinessDate(expense.Date);
                 _context.Add(expense);
                 await _context.SaveChangesAsync();
 

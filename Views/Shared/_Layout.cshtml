@@ -80,6 +80,10 @@
                     <a class="nav-item-link @navActive("Expenses", null)" asp-controller="Expenses" asp-action="Index">إدارة المصروفات</a>
                     <a class="nav-item-link @navActive("Session", "DailyReport")" asp-controller="Session" asp-action="DailyReport">التقارير</a>
                     <a class="nav-item-link @navActive("Analysis", "Index")" asp-controller="Analysis" asp-action="Index">التحليل المالي</a>
+
+                    <!-- 🟢 الزر الجديد الخاص بقائمة الدخل -->
+                    <a class="nav-item-link @navActive("Report", "IncomeStatement")" asp-controller="Report" asp-action="IncomeStatement">قائمة الدخل</a>
+
                     <a class="nav-item-link @navActive("Rooms", null)" asp-controller="Rooms" asp-action="Index">إدارة الغرف</a>
                     <a class="nav-item-link @navActive("RoomPricings", null)" asp-controller="RoomPricings" asp-action="Index">تسعير الغرف</a>
                 </nav>

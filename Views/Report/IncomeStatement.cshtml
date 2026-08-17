@@ -1,0 +1,219 @@
+﻿@model HubClub.ViewModels.IncomeReportViewModel
+
+@{
+    ViewData["Title"] = "قائمة الدخل والإيرادات";
+}
+
+<!-- وضعنا الروابط مباشرة بدون section لتجنب الـ Error نهائياً -->
+<link rel="stylesheet" href="~/lib/bootstrap/dist/css/bootstrap.min.css" />
+<link rel="stylesheet" href="~/css/hubclub.css" asp-append-version="true" />
+
+<div class="container-fluid mt-4" style="position: relative; z-index: 2;">
+    <h2 class="topbar-title mb-4">قائمة الدخل (Income Statement)</h2>
+
+    <!-- 🟢 رسائل الخطأ بتأثير الزجاج -->
+    @if (!ViewData.ModelState.IsValid)
+    {
+        <div class="alert-glass badge-danger-glass mb-4">
+            <div asp-validation-summary="All" class="text-danger mb-0 fw-bold"></div>
+        </div>
+    }
+
+    <!-- 🟢 فلتر التاريخ بتأثير الزجاج (Glass Form) -->
+    <form method="get" asp-action="IncomeStatement" class="table-glass-wrap p-4 mb-4 row g-3">
+        <div class="col-md-4">
+            <label asp-for="StartDate" class="premium-label"></label>
+            <input type="date" name="startDate" class="premium-input mb-0" value="@Model.StartDate.ToString("yyyy-MM-dd")" />
+        </div>
+        <div class="col-md-4">
+            <label asp-for="EndDate" class="premium-label"></label>
+            <input type="date" name="endDate" class="premium-input mb-0" value="@Model.EndDate.ToString("yyyy-MM-dd")" />
+        </div>
+        <div class="col-md-4 d-flex align-items-end">
+            <button type="submit" class="btn-aurelian-primary w-100" style="margin-bottom: 1.5rem;">عرض التقرير</button>
+        </div>
+    </form>
+
+    <!-- 🟢 صناديق الملخص السريعة -->
+    <div class="analysis-summary-grid mb-4">
+        <div class="summary-box">
+            <div class="sb-title">إجمالي الإيرادات (Total Revenue)</div>
+            <div class="sb-val" style="background: linear-gradient(120deg, var(--azure) 0%, var(--sapphire) 100%); -webkit-background-clip: text;">
+                @Model.TotalRevenue.ToString("N2")
+            </div>
+        </div>
+        <div class="summary-box">
+            <div class="sb-title">المصروفات (Total Expenses)</div>
+            <div class="sb-val" style="background: linear-gradient(120deg, #e05263 0%, #dc3545 100%); -webkit-background-clip: text;">
+                @Model.TotalExpenses.ToString("N2")
+            </div>
+        </div>
+        <div class="summary-box">
+            <div class="sb-title">صافي الدخل (Net Income)</div>
+            <div class="sb-val" style="background: linear-gradient(120deg, var(--amber) 0%, var(--violet-hint) 100%); -webkit-background-clip: text;">
+                @Model.NetIncome.ToString("N2")
+            </div>
+        </div>
+    </div>
+
+    <div class="row align-items-stretch mb-5">
+        <!-- 🟢 الجدول المالي بتأثير الزجاج الشفاف -->
+        <div class="col-md-7 d-flex">
+            <div class="table-glass-wrap w-100">
+                <table class="table-glass">
+                    <thead>
+                        <tr>
+                            <th>البند</th>
+                            <th>القيمة (جنيه)</th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                        <!-- الإيرادات -->
+                        <tr>
+                            <td colspan="2" class="premium-label" style="background: rgba(0,0,0,0.02);">تفصيل الإيرادات</td>
+                        </tr>
+                        <tr>
+                            <td>إيرادات وقت الصالة</td>
+                            <td class="val-success">@Model.SessionTimeRevenue.ToString("N2")</td>
+                        </tr>
+                        <tr>
+                            <td>مبيعات بار الصالة</td>
+                            <td class="val-success">@Model.SessionBarRevenue.ToString("N2")</td>
+                        </tr>
+                        <tr>
+                            <td>إيرادات وقت الغرف VIP</td>
+                            <td class="val-success">@Model.RoomTimeRevenue.ToString("N2")</td>
+                        </tr>
+                        <tr>
+                            <td>مبيعات بار الغرف VIP</td>
+                            <td class="val-success">@Model.RoomBarRevenue.ToString("N2")</td>
+                        </tr>
+                        <tr>
+                            <td>مبيعات الباقات المشتركة</td>
+                            <td class="val-success">@Model.PackagesRevenue.ToString("N2")</td>
+                        </tr>
+
+                        <!-- المصروفات -->
+                        <tr>
+                            <td colspan="2" class="premium-label" style="background: rgba(0,0,0,0.02); border-top: 2px solid var(--glass-edge-blue);">المصروفات</td>
+                        </tr>
+                        <tr>
+                            <td>إجمالي المصروفات والمشتريات</td>
+                            <td class="val-danger">@Model.TotalExpenses.ToString("N2")</td>
+                        </tr>
+
+                        <!-- الصافي -->
+                        <tr style="background: var(--azure-glow-soft);">
+                            <td class="premium-label fs-5">صافي الدخل النهائي:</td>
+                            <td class="fs-4 @(Model.NetIncome >= 0 ? "val-success" : "val-danger")">
+                                @Model.NetIncome.ToString("N2")
+                            </td>
+                        </tr>
+                    </tbody>
+                </table>
+            </div>
+        </div>
+
+        <!-- 🟢 الرسم البياني الدائري (Pie Chart) -->
+        <div class="col-md-5 d-flex">
+            <div class="table-glass-wrap p-4 w-100 d-flex flex-column align-items-center justify-content-center">
+                <h5 class="premium-label mb-3 text-center">توزيع مصادر الدخل</h5>
+                <div style="width: 100%; max-width: 350px;">
+                    <canvas id="incomePieChart"></canvas>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- 🟢 الرسم البياني الخطي -->
+    <div class="row mb-5">
+        <div class="col-12">
+            <div class="table-glass-wrap p-4">
+                <h5 class="premium-label text-center mb-4 text-uppercase">مؤشر الإيرادات اليومية لتتبع النمو</h5>
+                <div style="height: 400px; width: 100%;">
+                    <canvas id="dailyRevenueLineChart"></canvas>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+
+@section Scripts {
+    <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+    <script>
+        document.addEventListener("DOMContentLoaded", function () {
+
+            var revenueData = @Html.Raw(System.Text.Json.JsonSerializer.Serialize(new[] {
+                                        Model.SessionTimeRevenue,
+                                        Model.SessionBarRevenue,
+                                        Model.RoomTimeRevenue,
+                                        Model.RoomBarRevenue,
+                                        Model.PackagesRevenue
+                        }));
+
+        var pieCtx = document.getElementById('incomePieChart').getContext('2d');
+
+            if(!revenueData.every(item => item === 0)){
+                new Chart(pieCtx, {
+                    type: 'pie',
+                    data: {
+                        labels: ['وقت الصالة', 'بار الصالة', 'وقت الغرف VIP', 'بار الغرف VIP', 'الباقات'],
+                        datasets: [{
+                            data: revenueData,
+                            backgroundColor: ['#0080FF', '#FFC400', '#0044CC', '#FF7A1A', '#4FB2FF'],
+                            borderWidth: 2,
+                            borderColor: '#ffffff',
+                            hoverOffset: 6
+                        }]
+                    },
+                    options: {
+                        responsive: true,
+                        plugins: {
+                            legend: { position: 'bottom', labels: { font: { family: 'Tajawal, sans-serif', size: 14 } } }
+                        }
+                    }
+                });
+            } else {
+                document.getElementById('incomePieChart').parentElement.innerHTML =
+                    '<p class="text-center text-muted mt-5 fw-bold">لا توجد إيرادات لعرض التوزيع.</p>';
+            }
+
+            var dailyLabels = @Html.Raw(System.Text.Json.JsonSerializer.Serialize(Model.DailyLabels));
+            var dailyRevenues = @Html.Raw(System.Text.Json.JsonSerializer.Serialize(Model.DailyRevenues));
+
+            if(dailyRevenues.some(item => item > 0)) {
+                var lineCtx = document.getElementById('dailyRevenueLineChart').getContext('2d');
+                new Chart(lineCtx, {
+                    type: 'line',
+                    data: {
+                        labels: dailyLabels,
+                        datasets: [{
+                            label: 'إجمالي الإيرادات (جنيه)',
+                            data: dailyRevenues,
+                            borderColor: '#0080FF',
+                            backgroundColor: 'rgba(0, 128, 255, 0.15)',
+                            borderWidth: 3,
+                            fill: true,
+                            tension: 0.4,
+                            pointBackgroundColor: '#0044CC',
+                            pointRadius: 5,
+                            pointHoverRadius: 8
+                        }]
+                    },
+                    options: {
+                        responsive: true,
+                        maintainAspectRatio: false,
+                        scales: {
+                            y: { beginAtZero: true, grid: { color: 'rgba(0,0,0,0.05)' } },
+                            x: { grid: { display: false } }
+                        },
+                        plugins: { legend: { display: false }, tooltip: { titleFont: { family: 'Tajawal' }, bodyFont: { family: 'Tajawal' } } }
+                    }
+                });
+            } else {
+                document.getElementById('dailyRevenueLineChart').parentElement.innerHTML =
+                    '<p class="text-center text-muted mt-5 fs-5 fw-bold">لا توجد إيرادات في هذا النطاق الزمني لعرض الرسم البياني.</p>';
+            }
+        });
+    </script>
+}

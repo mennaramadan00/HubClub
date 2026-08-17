@@ -26,7 +26,7 @@ namespace HubClub.Models
 
         [Display(Name = "يوم العمل (الوردية)")]
         [Column(TypeName = "date")]
-        public DateTime BusinessDate { get; set; } 
+        public DateOnly BusinessDate { get; set; } 
 
         [Display(Name = "ملاحظات وتفاصيل")]
         [StringLength(500)]
