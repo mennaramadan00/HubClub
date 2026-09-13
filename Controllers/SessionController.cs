@@ -794,21 +794,23 @@ namespace HubClub.Controllers
 
         public async Task<IActionResult> DailyReport(DateTime? date)
         {
-            // 1. تحديد يوم العمل المحاسبي بدقة احترافية
             DateOnly targetBusinessDate;
+
             if (date.HasValue)
             {
-                targetBusinessDate = BusinessHelper.GetBusinessDate(date.Value);
+                // 🟢 المستخدم اختار تاريخاً محدداً -> نأخذه كما هو كـ DateOnly ونتجاهل وقت منتصف الليل
+                targetBusinessDate = DateOnly.FromDateTime(date.Value);
             }
             else
             {
-                targetBusinessDate = BusinessHelper.GetBusinessDate(DateTime.Now);
+                // 🟢 المستخدم ضغط "اليوم" أو فتح الصفحة للتو -> نستخدم الـ Helper ليفحص الساعة الحالية
+                targetBusinessDate = HubClub.Helpers.BusinessHelper.GetBusinessDate(DateTime.Now);
             }
 
+            // هذه السطور تستخدم للطباعة في الـ View فقط ولا تؤثر على البحث
             DateTime selectedDate = targetBusinessDate.ToDateTime(TimeOnly.MinValue);
             var businessStart = selectedDate.AddHours(8).AddMinutes(30);
             var businessEnd = businessStart.AddDays(1);
-
             // 2. تقرير جلسات الصالة
             var sessions = await _context.Sessions
                 .AsNoTracking()
@@ -878,11 +880,28 @@ namespace HubClub.Controllers
                 int added = 0;
                 int deficit = 0;
 
+                // بما أننا جلبنا الداتا في الميموري (ToDictionary)، يمكننا استخدام StringComparison بأمان
                 if (groupedMovementsToday.TryGetValue(p.ProductId, out var movements))
                 {
-                    sold = movements.Where(m => m.MovementType == "Sale" || m.MovementType == "Mid-Session Sale" || m.MovementType == "Session Product Return").Sum(m => -m.QuantityChanged);
-                    added = movements.Where(m => m.MovementType == "Stock In").Sum(m => m.QuantityChanged);
-                    deficit = movements.Where(m => m.MovementType == "Deficit").Sum(m => -m.QuantityChanged);
+                    // 🟢 1. قراءة كل المبيعات (حتى المعلقة) بتجاهل الحروف الكبيرة والصغيرة أو المسافات
+                    sold = movements.Where(m =>
+                        m.MovementType != null &&
+                        (m.MovementType.Contains("Sale", StringComparison.OrdinalIgnoreCase) ||
+                         m.MovementType.Contains("Mid", StringComparison.OrdinalIgnoreCase) ||
+                         m.MovementType.Contains("Return", StringComparison.OrdinalIgnoreCase))
+                    ).Sum(m => -m.QuantityChanged);
+
+                    // 🟢 2. قراءة الوارد
+                    added = movements.Where(m =>
+                        m.MovementType != null &&
+                        m.MovementType.Contains("Stock In", StringComparison.OrdinalIgnoreCase)
+                    ).Sum(m => m.QuantityChanged);
+
+                    // 🟢 3. قراءة العجز أو التالف
+                    deficit = movements.Where(m =>
+                        m.MovementType != null &&
+                        m.MovementType.Contains("Deficit", StringComparison.OrdinalIgnoreCase)
+                    ).Sum(m => -m.QuantityChanged);
                 }
 
                 // استخدام الـ Dictionary الآمن والجاهز
@@ -894,13 +913,12 @@ namespace HubClub.Controllers
                 {
                     ProductName = p.Name,
                     StartQuantity = actualStartQuantity,
-                    SoldQuantity = sold,
+                    SoldQuantity = sold, // 🟢 الآن ستظهر الـ 4 بكل تأكيد
                     AddedQuantity = added,
                     DeficitQuantity = deficit,
                     EndQuantity = actualEndQuantity
                 });
             }
-
             // 6. حساب إيرادات الباقات
             var packagesSoldToday = await _context.UserPackages
                 .AsNoTracking()

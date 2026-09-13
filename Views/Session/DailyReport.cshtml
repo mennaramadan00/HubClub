@@ -2,7 +2,7 @@
 @{
     var prevDay = Model.SelectedDate.AddDays(-1).ToString("yyyy-MM-dd");
     var nextDay = Model.SelectedDate.AddDays(1).ToString("yyyy-MM-dd");
-    var todayStr = DateTime.Now.Date.ToString("yyyy-MM-dd");
+    // 🟢 تم إزالة todayStr لكي يعمل الزر بناءً على الوردية الحالية
 }
 
 <div class="d-flex justify-content-between align-items-center mb-3">
@@ -14,14 +14,18 @@
     <form method="get" asp-controller="Session" asp-action="DailyReport" class="row g-2 align-items-center m-0">
         <div class="col-md-auto">
             <label for="date" class="fw-bold text-muted small mb-1">تاريخ العمل:</label>
-            <input type="date" id="date" name="date" class="premium-input m-0 py-1" value="@Model.SelectedDate.ToString("yyyy-MM-dd")" required style="min-width: 150px;" />
+            <!-- 🟢 تم إزالة value الثابتة لكي لا يفرض تاريخاً افتراضياً خاطئاً -->
+            <input type="date" id="date" name="date" class="premium-input m-0 py-1" value="@(Context.Request.Query["date"] != "" ? Context.Request.Query["date"] : Model.SelectedDate.ToString("yyyy-MM-dd"))" style="min-width: 150px;" />
         </div>
         <div class="col-md-auto mt-auto">
             <button type="submit" class="btn-aurelian-primary py-1 px-4">عرض</button>
         </div>
         <div class="col-md-auto ms-auto mt-auto d-flex gap-2">
             <a class="btn-aurelian-outline py-1 px-2 small" asp-controller="Session" asp-action="DailyReport" asp-route-date="@prevDay">&raquo; السابق</a>
-            <a class="btn-aurelian-outline py-1 px-2 small" asp-controller="Session" asp-action="DailyReport" asp-route-date="@todayStr">اليوم</a>
+
+            <!-- 🟢 زر اليوم تم تعديله ليرسل طلباً فارغاً، ليقوم الكنترولر بحساب الوردية الصحيحة -->
+            <a class="btn-aurelian-outline py-1 px-2 small" asp-controller="Session" asp-action="DailyReport">اليوم</a>
+
             <a class="btn-aurelian-outline py-1 px-2 small" asp-controller="Session" asp-action="DailyReport" asp-route-date="@nextDay">التالي &laquo;</a>
         </div>
     </form>
@@ -91,7 +95,7 @@
                 <span class="fw-bold text-dark text-break" style="max-width: 70%; text-align: left;">@Model.TotalTimeRevenue.ToString("N2") ج</span>
             </div>
             <div class="d-flex justify-content-between align-items-center mb-2 flex-wrap">
-                <span class="text-secondary fw-bold small">غرف VIP:</span>
+                <span class="text-secondary fw-bold small">غرف </span>
                 <span class="fw-bold val-amber text-break" style="max-width: 70%; text-align: left;">@Model.TotalRoomRevenue.ToString("N2") ج</span>
             </div>
             <div class="d-flex justify-content-between align-items-center flex-wrap">
@@ -137,7 +141,7 @@
 }
 
 <!-- تقرير جلسات الغرف -->
-<h4 class="topbar-title mb-3 fs-6 val-amber mt-4">جلسات الغرف (VIP) 🚪</h4>
+<h4 class="topbar-title mb-3 fs-6 val-amber mt-4">جلسات الغرف </h4>
 @if (!Model.RoomSessions.Any())
 {
     <p class="text-muted fw-bold small mb-4">لا توجد جلسات غرف في هذا اليوم.</p>
