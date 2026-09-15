@@ -718,76 +718,76 @@ namespace HubClub.Controllers
         #endregion
 
         #region reopen
-        // ─────────────────────────────────────────
-        // 🟢 NEW POST: Session/ReopenSession (صمام الأمان لحماية الداتابيز من الإغلاق الخاطئ)
-        // ─────────────────────────────────────────
-        [HttpPost]
-        [ValidateAntiForgeryToken]
-        public async Task<IActionResult> ReopenSession(int id)
-        {
-            var session = await _context.Sessions
-                     .Include(s => s.UserPackage)
-                     .Include(s => s.SessionProducts)
-                     .ThenInclude(sp => sp.Product)
-                     .FirstOrDefaultAsync(s => s.SessionId == id);
+        //// ─────────────────────────────────────────
+        //// 🟢 NEW POST: Session/ReopenSession (صمام الأمان لحماية الداتابيز من الإغلاق الخاطئ)
+        //// ─────────────────────────────────────────
+        //[HttpPost]
+        //[ValidateAntiForgeryToken]
+        //public async Task<IActionResult> ReopenSession(int id)
+        //{
+        //    var session = await _context.Sessions
+        //             .Include(s => s.UserPackage)
+        //             .Include(s => s.SessionProducts)
+        //             .ThenInclude(sp => sp.Product)
+        //             .FirstOrDefaultAsync(s => s.SessionId == id);
 
-            if (session == null || !session.IsClosed)
-            {
-                TempData["Error"] = "الجلسة غير موجودة أو مفتوحة بالفعل.";
-                return RedirectToAction("Index", "Home");
-            }
+        //    if (session == null || !session.IsClosed)
+        //    {
+        //        TempData["Error"] = "الجلسة غير موجودة أو مفتوحة بالفعل.";
+        //        return RedirectToAction("Index", "Home");
+        //    }
 
-            using var transaction = await _context.Database.BeginTransactionAsync();
-            try
-            {
-                // 1. إرجاع رصيد الساعات للباقة بأمان تام باستخدام الحقل الجديد
-                if (session.PaymentType == PaymentType.Package && session.UserPackage != null)
-                {
-                    // إرجاع الساعات التي تم تسجيلها وقت الإغلاق بدقة
-                    session.UserPackage.RemainingHours += session.PackageHoursUsed ?? 0;
+        //    using var transaction = await _context.Database.BeginTransactionAsync();
+        //    try
+        //    {
+        //        // 1. إرجاع رصيد الساعات للباقة بأمان تام باستخدام الحقل الجديد
+        //        if (session.PaymentType == PaymentType.Package && session.UserPackage != null)
+        //        {
+        //            // إرجاع الساعات التي تم تسجيلها وقت الإغلاق بدقة
+        //            session.UserPackage.RemainingHours += session.PackageHoursUsed ?? 0;
 
-                    // إعادة إحياء الباقة إذا كان تاريخها ما زال سارياً
-                    if (session.UserPackage.RemainingHours > 0 && session.UserPackage.ExpiryDate >= DateTime.Now)
-                    {
-                        session.UserPackage.Status = UserPackageStatus.Active;
-                    }
+        //            // إعادة إحياء الباقة إذا كان تاريخها ما زال سارياً
+        //            if (session.UserPackage.RemainingHours > 0 && session.UserPackage.ExpiryDate >= DateTime.Now)
+        //            {
+        //                session.UserPackage.Status = UserPackageStatus.Active;
+        //            }
 
-                    _context.UserPackages.Update(session.UserPackage);
-                }
+        //            _context.UserPackages.Update(session.UserPackage);
+        //        }
 
-                // 2. مسح بيانات الإغلاق لتعود الجلسة للعمل كالمعتاد
-                session.IsClosed = false;
-                session.EndTime = null;
-                session.TotalTimePrice = 0;
-                session.PriceSettingId = null;
-                // إرجاع أسعار المنتجات لسعر الكتالوج الأصلي لمسح أي خصم مضروب سابقاً
-                foreach (var sp in session.SessionProducts)
-                {
-                    if (sp.Product != null)
-                    {
-                        sp.UnitPriceAtSale = sp.Product.Price;
-                        sp.TotalPrice = sp.UnitPriceAtSale * sp.Quantity;
-                    }
-                }
+        //        // 2. مسح بيانات الإغلاق لتعود الجلسة للعمل كالمعتاد
+        //        session.IsClosed = false;
+        //        session.EndTime = null;
+        //        session.TotalTimePrice = 0;
+        //        session.PriceSettingId = null;
+        //        // إرجاع أسعار المنتجات لسعر الكتالوج الأصلي لمسح أي خصم مضروب سابقاً
+        //        foreach (var sp in session.SessionProducts)
+        //        {
+        //            if (sp.Product != null)
+        //            {
+        //                sp.UnitPriceAtSale = sp.Product.Price;
+        //                sp.TotalPrice = sp.UnitPriceAtSale * sp.Quantity;
+        //            }
+        //        }
 
-                // 3. تصفير حقل الساعات المستخدمة لتبدأ الجلسة نظيفة مرة أخرى
-                session.PackageHoursUsed = null;
+        //        // 3. تصفير حقل الساعات المستخدمة لتبدأ الجلسة نظيفة مرة أخرى
+        //        session.PackageHoursUsed = null;
 
-                _context.Sessions.Update(session);
-                await _context.SaveChangesAsync();
-                await transaction.CommitAsync();
+        //        _context.Sessions.Update(session);
+        //        await _context.SaveChangesAsync();
+        //        await transaction.CommitAsync();
 
-                TempData["Success"] = "تم التراجع وإعادة فتح الجلسة بنجاح، عداد الوقت عاد للعمل!";
-            }
-            catch (Exception ex)
-            {
-                await transaction.RollbackAsync();
-                _logger.LogError(ex, "خطأ أثناء محاولة إعادة فتح الجلسة");
-                TempData["Error"] = "حدث خطأ غير متوقع أثناء المعالجة.";
-            }
+        //        TempData["Success"] = "تم التراجع وإعادة فتح الجلسة بنجاح، عداد الوقت عاد للعمل!";
+        //    }
+        //    catch (Exception ex)
+        //    {
+        //        await transaction.RollbackAsync();
+        //        _logger.LogError(ex, "خطأ أثناء محاولة إعادة فتح الجلسة");
+        //        TempData["Error"] = "حدث خطأ غير متوقع أثناء المعالجة.";
+        //    }
 
-            return RedirectToAction("Index", "Home");
-        }
+        //    return RedirectToAction("Index", "Home");
+        //}
         #endregion
 
         #region daily report seperate page 
@@ -1047,33 +1047,28 @@ namespace HubClub.Controllers
             return View(vm);
         }
 
-        // ─────────────────────────────────────────
-        // POST: Session/Edit/5
-        // ─────────────────────────────────────────
+        
         [HttpPost]
         [ValidateAntiForgeryToken]
         public async Task<IActionResult> Edit(int id, EditClosedSessionViewModel vm)
         {
             if (id != vm.SessionId) return NotFound();
 
+            // 🟢 1. جلب الجلسة متضمنة الباقة والمنتجات معاً للتعامل مع السيناريوهين
             var session = await _context.Sessions
+                .Include(s => s.UserPackage)
                 .Include(s => s.SessionProducts)
+                    .ThenInclude(sp => sp.Product)
                 .FirstOrDefaultAsync(s => s.SessionId == id);
 
             if (session == null) return NotFound();
 
-            // 🟢 فتح Transaction لأننا سنقوم بتعديل المخزون والفاتورة معاً
             using var transaction = await _context.Database.BeginTransactionAsync();
             try
             {
-                session.CusId = vm.CusId;
-                session.PaymentType = vm.PaymentType;
-                session.TotalTimePrice = vm.TotalTimePrice;
-
-                // 🟢 معالجة المنتجات وتحديث المخزون
+                // 🟢 2. معالجة المنتجات وتحديث المخزون (هذا الجزء سيعمل في التعديل وإعادة الفتح معاً)
                 if (vm.Products != null)
                 {
-                    // Bulk fetch optimization for edit
                     var productIds = vm.Products.Select(p => p.ProductId).ToList();
                     var productsDict = await _context.Products
                         .Where(p => productIds.Contains(p.ProductId))
@@ -1085,11 +1080,8 @@ namespace HubClub.Controllers
                         if (existingSp != null)
                         {
                             productsDict.TryGetValue(existingSp.ProductId, out var product);
-
-                            // حساب فرق الكمية (الجديد - القديم)
                             int qtyDiff = item.Quantity - existingSp.Quantity;
 
-                            // التحقق من توافر المخزون في حالة زيادة الكمية
                             if (qtyDiff > 0 && product != null && product.Quantity < qtyDiff)
                             {
                                 await transaction.RollbackAsync();
@@ -1097,7 +1089,6 @@ namespace HubClub.Controllers
                                 return RedirectToAction(nameof(Edit), new { id = session.SessionId });
                             }
 
-                            // تحديث المخزون وتسجيل الحركة
                             if (qtyDiff != 0 && product != null)
                             {
                                 product.Quantity -= qtyDiff;
@@ -1114,7 +1105,6 @@ namespace HubClub.Controllers
                                 });
                             }
 
-                            // تحديث السعر والكمية في سطر الفاتورة
                             existingSp.Quantity = item.Quantity;
                             existingSp.UnitPriceAtSale = item.UnitPriceAtSale;
                             existingSp.TotalPrice = item.Quantity * item.UnitPriceAtSale;
@@ -1127,25 +1117,74 @@ namespace HubClub.Controllers
                     }
                 }
 
-                // 🟢 إجبار السيرفر على حساب الإجمالي النهائي من سطور المنتجات لمنع أي تلاعب
-                session.TotalProductPrice = session.SessionProducts.Where(sp => sp.Quantity > 0).Sum(sp => sp.TotalPrice);
-                session.GrandTotal = session.TotalTimePrice + session.TotalProductPrice;
+                // 🟢 3. التفريع الذكي (Logic Branching) بناءً على وقت النهاية
+                if (vm.EndTime == null)
+                {
+                    // 🔥 مسار إعادة الفتح (Reopen)
 
+                    // إرجاع رصيد الباقة إن وجد
+                    if (session.PaymentType == PaymentType.Package && session.UserPackage != null)
+                    {
+                        session.UserPackage.RemainingHours += session.PackageHoursUsed ?? 0;
+                        if (session.UserPackage.RemainingHours > 0 && session.UserPackage.ExpiryDate >= DateTime.Now)
+                        {
+                            session.UserPackage.Status = UserPackageStatus.Active;
+                        }
+                        _context.UserPackages.Update(session.UserPackage);
+                    }
+
+                    // مسح بيانات الإغلاق
+                    session.IsClosed = false;
+                    session.EndTime = null;
+                    session.TotalTimePrice = 0;
+                    session.PriceSettingId = null;
+                    session.PackageHoursUsed = null;
+
+                    // إرجاع أسعار المنتجات لسعر الكتالوج (لإلغاء أي تعديل يدوي في السعر تم وقت الإغلاق)
+                    foreach (var sp in session.SessionProducts)
+                    {
+                        if (sp.Product != null && sp.Quantity > 0)
+                        {
+                            sp.UnitPriceAtSale = sp.Product.Price;
+                            sp.TotalPrice = sp.UnitPriceAtSale * sp.Quantity;
+                        }
+                    }
+
+                    session.TotalProductPrice = session.SessionProducts.Where(sp => sp.Quantity > 0).Sum(sp => sp.TotalPrice);
+                    session.GrandTotal = session.TotalTimePrice + session.TotalProductPrice;
+
+                    TempData["Success"] = "تم إلغاء الإغلاق بنجاح، الجلسة الآن مفتوحة والعداد يعمل!";
+                }
+                else
+                {
+                    // 🔥 مسار التعديل العادي (Edit Closed Session)
+                    session.CusId = vm.CusId;
+                    session.PaymentType = vm.PaymentType;
+                    session.TotalTimePrice = vm.TotalTimePrice;
+
+                    // إجبار السيرفر على حساب الإجمالي النهائي من سطور المنتجات لمنع أي تلاعب
+                    session.TotalProductPrice = session.SessionProducts.Where(sp => sp.Quantity > 0).Sum(sp => sp.TotalPrice);
+                    session.GrandTotal = session.TotalTimePrice + session.TotalProductPrice;
+
+                    TempData["Success"] = "تم تعديل بيانات الجلسة والطلبات بنجاح.";
+                }
+
+                // 🟢 4. الحفظ النهائي في كلتا الحالتين
                 _context.Update(session);
                 await _context.SaveChangesAsync();
                 await transaction.CommitAsync();
 
-                TempData["Success"] = "تم تعديل بيانات الجلسة والطلبات بنجاح.";
                 return RedirectToAction("Index", "Home");
             }
             catch (Exception ex)
             {
                 await transaction.RollbackAsync();
-                _logger.LogError(ex, "خطأ أثناء تعديل الجلسة");
-                TempData["Error"] = "حدث خطأ غير متوقع أثناء حفظ التعديلات.";
+                _logger.LogError(ex, "خطأ أثناء تعديل أو إعادة فتح الجلسة");
+                TempData["Error"] = "حدث خطأ غير متوقع أثناء معالجة الطلب.";
                 return RedirectToAction(nameof(Edit), new { id = session.SessionId });
             }
         }
+       
         #endregion
 
         #region delete session

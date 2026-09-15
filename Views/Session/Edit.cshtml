@@ -1,101 +1,129 @@
 ﻿@model HubClub.ViewModels.EditClosedSessionViewModel
 @{
-    ViewData["Title"] = "تعديل جلسة مغلقة";
+    ViewData["Title"] = "تعديل فاتورة الجلسة";
 }
 
-<h3 style="color: var(--sapphire); font-weight: 800;">تعديل فاتورة الجلسة #@Model.SessionId</h3>
-<hr />
-
-<form asp-action="Edit" method="post" dir="rtl">
-    @Html.AntiForgeryToken()
-    <input type="hidden" asp-for="SessionId" />
-
-    <div class="row">
-        <div class="col-md-6 mb-3">
-            <label asp-for="CusId" class="form-label fw-bold"></label>
-            <select asp-for="CusId" asp-items="Model.AllCustomers" class="form-control"></select>
-        </div>
-        <div class="col-md-6 mb-3">
-            <label asp-for="PaymentType" class="form-label fw-bold"></label>
-            <select asp-for="PaymentType" class="form-control" asp-items="Html.GetEnumSelectList<HubClub.Models.Enums.PaymentType>()"></select>
-        </div>
+<div class="glass-form-container">
+    <div class="form-header">
+        <h2>تعديل فاتورة الجلسة #@Model.SessionId</h2>
+        <p>تعديل المبالغ والمنتجات، أو إعادة فتح الجلسة بأمان</p>
     </div>
 
-    <div class="row">
-        <div class="col-md-4 mb-3">
-            <label asp-for="StartTime" class="form-label fw-bold"></label>
-            <input type="text" class="form-control bg-light" value="@Model.StartTime.ToString("g")" readonly />
-        </div>
-        <div class="col-md-4 mb-3">
-            <label asp-for="EndTime" class="form-label fw-bold"></label>
-            <input type="text" class="form-control bg-light" value="@Model.EndTime?.ToString("g")" readonly />
-        </div>
-        <div class="col-md-4 mb-3">
-            <label asp-for="HoursElapsed" class="form-label fw-bold"></label>
-            <input asp-for="HoursElapsed" class="form-control bg-light" readonly />
-        </div>
-    </div>
+    <form asp-action="Edit" method="post" dir="rtl" id="editForm">
+        @Html.AntiForgeryToken()
+        <input type="hidden" asp-for="SessionId" />
 
-    <!-- 🟢 جدول تعديل المنتجات -->
-    <h5 class="fw-bold mt-4 mb-3" style="color: var(--sapphire);">المنتجات المطلوبة</h5>
-    <div class="table-responsive mb-4">
-        <table class="table table-bordered table-hover bg-white text-center align-middle">
-            <thead class="bg-light">
-                <tr>
-                    <th>المنتج</th>
-                    <th style="width: 150px;">سعر الوحدة</th>
-                    <th style="width: 150px;">الكمية</th>
-                    <th>إجمالي السطر</th>
-                </tr>
-            </thead>
-            <tbody>
-                @for (int i = 0; i < Model.Products.Count; i++)
-                {
-                    <tr>
-                        <td class="fw-bold text-primary">
-                            @Model.Products[i].ProductName
-                            <input type="hidden" asp-for="Products[i].SessionProductId" />
-                            <input type="hidden" asp-for="Products[i].ProductId" />
-                            <input type="hidden" asp-for="Products[i].ProductName" />
-                        </td>
-                        <td>
-                            <input asp-for="Products[i].UnitPriceAtSale" type="number" step="0.01" class="form-control text-center price-input" oninput="recalcLines()" />
-                        </td>
-                        <td>
-                            <input asp-for="Products[i].Quantity" type="number" min="0" class="form-control text-center qty-input" oninput="recalcLines()" />
-                        </td>
-                        <td>
-                            <span class="line-total fw-bold" id="line-total-@i">
-                                @((Model.Products[i].UnitPriceAtSale * Model.Products[i].Quantity).ToString("N2"))
-                            </span>
-                        </td>
-                    </tr>
-                }
-            </tbody>
-        </table>
-    </div>
+        <!-- 🟢 الحقول المخفية لضمان إرسال البيانات الأساسية لأننا قفلناها للعرض فقط -->
+        <input type="hidden" asp-for="CusId" />
+        <input type="hidden" asp-for="PaymentType" />
+        <input type="hidden" asp-for="StartTime" />
+        <input type="hidden" asp-for="EndTime" id="hiddenEndTime" />
 
-    <div class="row mt-3 p-3 rounded" style="background: rgba(0, 128, 255, 0.05); border: 1px dashed var(--azure-soft);">
-        <div class="col-md-4 mb-3">
-            <label asp-for="TotalTimePrice" class="form-label fw-bold text-primary"></label>
-            <input asp-for="TotalTimePrice" type="number" step="0.01" class="form-control font-weight-bold" id="timePrice" oninput="recalcLines()" />
+        <div class="row">
+            <div class="col-md-6">
+                <label asp-for="CusId" class="premium-label"></label>
+                <!-- أضفنا disabled ومسحنا margin عشان الـ style -->
+                <select asp-items="Model.AllCustomers" class="premium-input" style="opacity: 0.8; cursor: not-allowed;" disabled></select>
+            </div>
+            <div class="col-md-6">
+                <label asp-for="PaymentType" class="premium-label"></label>
+                <select class="premium-input" asp-items="Html.GetEnumSelectList<HubClub.Models.Enums.PaymentType>()" style="opacity: 0.8; cursor: not-allowed;" disabled></select>
+            </div>
         </div>
-        <div class="col-md-4 mb-3">
-            <label asp-for="TotalProductPrice" class="form-label fw-bold text-primary"></label>
-            <!-- 🟢 تم إغلاقه (readonly) لأنه يُحسب تلقائياً من الجدول -->
-            <input asp-for="TotalProductPrice" type="number" step="0.01" class="form-control font-weight-bold bg-light" id="prodPrice" readonly />
-        </div>
-        <div class="col-md-4 mb-3">
-            <label asp-for="GrandTotal" class="form-label fw-bold text-danger"></label>
-            <input asp-for="GrandTotal" type="number" step="0.01" class="form-control font-weight-bold bg-light" id="grandTotal" readonly />
-        </div>
-    </div>
 
-    <button type="submit" class="btn btn-primary mt-4 px-5">حفظ التعديلات</button>
-    <a asp-controller="Home" asp-action="Index" class="btn btn-secondary mt-4 px-4 mx-2">إلغاء</a>
-</form>
+        <div class="row">
+            <div class="col-md-4">
+                <label asp-for="StartTime" class="premium-label"></label>
+                <input type="text" class="premium-input" style="opacity: 0.8;" value="@Model.StartTime.ToString("g")" readonly />
+            </div>
+
+            <!-- 🟢 حقل وقت النهاية مع أيقونة مسح الإغلاق -->
+            <div class="col-md-4 mb-4">
+                <label asp-for="EndTime" class="premium-label"></label>
+                <div class="input-group">
+                    <input type="text" class="premium-input text-danger fw-bold" style="margin-bottom: 0; border-start-end-radius: 0; border-end-end-radius: 0;" value="@Model.EndTime?.ToString("g")" id="visibleEndTime" readonly />
+                    <button type="button" class="btn btn-outline-danger fw-bold" style="border-start-start-radius: 0; border-end-start-radius: 0; border-width: 2px;" id="btnReopen" title="إلغاء الإغلاق وإعادة الفتح">
+                        ❌
+                    </button>
+                </div>
+                <!-- رسالة تحذيرية تظهر فقط عند مسح الوقت -->
+                <small id="reopenWarning" class="text-danger d-none fw-bold mt-2 d-block">
+                    ⚠️ سيتم إعادة فتح هذه الجلسة عند الحفظ!
+                </small>
+            </div>
+
+            <div class="col-md-4">
+                <label asp-for="HoursElapsed" class="premium-label"></label>
+                <input asp-for="HoursElapsed" class="premium-input" style="opacity: 0.8;" id="hoursInput" readonly />
+            </div>
+        </div>
+
+        <!-- 🟢 جدول تعديل المنتجات بالتصميم الزجاجي -->
+        <h5 class="fw-bold mt-2 mb-3" style="color: var(--sapphire);">المنتجات المطلوبة</h5>
+        <div class="table-glass-wrap mb-4">
+            <div class="table-responsive">
+                <table class="table-glass text-center align-middle mb-0">
+                    <thead>
+                        <tr>
+                            <th>المنتج</th>
+                            <th style="width: 150px;">سعر الوحدة</th>
+                            <th style="width: 150px;">الكمية</th>
+                            <th>إجمالي السطر</th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                        @for (int i = 0; i < Model.Products.Count; i++)
+                        {
+                            <tr>
+                                <td class="fw-bold text-primary">
+                                    @Model.Products[i].ProductName
+                                    <input type="hidden" asp-for="Products[i].SessionProductId" />
+                                    <input type="hidden" asp-for="Products[i].ProductId" />
+                                    <input type="hidden" asp-for="Products[i].ProductName" />
+                                </td>
+                                <td>
+                                    <input asp-for="Products[i].UnitPriceAtSale" type="number" step="0.01" class="premium-input text-center price-input" style="margin-bottom: 0; padding: 0.5rem;" oninput="recalcLines()" />
+                                </td>
+                                <td>
+                                    <input asp-for="Products[i].Quantity" type="number" min="0" class="premium-input text-center qty-input" style="margin-bottom: 0; padding: 0.5rem;" oninput="recalcLines()" />
+                                </td>
+                                <td>
+                                    <span class="price-highlight line-total" id="line-total-@i">
+                                        @((Model.Products[i].UnitPriceAtSale * Model.Products[i].Quantity).ToString("N2"))
+                                    </span>
+                                </td>
+                            </tr>
+                        }
+                    </tbody>
+                </table>
+            </div>
+        </div>
+
+        <!-- 🟢 ملخص الفاتورة -->
+        <div class="row mt-4 p-4 rounded" style="background: var(--azure-glow-soft); border: 1px dashed var(--azure-soft);">
+            <div class="col-md-4">
+                <label asp-for="TotalTimePrice" class="premium-label text-primary"></label>
+                <input asp-for="TotalTimePrice" type="number" step="0.01" class="premium-input val-success" style="margin-bottom: 0; font-size: 1.1rem;" id="timePrice" oninput="recalcLines()" />
+            </div>
+            <div class="col-md-4">
+                <label asp-for="TotalProductPrice" class="premium-label text-primary"></label>
+                <input asp-for="TotalProductPrice" type="number" step="0.01" class="premium-input val-success" style="margin-bottom: 0; opacity: 0.8; font-size: 1.1rem;" id="prodPrice" readonly />
+            </div>
+            <div class="col-md-4">
+                <label asp-for="GrandTotal" class="premium-label text-danger"></label>
+                <input asp-for="GrandTotal" type="number" step="0.01" class="premium-input val-danger" style="margin-bottom: 0; opacity: 0.8; font-size: 1.2rem;" id="grandTotal" readonly />
+            </div>
+        </div>
+
+        <div class="form-actions mt-5">
+            <button type="submit" class="btn-aurelian-primary" style="flex: 2;">حفظ التعديلات</button>
+            <a asp-controller="Home" asp-action="Index" class="btn-aurelian-outline">إلغاء</a>
+        </div>
+    </form>
+</div>
 
 <script>
+    // حساب الإجماليات
     function recalcLines() {
         let totalProducts = 0;
         const prices = document.querySelectorAll('.price-input');
@@ -116,4 +144,26 @@
         let t = parseFloat(document.getElementById('timePrice').value) || 0;
         document.getElementById('grandTotal').value = (t + totalProducts).toFixed(2);
     }
+
+    // 🟢 السكريبت الخاص بزر إعادة الفتح (مسح وقت النهاية)
+    document.getElementById('btnReopen').addEventListener('click', function() {
+        // رسالة التأكيد
+        if(confirm("هل أنت متأكد من إلغاء إغلاق هذه الجلسة وإعادة فتحها؟\n\n(سيتم عودة العداد للعمل، واسترداد أي ساعات مخصومة من الباقة).")) {
+
+            // تفريغ الحقول لإجبار الكنترولر على قراءتها كـ Null
+            document.getElementById('hiddenEndTime').value = "";
+            document.getElementById('visibleEndTime').value = "سيتم إعادة الفتح...";
+            document.getElementById('hoursInput').value = "0";
+            document.getElementById('timePrice').value = "0";
+
+            // إظهار الرسالة التحذيرية الحمراء
+            document.getElementById('reopenWarning').classList.remove('d-none');
+
+            // إعادة حساب الفاتورة (لتصفير تكلفة الوقت)
+            recalcLines();
+
+            // تعطيل الزر لمنع الضغط مرتين
+            this.disabled = true;
+        }
+    });
 </script>

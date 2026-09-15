@@ -3,7 +3,6 @@
     ViewData["Title"] = "التحليل المالي ليوم العمل";
 }
 
-<!-- القسم الأول: الإيرادات حسب النوع -->
 <h4 class="topbar-title mb-3 fs-5">1. الإيرادات حسب مصدر الدخل</h4>
 <div class="analysis-summary-grid mb-4">
     <div class="summary-box">
@@ -26,7 +25,6 @@
     </div>
 </div>
 
-<!-- القسم الثاني: الإيرادات حسب طريقة التحصيل -->
 <h4 class="topbar-title mb-3 fs-5">2. الإيرادات حسب طريقة التحصيل</h4>
 <div class="analysis-summary-grid mb-4" style="grid-template-columns: repeat(auto-fit, minmax(250px, 1fr));">
     <div class="summary-box" style="border-left: 4px solid #198754;">
@@ -43,7 +41,6 @@
     </div>
 </div>
 
-<!-- القسم الثالث: الإجمالي النهائي -->
 <h4 class="topbar-title mb-3 fs-5">3. ملخص الخزينة</h4>
 <div class="analysis-summary-grid mb-5" style="grid-template-columns: 1fr;">
     <div class="summary-box" style="background: linear-gradient(135deg, var(--azure) 0%, #1E3A8A 100%); border: none;">
@@ -56,10 +53,9 @@
 
 <hr style="border-color: var(--glass-edge-blue); margin-bottom: 2rem;" />
 
-<!-- جدول جلسات الغرف المغلقة  -->
 <div class="d-flex justify-content-between align-items-center mb-3">
     <h3 class="val-amber m-0 fs-4 fw-bold">
-        جلسات الغرف المغلقة (@Model.ClosedRoomSessions.Count) 
+        جلسات الغرف المغلقة (@Model.ClosedRoomSessions.Count)
     </h3>
 </div>
 
@@ -98,14 +94,18 @@
                             int h = (int)duration.TotalHours;
                             int m = duration.Minutes;
                             if (h > 0 && m > 0)
-                    @($"{h} ساعة و {m} دقيقة")
-                                        else if (h > 0)
-
-                    @($"{h} ساعة")
-                                        else
-
-                    @($"{m} دقيقة")
-                                        }
+                            {
+                                @($"{h} ساعة و {m} دقيقة")
+                            }
+                            else if (h > 0)
+                            {
+                                @($"{h} ساعة")
+                            }
+                            else
+                            {
+                                @($"{m} دقيقة")
+                            }
+                        }
                         else
                         {
                             <span>-</span>
@@ -133,12 +133,7 @@
                     </td>
                     <td class="text-center">
                         <div class="d-flex justify-content-center gap-1">
-                            <form asp-controller="RoomSession" asp-action="ReopenSession" asp-route-id="@rs.RoomSessionId" method="post" class="m-0 p-0">
-                                @Html.AntiForgeryToken()
-                                <button type="submit" class="btn btn-sm text-warning" style="background: rgba(255, 196, 0, 0.1); border: 1px solid #FFC400; font-weight: 700;" onclick="return confirm('هل أنت متأكد من إعادة فتح جلسة هذه الغرفة؟')">تراجع</button>
-                            </form>
-                            <a asp-controller="RoomSession" asp-action="Edit" asp-route-id="@rs.RoomSessionId" class="btn btn-sm text-primary" style="background: rgba(0, 128, 255, 0.1); border: 1px solid #0080ff; font-weight: 700;">تعديل</a>
-                            <a asp-controller="RoomSession" asp-action="Delete" asp-route-id="@rs.RoomSessionId" class="btn btn-sm text-danger" style="background: rgba(255, 0, 0, 0.1); border: 1px solid #ff0000; font-weight: 700;">حذف</a>
+                            <a asp-controller="RoomSession" asp-action="Edit" asp-route-id="@rs.RoomSessionId" class="btn btn-sm" style="background: rgba(255, 196, 0, 0.15); color: #C9631A; border: 1px solid #FFC400; font-weight: 700; padding: 0.25rem 1rem;">تراجع</a>
                         </div>
                     </td>
                 </tr>
@@ -147,10 +142,9 @@
     </table>
 </div>
 
-<!-- جدول جلسات الصالة المفتوحة المغلقة (العادية) -->
 <div class="d-flex justify-content-between align-items-center mb-3 mt-5">
     <h3 class="val-sapphire m-0 fs-4 fw-bold">
-        جلسات الصالة المغلقة (@Model.ClosedSessions.Count) 
+        جلسات الصالة المغلقة (@Model.ClosedSessions.Count)
     </h3>
 </div>
 
@@ -189,14 +183,18 @@
                             int h = (int)duration.TotalHours;
                             int m = duration.Minutes;
                             if (h > 0 && m > 0)
-                    @($"{h} ساعة و {m} دقيقة")
-                                        else if (h > 0)
-
-                    @($"{h} ساعة")
-                                        else
-
-                    @($"{m} دقيقة")
-                                        }
+                            {
+                                @($"{h} ساعة و {m} دقيقة")
+                            }
+                            else if (h > 0)
+                            {
+                                @($"{h} ساعة")
+                            }
+                            else
+                            {
+                                @($"{m} دقيقة")
+                            }
+                        }
                         else
                         {
                             <span>-</span>
@@ -226,12 +224,7 @@
                     </td>
                     <td class="text-center">
                         <div class="d-flex justify-content-center gap-1">
-                            <form asp-controller="Session" asp-action="ReopenSession" asp-route-id="@session.SessionId" method="post" class="m-0 p-0">
-                                @Html.AntiForgeryToken()
-                                <button type="submit" class="btn btn-sm" style="background: rgba(255, 196, 0, 0.15); color: #C9631A; border: 1px solid #FFC400; font-weight: 700;" onclick="return confirm('هل أنت متأكد من إعادة فتح هذه الجلسة؟')">تراجع</button>
-                            </form>
-                            <a asp-controller="Session" asp-action="Edit" asp-route-id="@session.SessionId" class="btn btn-sm text-primary" style="background: rgba(0, 128, 255, 0.15); border: 1px solid #0080ff; font-weight: 700;">تعديل</a>
-                            <a asp-controller="Session" asp-action="Delete" asp-route-id="@session.SessionId" class="btn btn-sm text-danger" style="background: rgba(255, 0, 0, 0.15); border: 1px solid #ff0000; font-weight: 700;">حذف</a>
+                            <a asp-controller="Session" asp-action="Edit" asp-route-id="@session.SessionId" class="btn btn-sm" style="background: rgba(255, 196, 0, 0.15); color: #C9631A; border: 1px solid #FFC400; font-weight: 700; padding: 0.25rem 1rem;">تراجع</a>
                         </div>
                     </td>
                 </tr>
